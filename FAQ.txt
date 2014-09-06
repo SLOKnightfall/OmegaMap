@@ -1,0 +1,55 @@
+
+*How do I show/hide OmegaMap?
+
+There are a few ways to toggle OmegaMap
+
+    You need to specify your own key in the WoW Key bindings for the "Toggle OmegaMap" setting. e.g. use 'M' to toggle OmegaMap instead of the World Maps
+    Left click on the minimap Icon or the DataBroker icon
+    If you are useing a DataBroker addon,
+    If the HotSpot icon is displayed just mouse over it. 
+
+*What is the HotSpot icon?
+
+-It is a small icon of a map that shows OmegaMap when you mouse over it and hide OmegaMap when the mouse leaves it. It can be shown via the options menu or middle clicking on the Minimap or DataBroker Icon. The first time used it will display in the center of the screen, from there just click and drag it to where you want it.
+*What are the icons at the top of the OmegaMap window?
+
+    Red Book - Opens the Dungeon Journal
+    Red Question Mark - Opens the Options Menu
+    Globe - Allows the map to be moved and to be zoomed in & out by clicking on the map
+    Green Eye - Allows the quick toggling of other addon's points of interest (Gatherer/Gathermate nodes, Map notes, Route lines)
+    
+*How do I show/hide the OmegaMap Options frame ?
+
+- The Options menu is accessable via the Blizzard Addon Interface menu or by left clicking the minimap icon. Additionally you access the Options menu while OmegaMap is displayed by clicking on the red question mark icon at the top of the map.
+*How do I move OmegaMap ?
+
+- Click on the "Globe" icon (third from the left) which will cause the move bars to appear on the top and bottom of the map. By dragging the bars you can move the map.
+*How do I change the size of OmegaMap
+
+- Open the options menu and then use the scale slider
+*How do I change the opacity of OmegaMap
+
+- Use the slider on the left side of the map. The slider can be shown/hidden via the options menu
+*Can I click on the OmegaMap to zoom in and out like I do on the World Map ?
+
+    Click on the "Globe" icon (third from the left) which will enable the map to detect mouse clicks
+    Open the Options and set the HotKey selector. <Shift,Ctrl,Alt> Whenever you hold down the hotkey the map will detect mouse clicks 
+
+*How do you display the points of interest from supported addons?
+
+- Bring up the options menu and make sure that the appropriate boxes are checked. Also make sure that the "Eye" icon a the top of the map is on
+*How do I create notes on OmegaMap using supported addons?
+
+Click on the "Globe" icon (third from the left) or use the Interaction Hotkey. Then use the key combo for the addon in question
+
+    CTMap - Ctrl + Left click to the map to create a CTMap point
+    TomTom - What ever modifier key + Left click on the map to create a TomTom point
+    MapNotes - Ctrl + Right click or Ctrl + Alt + Right click for a quick note 
+
+*When Tracking Quests how do I show the quest objectives?
+
+If there are quests objectives to show on the current map, there is a small arrow on the top right of the map. Clicking on it will toggle the dislaying of the quest objectives.
+
+*How do I view instance Maps via OmegaMap?
+
+Currently there is no way to view instance maps via OmegaMap. All instance maps are accessible by using Blizzards Dungeon Journal.

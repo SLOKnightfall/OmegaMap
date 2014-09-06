@@ -1,0 +1,14 @@
+externals:
+    Libs/CallbackHandler-1.0:
+        url: svn://svn.wowace.com/wow/callbackhandler/mainline/trunk/CallbackHandler-1.0
+    Libs/LibDataBroker-1.1:
+        url: git://git.wowace.com/wow/libdatabroker-1-1/mainline.git
+    Libs/LibStub:
+        url: svn://svn.wowace.com/wow/libstub/mainline/trunk
+    Libs/LibBabble-Zone-3.0:
+        url: svn://svn.wowace.com/wow/libbabble-zone-3-0/mainline/trunk
+    Libs/LibBabble-SubZone-3.0:
+        url: svn://svn.wowace.com/wow/libbabble-subzone-3-0/mainline/trunk
+    Libs/LibDBIcon-1.0:
+        url: svn://svn.wowace.com/wow/libdbicon-1-0/mainline/trunk/LibDBIcon-1.0
+enable-nolib-creation: no

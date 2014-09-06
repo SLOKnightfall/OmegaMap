@@ -1,0 +1,124 @@
+v1.8.1 
+-Fixed Pet Tracker plugin to work with most recent version
+
+v1.8
+-Added support for HandyNotes
+
+V1.7.1
+-Updated _NPCScan.Overlay plugin to reflect its native support of OmegaMap
+-Fixed UpdateMicroButtons taint issues
+
+V1.7
+-Update to WOW 5.4 map changes
+-Checked plugins for updates
+-Fixed GatherMate not showing profession/tracking only settings
+-Fixed GatherMated nodes showing in microdungeons on OmegaMap
+-Fixed OmegaMap not displaying vehicles correctly
+-Updated OmegaMap to work the the most recent version of MapNotes(6.09.50001)
+
+
+V1.6.3
+-Updated PetTracker plugin to be compatable with PetTracker V5.3.13
+
+
+V1.6.2
+-Updated PetTracker plugin to fix errors
+
+V1.6.1
+-Added alternat map for Deepwind Gorge
+-Fixed issues with Temple of Kotmogu & Silvershard Mine alternate maps
+-Added support for PetTracker Addon
+
+V1.6
+-Update to WoW 5.3 map changes
+-bug fixes
+
+v1.5.3
+-Bug fix
+
+V1.5.2
+-Isle of thunder compact mode missing map fix.
+
+V1.5.1
+-Update TOC
+
+V1.5
+-Updated map code to reflect WoW 5.2 map changes
+-Added Isle of Thunder map & POI 
+
+v1.4.5
+-Bugfixes
+
+v1.4
+-Updated map code to reflect WoW 5.1 map changes
+-Added Battle Pet Levels to Zone info
+-Updated Plugins
+-Added Scale Slider to Map (Ticket 19)
+-Added lock to HotSpot when clicked to allow map to continue to be shown when leaving HotSpot(Ticket 17)
+-Minor tweaks
+
+v1.3.6
+-Updated TomTom plugin to fix bug caused by changes to TomTom.
+
+V1.3.5
+-Fixed bug preventsing QuestHelper Lite info from displaying
+-Adjusted map opacity so map can go completely opaque
+
+V1.3.4
+-Fixed the displaying of Gatherer nodes.
+
+V1.3.3
+-POI and Quest blobs in Scenarios should now be working properly.
+
+V1.3.2
+-Fixed some compact mode issues
+-Fixed problems when viewing maps in scenarios
+
+v1.3
+-Added the ability to show tinted unexplored areas when useing the Compact Mode.  Without this then any unexplored area would not be shown.
+-Added support for MozzFullWorldMap
+-Added loading messages when a plugin is used
+-Fixed interactions with addons using Astrolabe that caused the map to reset to the current zone
+-Added independent settings for Standard and BG maps. (Ticket 12)
+-Added "Compact Mode" (Ticket 15)
+-Added built in support for QuestHelperLight (Ticket 14)
+-Fixed protected call error (Ticket 13)
+-Fixed Raid member icons remaining on map after leaving group (Ticket 11)
+
+V1.2 (8/30/12)
+-Minor bug fixes & tweaks
+-Added loading message
+-Added moveable HotSpot icon that will toggle map on mouseover.  Can be toggled via options and middle clicking
+on DataBroker or Minimap icons. (Ticket 8)	
+-Added OpmegaMap Config toggle to the Blizzard Addon Interface Menu (Ticket 10)
+-Updated TomTom plugin file to reflect changes to the TomTom addon (Ticket 6)
+-Added DataBroker support and Minimap Icon (Ticket 9)
+
+V1.1 (08/27/12)
+-Updated files to match changes to Blizzard's map code for Mists
+-Bugfix for TomTom error (Ticket #5)
+-Bugfix to keep Map Corrdinates Hidden when disabled (Ticket #4)
+-Bugfix to keep Apha Slider Hidden when disabled(Ticket #4)
+-Added option to keep map open on "Escape" keypress. 
+-Added Maps for the Mists Battlegrounds Temple of Kotmogu, Silvershard Mine
+-Removed the following exterior maps due to Blizzard adding maps to areas: Cavern of Time, Scarlet Monestary,
+Uldman, Black Rock Mountain, Maraudon, Wailing Caverns, The Deadmines, Gnomeregan
+
+
+V1.0.4 (7/17/12)
+-Bugfix for a problem with a nil variable in the hotkey settings
+
+V1.0.3 (7/14/12)
+-Added the option to lock the map for interaction between views
+-Added the option to select a hotkey that will cause the map to solidify for interaction
+-Removed some left behind test items from the code
+
+V1.0.2 (7/11/12):
+-Fixed Missing Disabled text global for Routes in the Options Menu
+
+V1.0.1 (7/11/12):
+-Added built in support for the NPCScan.Overlay addon
+-Changed layout and cleaned up code for the Options Menu
+
+V1.0 (7-8-12)
+-Initial Public Release

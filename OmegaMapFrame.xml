@@ -1,0 +1,1329 @@
+<!-- 
+/////////////////////////////////////////////////////////////////////////////
+	This is a modified version of Blizzard's WorldMapFrame.xml file (v5.0.4 r16016)
+/////////////////////////////////////////////////////////////////////////////
+-->
+
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+
+<Include file="OmegaMapFrameTemplates.xml"/>
+<Script file="OmegaMapFrame.lua"/>
+<Script file="OmegaMapHotSpot.lua"/>
+<Script file= "AltMaps\OmegaMapExteriors.lua" />
+<Script file= "AltMaps\OmegaMapBattlegrounds.lua" />
+<Script file="OmegaMapAltMaps.lua"/>
+
+<Frame name="OmegaMapPlayerTemplate" virtual="true">
+		<Size x="28" y="28"/>
+		<Anchors>
+			<Anchor point="CENTER"/>
+		</Anchors>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture name="$parentIcon" file="Interface\WorldMap\WorldMapArrow" setAllPoints="true" parentKey="icon"/>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.unit = "player";
+			</OnLoad>
+			<OnEnter>
+				OmegaMapUnit_OnEnter(self, motion);
+			</OnEnter>
+			<OnLeave>
+				OmegaMapUnit_OnLeave(self, motion);
+			</OnLeave>
+			<OnMouseUp>
+				OmegaMapUnit_OnMouseUp(self, button, "OmegaMapRaid", "OmegaMapParty");
+			</OnMouseUp>
+		</Scripts>
+	</Frame>
+
+
+
+<Frame name="OmegaMapMasterFrame" setAllPoints="true" hidden="false" enableMouse="false" enableKeyboard="true" clampedToScreen="true" movable="true" >
+	<Size>
+		<AbsDimension x="1024" y="768"/>
+	</Size>
+	<Anchors>
+		<Anchor point="Center"/>
+	</Anchors>
+	<Frames>
+		<Frame name="OmegaMapMovementFrameTop" hidden="true" enableMouse="true" >
+			<Size>
+					<AbsDimension x="1002" y="32"/>
+			</Size>
+			<Anchors>
+				<Anchor point="TOPLEFT" relativeTo="OmegaMapMasterFrame" relativePoint="TOPLEFT"/>
+				<Anchor point="TOPRIGHT" relativeTo="OmegaMapMasterFrame" relativePoint="TOPRIGHT"/>
+									<Offset>
+						<AbsDimension x="0" y="20"/>
+					</Offset>
+			</Anchors>
+			<Layers>
+				<Layer level="ARTWORK">
+				<Texture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD"/>
+				</Layer>
+			</Layers>
+			<Scripts>
+				<OnShow>
+					self:SetFrameLevel( self:GetParent():GetFrameLevel() + 3 );
+				</OnShow>
+				<OnMouseDown>
+					self:GetParent():StartMoving();
+					self:GetParent().isMoving = true;
+					OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
+				</OnMouseDown>
+				<OnMouseUp>
+					self:GetParent():StopMovingOrSizing();
+					self:GetParent().isMoving = false;
+					OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), true);
+				</OnMouseUp>
+				<OnHide>
+					self:GetParent():StopMovingOrSizing();
+					self:GetParent().isMoving = false;
+				</OnHide>
+			</Scripts>
+		</Frame>
+				<Frame name="OmegaMapMovementFrameBottom" hidden="true" enableMouse="true" >
+			<Size>
+					<AbsDimension x="1002" y="32"/>
+			</Size>
+			<Anchors>
+				<Anchor point="BOTTOMLEFT" relativeTo="OmegaMapMasterFrame" relativePoint="BOTTOMLEFT"/>
+				<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapMasterFrame" relativePoint="BOTTOMRIGHT"/>
+									<Offset>
+						<AbsDimension x="0" y="20"/>
+					</Offset>
+			</Anchors>
+			<Layers>
+				<Layer level="ARTWORK">
+				<Texture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD"/>
+				</Layer>
+			</Layers>
+			<Scripts>
+				<OnShow>
+					self:SetFrameLevel( self:GetParent():GetFrameLevel() + 3 );
+				</OnShow>
+				<OnMouseDown>
+					self:GetParent():StartMoving();
+					self:GetParent().isMoving = true;
+					OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
+				</OnMouseDown>
+				<OnMouseUp>
+					self:GetParent():StopMovingOrSizing();
+					self:GetParent().isMoving = false;
+					OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), true);
+				</OnMouseUp>
+				<OnHide>
+					self:GetParent():StopMovingOrSizing();
+					self:GetParent().isMoving = false;
+				</OnHide>
+			</Scripts>
+		</Frame>
+
+		<Frame name="OmegaMapSpecialFrame"  hidden="false" >
+			<Size>
+				<AbsDimension x="1002" y="668"/>
+			</Size>
+
+			<Anchors>
+				<Anchor point="CENTER">
+				</Anchor>
+			</Anchors>
+			<Frames>
+				<QuestPOIFrame name="OmegaMapBlobFrame">
+					<Size x="1002" y="668"/>
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="-15"/>
+					</Anchors>				
+					<Layers>
+						<Layer level="ARTWORK">
+							<Texture name="OmegaMapBlobFrameTexture" setAllPoints="true" />
+						</Layer>
+					</Layers>
+					<Scripts>
+						<OnLoad function="OmegaMapBlobFrame_OnLoad" />
+						<OnUpdate function="OmegaMapBlobFrame_OnUpdate"/>
+					</Scripts>
+				</QuestPOIFrame>
+
+				<ArchaeologyDigSiteFrame name="OmegaMapArchaeologyDigSites">
+					<Size x="1002" y="668"/>
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="-15"/>
+					</Anchors>
+					<Layers>
+						<Layer level="ARTWORK">
+							<Texture name="$parentTexture" setAllPoints="true"/>
+						</Layer>
+					</Layers>
+					<Scripts>
+						<OnLoad>
+							self:SetFillAlpha(128);
+							self:SetFillTexture("Interface\\WorldMap\\UI-ArchaeologyBlob-Inside");
+							self:SetBorderTexture("Interface\\WorldMap\\UI-ArchaeologyBlob-Outside");
+							self:EnableSmoothing(true);
+							--self:SetNumSplinePoints(30);
+							self:SetBorderScalar(0.5);
+						</OnLoad>
+						<OnUpdate function="ArchaeologyDigSiteFrame_OnUpdate"/>
+					</Scripts>
+				</ArchaeologyDigSiteFrame>
+
+				<ScenarioPOIFrame name="OmegaMapScenarioPOIFrame">
+				<Size x="1002" y="668"/>
+				<Anchors>
+					<Anchor point="CENTER"  x="0" y="-15"/>
+				</Anchors>				
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture name="OmegaMapBlobFrameTexture" setAllPoints="true" />
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetFillTexture("Interface\\WorldMap\\UI-QuestBlob-Inside");
+						self:SetBorderTexture("Interface\\WorldMap\\UI-QuestBlob-Outside");
+						self:SetFillAlpha(128);
+						self:SetBorderAlpha(192);
+						self:SetBorderScalar(1.0);
+					</OnLoad>
+					<OnUpdate function="OmegaMapScenarioPOIFrame_OnUpdate"/>
+				</Scripts>
+			</ScenarioPOIFrame>
+			</Frames>
+		</Frame>
+
+	
+	<Frame name="OmegaMapFrame" setAllPoints="true" hidden="true" enableKeyboard="true" enableMouse="false" clampedToScreen="false">
+		<Size>
+		<AbsDimension x="1024" y="768"/>
+	</Size>
+	<Anchors>
+		<Anchor point="Center"/>
+	</Anchors>
+	<Scripts>
+	</Scripts>
+		<Frames>
+			<Frame name="OmegaMapTitleDropDown" inherits="UIDropDownMenuTemplate" hidden="true">
+				<Anchors>
+					<Anchor point="TOP" x="-80" y="-35"/>
+				</Anchors>
+			</Frame>
+			<Frame name="OmegaMapPositioningGuide">
+				<Size x="1024" y="768" />
+				<Anchors>
+					<Anchor point="CENTER" x="0" y="0" />
+				</Anchors>				
+			</Frame>
+			<Frame name="OmegaMapContinentDropDown" inherits="UIDropDownMenuTemplate" id="1">
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativePoint="TOP" relativeTo="OmegaMapPositioningGuide" x="-50" y="-35"/>
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString inherits="GameFontNormalSmall" text="CONTINENT">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="20" y="10"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame name="OmegaMapZoneDropDown" inherits="UIDropDownMenuTemplate" id="2">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapPositioningGuide" relativePoint="TOP" x="-70" y="-35"/>
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString inherits="GameFontNormalSmall" text="ZONE">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="20" y="10"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame name="OmegaMapShowDropDown" inherits="UIDropDownMenuTemplate" enableMouse="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapPositioningGuide" relativePoint="TOPLEFT" x="25" y="-35" />
+				</Anchors>	
+				<Scripts>
+					<OnLoad function="OmegaMapShowDropDown_OnLoad" />
+					<OnShow function="OmegaMapShowDropDown_OnLoad" />
+				</Scripts>
+			</Frame>
+			<Button name="OmegaMapZoomOutButton" inherits="UIPanelButtonTemplate" text="ZOOM_OUT">
+				<Size>
+					<AbsDimension x="110" y="22"/>
+				</Size>
+				<Anchors>
+					<Anchor point="LEFT" relativeTo="OmegaMapZoneDropDown" relativePoint="RIGHT" x="-10" y="3"/>
+				</Anchors>
+				<Scripts>
+					<OnClick function="OmegaMapZoomOutButton_OnClick"/>
+				</Scripts>
+			</Button>
+            <Frame name="OmegaMapDetailFrame" hidden="false">
+                <Size x="1002" y="668"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativePoint="TOP" relativeTo="OmegaMapPositioningGuide" x="-726" y="-99"/>
+                </Anchors>
+                <Layers>
+                    <Layer level="BACKGROUND">
+                            <Texture name="OmegaMapDetailTile1">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile2">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile1" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile3">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile2" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile4">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile3" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>	
+                        <Texture name="OmegaMapDetailTile5">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile1" relativePoint="BOTTOMLEFT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile6">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile5" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile7">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile6" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile8">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile7" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile9">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile5" relativePoint="BOTTOMLEFT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile10">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile9" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile11">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile10" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="OmegaMapDetailTile12">
+                            <Size x="256" y="256"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile11" relativePoint="TOPRIGHT"/>
+                            </Anchors>
+                        </Texture>	
+                    </Layer>
+                    <Layer level="OVERLAY">
+                        <Texture name="OmegaMapHighlight" alphaMode="ADD" hidden="true">
+                            <Size x="128" y="128"/>
+                            <Anchors>
+                                <Anchor point="TOPLEFT"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                    <Layer level="ARTWORK">
+                        <FontString name="OmegaMapZoneInfo" inherits="SubZoneTextFont" justifyH="CENTER" hidden="true">
+                            <Anchors>
+                                <Anchor point="BOTTOM" relativePoint="BOTTOM" x="0" y="20"/>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="MapFramerateLabel" hidden="true" inherits="SystemFont_Shadow_Med1" text="FRAMERATE_LABEL">
+                            <Anchors>
+                                <Anchor point="BOTTOM" relativePoint="BOTTOM" x="0" y="64"/>
+                            </Anchors>
+                        </FontString>
+                        <FontString name="MapFramerateText" hidden="true" inherits="SystemFont_Shadow_Med1">
+                            <Anchors>
+                                <Anchor point="LEFT" relativeTo="MapFramerateLabel" relativePoint="RIGHT"/>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+            </Frame>
+			<Frame name="OmegaMapLevelDropDown" inherits="UIDropDownMenuTemplate" id="2">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame" relativePoint="TOPLEFT" x="780" y="34"/>
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString inherits="GameFontNormalSmall" text="FLOOR" parentKey="header">
+							<Anchors>
+								<Anchor point="TOPLEFT" x="20" y="10"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Button name="OmegaMapLevelUpButton">
+				<Size x="16" y="16"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapLevelDropDown" relativePoint="TOPRIGHT" x="-10" y="8"/>
+				</Anchors>
+				<Scripts>
+					<OnClick function="OmegaMapLevelUp_OnClick"/>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\Arrow-Up-Up"/>
+				<PushedTexture file="Interface\Buttons\Arrow-Up-Down"/>
+				<DisabledTexture file="Interface\Buttons\Arrow-Up-Disabled"/>
+			</Button>
+			<Button name="OmegaMapLevelDownButton">
+				<Size x="16" y="16"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativeTo="OmegaMapLevelDropDown" relativePoint="BOTTOMRIGHT" x="-10" y="2"/>
+				</Anchors>
+				<Scripts>
+					<OnClick function="OmegaMapLevelDown_OnClick"/>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\Arrow-Down-Up"/>
+				<PushedTexture file="Interface\Buttons\Arrow-Down-Down"/>
+				<DisabledTexture file="Interface\Buttons\Arrow-Down-Disabled"/>
+			</Button>
+			<Button name="OmegaMapMagnifyingGlassButton" hidden="true">
+				<Size x="179" y="40"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOP" relativeTo="OmegaMapPositioningGuide" x="-468" y="-86"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture file="Interface\WorldMap\WorldMap-MagnifyingGlass">
+							<Size x="32" y="32"/>
+							<Anchors>
+								<Anchor point="TOPLEFT"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetFrameLevel(self:GetFrameLevel() + 2);
+						self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+					</OnLoad>
+					<OnClick function="OmegaMapZoomOutButton_OnClick"/>
+				</Scripts>
+				<ButtonText text="ZOOM_OUT_BUTTON_TEXT">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="32" y="-5"/>
+					</Anchors>
+				</ButtonText>
+				<NormalFont style="GameFontHighlightSmall"/>
+			</Button>
+			<Button name="OmegaMapFrameCloseButton" inherits="UIPanelCloseButton">
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="OmegaMapPositioningGuide" x="0" y="-40"/>
+				</Anchors>
+			</Button>
+		
+
+			<Button name="OmegaMapButton">
+				<Size x="1002" y="668"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
+				</Anchors>
+				<Frames>
+					<Frame name="OmegaMapPlayerLower" inherits="OmegaMapPlayerTemplate" framestrata="MEDIUM" hidden="true"/>
+					<Frame name="OmegaMapPlayerUpper" inherits="OmegaMapPlayerTemplate" framestrata="FULLSCREEN" alpha="0.7" hidden="true"/>
+
+
+					<Frame name="OmegaMapUnitDropDown" inherits="UIDropDownMenuTemplate" clampedToScreen="true" id="1" hidden="true"/>
+
+					<Frame name="OmegaMapParty1" inherits="OmegaMapPartyUnitTemplate" id="1"/>
+					<Frame name="OmegaMapParty2" inherits="OmegaMapPartyUnitTemplate" id="2"/>
+					<Frame name="OmegaMapParty3" inherits="OmegaMapPartyUnitTemplate" id="3"/>
+					<Frame name="OmegaMapParty4" inherits="OmegaMapPartyUnitTemplate" id="4"/>
+					<Frame name="OmegaMapRaid1" inherits="OmegaMapRaidUnitTemplate" id="1"/>
+					<Frame name="OmegaMapRaid2" inherits="OmegaMapRaidUnitTemplate" id="2"/>
+					<Frame name="OmegaMapRaid3" inherits="OmegaMapRaidUnitTemplate" id="3"/>
+					<Frame name="OmegaMapRaid4" inherits="OmegaMapRaidUnitTemplate" id="4"/>
+					<Frame name="OmegaMapRaid5" inherits="OmegaMapRaidUnitTemplate" id="5"/>
+					<Frame name="OmegaMapRaid6" inherits="OmegaMapRaidUnitTemplate" id="6"/>
+					<Frame name="OmegaMapRaid7" inherits="OmegaMapRaidUnitTemplate" id="7"/>
+					<Frame name="OmegaMapRaid8" inherits="OmegaMapRaidUnitTemplate" id="8"/>
+					<Frame name="OmegaMapRaid9" inherits="OmegaMapRaidUnitTemplate" id="9"/>
+					<Frame name="OmegaMapRaid10" inherits="OmegaMapRaidUnitTemplate" id="10"/>
+					<Frame name="OmegaMapRaid11" inherits="OmegaMapRaidUnitTemplate" id="11"/>
+					<Frame name="OmegaMapRaid12" inherits="OmegaMapRaidUnitTemplate" id="12"/>
+					<Frame name="OmegaMapRaid13" inherits="OmegaMapRaidUnitTemplate" id="13"/>
+					<Frame name="OmegaMapRaid14" inherits="OmegaMapRaidUnitTemplate" id="14"/>
+					<Frame name="OmegaMapRaid15" inherits="OmegaMapRaidUnitTemplate" id="15"/>
+					<Frame name="OmegaMapRaid16" inherits="OmegaMapRaidUnitTemplate" id="16"/>
+					<Frame name="OmegaMapRaid17" inherits="OmegaMapRaidUnitTemplate" id="17"/>
+					<Frame name="OmegaMapRaid18" inherits="OmegaMapRaidUnitTemplate" id="18"/>
+					<Frame name="OmegaMapRaid19" inherits="OmegaMapRaidUnitTemplate" id="19"/>
+					<Frame name="OmegaMapRaid20" inherits="OmegaMapRaidUnitTemplate" id="20"/>
+					<Frame name="OmegaMapRaid21" inherits="OmegaMapRaidUnitTemplate" id="21"/>
+					<Frame name="OmegaMapRaid22" inherits="OmegaMapRaidUnitTemplate" id="22"/>
+					<Frame name="OmegaMapRaid23" inherits="OmegaMapRaidUnitTemplate" id="23"/>
+					<Frame name="OmegaMapRaid24" inherits="OmegaMapRaidUnitTemplate" id="24"/>
+					<Frame name="OmegaMapRaid25" inherits="OmegaMapRaidUnitTemplate" id="25"/>
+					<Frame name="OmegaMapRaid26" inherits="OmegaMapRaidUnitTemplate" id="26"/>
+					<Frame name="OmegaMapRaid27" inherits="OmegaMapRaidUnitTemplate" id="27"/>
+					<Frame name="OmegaMapRaid28" inherits="OmegaMapRaidUnitTemplate" id="28"/>
+					<Frame name="OmegaMapRaid29" inherits="OmegaMapRaidUnitTemplate" id="29"/>
+					<Frame name="OmegaMapRaid30" inherits="OmegaMapRaidUnitTemplate" id="30"/>
+					<Frame name="OmegaMapRaid31" inherits="OmegaMapRaidUnitTemplate" id="31"/>
+					<Frame name="OmegaMapRaid32" inherits="OmegaMapRaidUnitTemplate" id="32"/>
+					<Frame name="OmegaMapRaid33" inherits="OmegaMapRaidUnitTemplate" id="33"/>
+					<Frame name="OmegaMapRaid34" inherits="OmegaMapRaidUnitTemplate" id="34"/>
+					<Frame name="OmegaMapRaid35" inherits="OmegaMapRaidUnitTemplate" id="35"/>
+					<Frame name="OmegaMapRaid36" inherits="OmegaMapRaidUnitTemplate" id="36"/>
+					<Frame name="OmegaMapRaid37" inherits="OmegaMapRaidUnitTemplate" id="37"/>
+					<Frame name="OmegaMapRaid38" inherits="OmegaMapRaidUnitTemplate" id="38"/>
+					<Frame name="OmegaMapRaid39" inherits="OmegaMapRaidUnitTemplate" id="39"/>
+					<Frame name="OmegaMapRaid40" inherits="OmegaMapRaidUnitTemplate" id="40"/>
+					<Frame name="OmegaMapFlag1" inherits="OmegaMapFlagTemplate" id="1"/>
+					<Frame name="OmegaMapFlag2" inherits="OmegaMapFlagTemplate" id="2"/>
+					<Frame name="OmegaMapFlag3" inherits="OmegaMapFlagTemplate" id="3"/>
+					<Frame name="OmegaMapFlag4" inherits="OmegaMapFlagTemplate" id="4"/>
+					<Frame name="OmegaMapCorpse" inherits="OmegaMapCorpseTemplate"/>
+					<Frame name="OmegaMapDeathRelease" inherits="OmegaMapCorpseTemplate">
+						<Scripts>
+							<OnEnter>
+								local x, y = self:GetCenter();
+								local parentX, parentY = self:GetParent():GetCenter();
+								if ( x > parentX ) then
+									OmegaMapTooltip:SetOwner(self, "ANCHOR_LEFT");
+								else
+									OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								end
+								OmegaMapTooltip:SetText(SPIRIT_HEALER_RELEASE_RED);
+								OmegaMapTooltip:Show();
+							</OnEnter>
+						</Scripts>
+					</Frame>
+					<Frame name="OmegaMapPing" framestrata="FULLSCREEN" hidden="true">
+						<Size x="64" y="64"/>
+						<Anchors>
+							<Anchor point="CENTER" relativeTo="OmegaMapFrame"/>
+						</Anchors>
+						<Layers>
+							<Layer level="OVERLAY">
+								<Texture parentKey="centerRing" file="Interface\minimap\UI-Minimap-Ping-Center">
+									<Size x="32" y="32"/>
+									<Anchors>
+										<Anchor point="CENTER"/>
+									</Anchors>
+								</Texture>
+								<Texture parentKey="rotatingRing" file="Interface\minimap\UI-Minimap-Ping-Rotate">
+									<Size x="48" y="48"/>
+									<Anchors>
+										<Anchor point="CENTER"/>
+									</Anchors>
+								</Texture>
+								<Texture parentKey="expandingRing" file="Interface\minimap\UI-Minimap-Ping-Expand">
+									<Size x="32" y="32"/>
+									<Anchors>
+										<Anchor point="CENTER"/>
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<Animations>
+							<AnimationGroup parentKey="Ping" looping="REPEAT">
+								<Rotation targetKey="$parent.$parent.rotatingRing" degrees="-180" duration="0.75" order="1"/>
+								<Scale targetKey="$parent.$parent.expandingRing" scaleX="1.75" scaleY="1.75" duration="0.75" order="1"/>
+								<Scripts>
+									<OnPlay function="OmegaMapPing_OnPlay"/>
+									<OnLoop function="OmegaMapPing_OnLoop"/>
+									<OnStop function="OmegaMapPing_OnStop"/>
+								</Scripts>
+							</AnimationGroup>
+						</Animations>
+					</Frame>
+					<Frame name="OmegaMapFrameAreaFrame">
+						<Size x="400" y="128"/>
+						<Anchors>
+							<Anchor point="TOP" x="0" y="-10"/>
+						</Anchors>
+						<Layers>
+							<Layer level="OVERLAY">
+								<FontString name="OmegaMapFrameAreaLabel" inherits="WorldMapTextFont" text="BLAH!" justifyV="TOP">
+									<Size x="900" y="0"/>
+									<Anchors>
+										<Anchor point="TOP" x="0" y="-20"/>
+									</Anchors>
+								</FontString>
+								<FontString name="OmegaMapFrameAreaDescription" inherits="SubZoneTextFont">
+									<Anchors>
+										<Anchor point="TOP" relativeTo="OmegaMapFrameAreaLabel" relativePoint="BOTTOM" x="0" y="-10"/>
+									</Anchors>
+								</FontString>
+								<FontString name="OmegaMapFrameAreaPetLevels" inherits="SubZoneTextFont">
+									<Anchors>
+										<Anchor point="TOP" relativeTo="OmegaMapFrameAreaLabel" relativePoint="BOTTOM" x="0" y="-10"/>
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+					</Frame>
+					<Button name="OmegaMapOutlandButton" hidden="true">
+						<Size x="320" y="320"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" x="115" y="-90"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								SetMapZoom(3);
+							</OnClick>
+						</Scripts>
+						<HighlightTexture name="$parentHighlight" file="Interface\WorldMap\Cosmic\Cosmic-Outland-Highlight">
+							<Size x="856" y="605"/>
+							<Anchors>
+								<Anchor point="CENTER" x="176" y="-87"/>
+							</Anchors>
+						</HighlightTexture>
+					</Button>
+					<Button name="OmegaMapAzerothButton" hidden="true">
+						<Size x="366" y="366"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" x="593" y="-255"/>
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								SetMapZoom(0);
+							</OnClick>
+						</Scripts>
+						<HighlightTexture name="$parentHighlight" file="Interface\WorldMap\Cosmic\Cosmic-Azeroth-Highlight">
+							<Size x="898" y="647"/>
+							<Anchors>
+								<Anchor point="CENTER" x="-224" y="104"/>
+							</Anchors>
+						</HighlightTexture>
+					</Button>
+					<Button name="OmegaMapTheMaelstromButton" inherits="OmegaMapMaelstromButtonTemplate" text="TheMaelstrom">
+						<Size x="120" y="120"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" x="305" y="-140"/>
+						</Anchors>
+						<HighlightTexture name="$parentHighlight" file="Interface\WorldMap\TheMaelstrom\TheMaelstromHighlight" alphaMode="ADD">
+							<Size x="128" y="128"/>
+							<Anchors>
+								<Anchor point="CENTER" x="0" y="-2"/>
+							</Anchors>
+						</HighlightTexture>
+					</Button>
+					<Button name="OmegaMapDeepholmButton" inherits="OmegaMapMaelstromButtonTemplate" text="Deepholm">
+						<Size x="120" y="120"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" x="450" y="-130"/>
+						</Anchors>
+						<HighlightTexture name="$parentHighlight" file="Interface\WorldMap\Deepholm\DeepholmHighlight" alphaMode="ADD">
+							<Size x="160" y="160"/>
+							<Anchors>
+								<Anchor point="CENTER" x="5" y="-20"/>
+							</Anchors>
+						</HighlightTexture>	
+					</Button>
+					<Button name="OmegaMapKezanButton" inherits="OmegaMapMaelstromButtonTemplate" text="Kezan">
+						<Size x="254" y="240"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" x="236" y="-380"/>
+						</Anchors>
+						<HighlightTexture name="$parentHighlight" file="Interface\WorldMap\Kezan\KezanHighlight" alphaMode="ADD">
+							<Size x="360" y="360"/>
+							<Anchors>
+								<Anchor point="CENTER" x="-5" y="-65"/>
+							</Anchors>
+						</HighlightTexture>
+					</Button>
+					<Button name="OmegaMapLostIslesButton" inherits="OmegaMapMaelstromButtonTemplate" text="TheLostIsles">
+						<Size x="152" y="180"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" x="75" y="-266"/>
+						</Anchors>
+						<HighlightTexture name="$parentHighlight" file="Interface\WorldMap\TheLostIsles\TheLostIslesHighlight" alphaMode="ADD">
+							<Size x="250" y="250"/>
+							<Anchors>
+								<Anchor point="CENTER" x="5" y="-40"/>
+							</Anchors>
+						</HighlightTexture>
+					</Button>
+				</Frames>
+<!-- This animation blanks the wall display in Wintergrasp. Remove for now, revisit later.
+				<Animations>
+					<AnimationGroup name="$parentPulser" looping="BOUNCE">
+						<Animation duration="2.0">
+							<Scripts>
+								<OnLoad>
+									self.min = 0.15;
+									self.max = 0.35;
+								</OnLoad>
+								<OnUpdate function="OmegaMapQuestPOIPulser_OnUpdate"/>
+							</Scripts>
+						</Animation>
+						<Scripts>
+							<OnLoad>
+								self:Play();
+							</OnLoad>
+						</Scripts>
+					</AnimationGroup>
+				</Animations>
+-->
+				<Scripts>
+					<OnLoad>
+						self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+					</OnLoad>
+					<OnMouseUp function="OmegaMapButton_OnClick"/>
+					<OnUpdate function="OmegaMapButton_OnUpdate"/>
+				</Scripts>
+			</Button>
+			<Frame name="OmegaMapBossButtonFrame">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
+					<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
+				</Anchors>
+			</Frame>
+			<ScrollFrame name="OmegaMapQuestScrollFrame" inherits="UIPanelScrollFrameTemplate" hidden="true">
+				<Size x="283" y="670"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="OmegaMapDetailFrame" relativePoint="TOPRIGHT" x="6" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture name="BlackoutWorld">
+							<Anchors>
+								<Anchor point="BOTTOMLEFT"/>
+								<Anchor point="TOPRIGHT"/>
+							</Anchors>
+							<Color r="0.5" g="0.5" b="0.5" a=".25"/>
+						</Texture>
+					</Layer>
+				</Layers>
+				<ScrollChild>
+					<Frame name="OmegaMapQuestScrollChildFrame">
+						<Size x="283" y="50"/>
+						<Anchors>
+							<Anchor point="TOPLEFT"/>
+						</Anchors>
+						<Frames>
+							<Frame name="OmegaMapQuestSelectedFrame" hidden="false">
+								<Size x="301" y="50"/>
+								<Layers>
+									<Layer level="ARTWORK">
+										<Texture name="OmegaMapQuestSelectBar" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" alphaMode="ADD"/>
+									</Layer>
+								</Layers>
+								<Scripts>
+									<OnLoad>
+										OmegaMapQuestSelectBar:SetVertexColor(1, 0.824, 0);
+									</OnLoad>
+								</Scripts>
+							</Frame>							
+							<Frame name="OmegaMapQuestHighlightedFrame" hidden="false">
+								<Size x="301" y="50"/>						
+								<Layers>
+									<Layer level="ARTWORK">
+										<Texture name="OmegaMapQuestHighlightBar" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" alphaMode="ADD"/>
+									</Layer>
+								</Layers>
+								<Scripts>
+									<OnLoad>
+										OmegaMapQuestHighlightBar:SetVertexColor(0.243, 0.570, 1);
+									</OnLoad>
+								</Scripts>
+							</Frame>					
+						</Frames>						
+					</Frame>
+				</ScrollChild>
+			</ScrollFrame>
+			<ScrollFrame name="OmegaMapQuestDetailScrollFrame" inherits="MinimalScrollFrameTemplate" hidden="true">>
+				<Size x="302" y="199"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativeTo="OmegaMapDetailFrame" relativePoint="BOTTOMLEFT" x="00" y="0"/>
+				</Anchors>
+				<ScrollChild>
+					<Frame name="OmegaMapQuestDetailScrollChildFrame">
+						<Size x="300" y="199"/>
+						<Anchors>
+							<Anchor point="TOPLEFT"/>
+						</Anchors>
+					</Frame>
+				</ScrollChild>
+			</ScrollFrame>
+
+			<CheckButton name="OmegaMapTrackQuest" inherits="OptionsCheckButtonTemplate" hidden="true">
+				<Size x="24" y="24"/>
+				<Scripts>
+					<OnLoad>
+						local text = _G[self:GetName().."Text"];
+						text:SetText(TRACK_QUEST);
+						self:SetPoint("BOTTOMLEFT", OmegaMapPositioningGuide, "BOTTOMLEFT", 16, 4);
+					</OnLoad>
+					<OnClick>
+						local isChecked = self:GetChecked();
+						if ( isChecked ) then
+							PlaySound("igMainMenuOptionCheckBoxOn");
+						else
+							PlaySound("igMainMenuOptionCheckBoxOff");
+						end					
+						OmegaMapTrackQuest_Toggle(isChecked);
+					</OnClick>
+					<OnEnter>
+						OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						OmegaMapTooltip:SetText(OPTION_TOOLTIP_MAP_TRACK_QUEST, nil, nil, nil, nil, 1);
+					</OnEnter>
+					<OnLeave>
+						OmegaMapTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+			</CheckButton>			
+
+			--New Frames
+			<Frame name="OmegaMapPOIFrame" parent="OmegaMapDetailFrame">
+				<Size x="1002" y="668"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame">
+					<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame"/>
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+			</Frame>
+			<Frame name="OmegaMapNoteFrame">
+				<Size x="1002" y="668"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame">
+					<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame"/>
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+			</Frame>
+						<Frame name="OmegaMapAltMapFrame" hidden="true" parent="OmegaMapFrame">
+				<Size x="512" y="512"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" relativeTo="OmegaMapDetailFrame"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture name="OmegaMapExtDetailTile1">
+						<Size x="512" y="512"/>
+						<Anchors>
+							<Anchor point="CENTER" relativePoint="CENTER" relativeTo="OmegaMapAltMapFrame" x="0" y="0"/>
+						</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+
+			<ScrollFrame name="OmegaMapAltMapNoteFrame" inherits="UIPanelScrollFrameTemplate" hidden="false" parent = "OmegaMapAltMapFrame">
+				<Size x="283" y="512"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapAltMapFrame" relativePoint="TOPRIGHT" x="6" y="0"/>
+				</Anchors>
+				<ScrollChild>
+					<Frame name="$parentScrollChildFrame">
+						<Size x="283" y="50"/>
+						<Anchors>
+							<Anchor point="TOPLEFT"/>
+						</Anchors>
+						<Frames>
+							<Frame name="$parentSelectedFrame" hidden="false">
+								<Size x="301" y="50"/>
+								<Layers>
+									<Layer level="ARTWORK">
+										<Texture name="OmegaMapQuestSelectBar" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" alphaMode="ADD"/>
+									</Layer>
+								</Layers>
+								<Scripts>
+									<OnLoad>
+										OmegaMapQuestSelectBar:SetVertexColor(1, 0.824, 0);
+									</OnLoad>
+								</Scripts>
+							</Frame>							
+							<Frame name="$parentHighlightedFrame" hidden="false">
+								<Size x="301" y="50"/>			
+								<Layers>
+									<Layer level="ARTWORK">
+										<Texture name="OmegaMapQuestHighlightBar" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" alphaMode="ADD"/>
+									</Layer>
+								</Layers>
+								<Scripts>
+									<OnLoad>
+										OmegaMapQuestHighlightBar:SetVertexColor(0.243, 0.570, 1);
+									</OnLoad>
+								</Scripts>
+							</Frame>					
+						</Frames>						
+					</Frame>
+				</ScrollChild>
+			</ScrollFrame>
+
+			<Button name="OmegaMapAltMapNoteToggleButton" inherits="UIPanelButtonTemplate"  parent = "OmegaMapAltMapFrame">
+				<Size x="25" y="25"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="OmegaMapAltMapNoteFrame" relativePoint="TOPLEFT" x="8" y="-3"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						if ( OmegaMapConfig.showAltMapNotes ) then
+					
+							PlaySound("igMainMenuOptionCheckBoxOff");
+							OmegaMapAltMapNoteFrame:Hide();
+							OmegaMapConfig.showAltMapNotes= false;
+							OmegaMapAltMapNoteToggleButton:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up")
+							OmegaMapAltMapNoteToggleButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Down")
+							else
+							PlaySound("igMainMenuOptionCheckBoxOn");
+							OmegaMapAltMapNoteFrame:Show();
+							OmegaMapConfig.showAltMapNotes = true;
+							OmegaMapAltMapNoteToggleButton:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Up")
+							OmegaMapAltMapNoteToggleButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Down")				
+						end
+					</OnClick>					
+					<OnShow>
+						if (OmegaMapConfig.showAltMapNotes ) then
+							OmegaMapAltMapNoteFrame:Show();
+							OmegaMapAltMapNoteToggleButton:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Up")
+							OmegaMapAltMapNoteToggleButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Down")				
+							else
+							OmegaMapAltMapNoteFrame:Hide();
+							OmegaMapAltMapNoteToggleButton:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up")
+							OmegaMapAltMapNoteToggleButton:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Down")
+						end
+					</OnShow>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-SpellbookIcon-PrevPage-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-SpellbookIcon-PrevPage-Down"/>
+			</Button>
+
+		
+--New Objects
+
+	<Button name="OmegaMapHideObjectivesButton" inherits="UIPanelButtonTemplate"  parent = "OmegaMapQuestScrollFrame" >
+				<Size x="25" y="25"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" x="4" y="25"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+							OmegaMapShowObjectivesButton:Show()
+							OmegaMapQuestScrollFrame:Hide()
+							OmegaMapConfig.showObjectives =  false;
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-SpellbookIcon-NextPage-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-SpellbookIcon-NextPage-Down"/>
+			</Button>
+			<Button name="OmegaMapShowObjectivesButton" inherits="UIPanelButtonTemplate"  hidden="true">
+				<Size x="25" y="25"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="OmegaMapFrameCloseButton" relativePoint="TOPLEFT" x="8" y="-3"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						OmegaMapShowObjectivesButton:Hide()
+						OmegaMapQuestScrollFrame:Show()
+						OmegaMapConfig.showObjectives = true;
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-SpellbookIcon-PrevPage-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-SpellbookIcon-PrevPage-Down"/>
+			</Button>
+
+			<Button name="OmegaMapPOIToggle" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Size x="20" y="35"/>
+				<Anchors>
+				<Anchor point="TOPLEFT" relativeTo="OmegaMapContinentDropDown" x="-8" y="10"/>
+					<!--<Anchor point="TOPLEFT" relativeTo="OmegaMapTrackQuestButton" x="-20" y="0"/> -->
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						if (OmegaMapConfig.clearMap) then
+							OmegaMapPOIToggle:SetNormalTexture("Interface\\Buttons\\UI-MicroButton-LFG-Up")
+							OmegaMapConfig.clearMap = false
+							OmegaMapNoteFrame:Show()
+
+						else
+							OmegaMapConfig.clearMap = true
+							OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
+							OmegaMapNoteFrame:Hide()
+						end
+					</OnClick>
+					<OnEnter>
+						OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						OmegaMapTooltip:SetText(OMEGAMAPPOITOGGLE_TOOLTIP, nil, nil, nil, nil, 1);
+					</OnEnter>
+					<OnLeave>
+
+						OmegaMapTooltip:Hide();
+					</OnLeave>
+					<OnShow>
+					if (OmegaMapConfig.clearMap) then
+						OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
+						OmegaMapNoteFrame:Hide()
+					end
+					</OnShow>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-MicroButton-LFG-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-MicroButton-LFG-Down"/>
+				<DisabledTexture file ="Interface\Addons\OmegaMap\Icons\off"/>
+			</Button>
+			<Button name="OmegaMapLockButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Size x="20" y="35"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapPOIToggle" x="-20" y="0"/>
+				</Anchors>
+				<Scripts>
+					<OnShow>
+						if (OmegaMapConfig.keepInteractive) and (OmegaMapConfig.solidify) then 
+							OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Up")
+							OmegaMapSolidify("On")
+						else
+							OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Disabled")
+							OmegaMapSolidify("Off")
+						end
+					</OnShow>
+					<OnClick>
+						if not(OmegaMapConfig.solidify) then
+							OmegaMapSolidify("On")
+							OmegaMapConfig.solidify = true
+							OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Up")
+						else
+							OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Disabled")
+							OmegaMapSolidify("Off")
+							OmegaMapConfig.solidify = false
+						end
+					</OnClick>
+					<OnEnter>
+						OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						OmegaMapTooltip:SetText(OMEGAMAPLOCKBUTTON_TOOLTIP, nil, nil, nil, nil, 1);
+					</OnEnter>
+					<OnLeave>
+						OmegaMapTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-MICROBUTTON-World-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-MICROBUTTON-World-Down"/>
+				<DisabledTexture file="Interface\Buttons\UI-MICROBUTTON-World-Disabled"/>
+			</Button>
+			<Button name="OmegaMapOptionsButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Size x="20" y="35"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapLockButton" x="-20" y="0"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						OmegaMapOptionsFrame.Toggle()
+					</OnClick>
+					<OnEnter>
+						OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						OmegaMapTooltip:SetText(OMEGAMAP_OPTION_BUTTON_TOOLTIP, nil, nil, nil, nil, 1);
+					</OnEnter>
+					<OnLeave>
+						OmegaMapTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-MicroButton-Help-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-MicroButton-Help-Down"/>
+			</Button>
+
+			<Button name="OmegaMapEncounterJournalButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Size x="20" y="35"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapOptionsButton" x="-20" y="0"/>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						ToggleFrame(EncounterJournal);
+					</OnClick>
+					<OnEnter>
+						OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						OmegaMapTooltip:SetText(OMEGAMAP_EJ_TOOLTIP, nil, nil, nil, nil, 1);
+					</OnEnter>
+					<OnLeave>
+						OmegaMapTooltip:Hide();
+					</OnLeave>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-MicroButton-EJ-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-MicroButton-EJ-Down"/>
+			</Button>
+			
+		<Slider name="OmegaMapSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
+					defaultValue="0.3" movable="true" parent="OmegaMapFrame">
+				<Size x="16" y="128"/>
+				<Anchors>
+					<Anchor point="CENTER" relativeTo="OmegaMapFrame" relativePoint="BOTTOMLEFT" x="25" y="450"/>
+				</Anchors>
+				<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+					<EdgeSize>
+						<AbsValue val="8"/>
+					</EdgeSize>
+					<TileSize>
+						<AbsValue val="8"/>
+					</TileSize>
+					<BackgroundInsets>
+						<AbsInset left="3" right="3" top="6" bottom="6"/>
+					</BackgroundInsets>
+				</Backdrop>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString name="$parentText" inherits="GameFontNormalSmall">
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOP"/>
+							</Anchors>
+						</FontString>
+						<FontString inherits="GameFontHighlightSmall" text="0%">
+							<Anchors>
+								<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="2" y="3"/>
+							</Anchors>
+						</FontString>
+						<FontString inherits="GameFontHighlightSmall" text="100%">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-2" y="3"/>
+							</Anchors>
+						</FontString>
+						<FontString inherits="GameFontHighlightSmall" text="Alpha">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="15"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Frame name="OmegaMapSliderMovementFrame" hidden="true" setAllPoints="true" enableMouse="false" movable="true">
+						<Scripts>
+							<OnShow>
+								self:SetFrameLevel( OmegaMapSliderFrame:GetFrameLevel() + 1 );
+							</OnShow>
+							<OnMouseDown>
+								OmegaMapSliderFrame:StartMoving();
+								OmegaMapSliderFrame.isMoving = true;
+							</OnMouseDown>
+							<OnMouseUp>
+								<!--AM_RememberSliderPos();
+								OmegaMapSliderFrame:StopMovingOrSizing();
+								OmegaMapSliderFrame.isMoving = false;
+								if ( OmegaMapSliderFrame.Adopt ) then
+									OmegaMapSliderFrame:SetUserPlaced(false);
+									AM_SetSliderPos();
+									OmegaMapSliderFrame.Adopt = nil;
+								else
+									OmegaMapSliderFrame:SetUserPlaced(true);
+								end -->
+							</OnMouseUp>
+						</Scripts>
+					</Frame>
+				</Frames>
+				<Scripts>
+					<OnShow>
+						self:SetFrameLevel( OmegaMapButton:GetFrameLevel() + 1 );
+					</OnShow>
+					<OnLoad>
+						OmegaMapSliderFrame:SetMinMaxValues(0,1);
+						OmegaMapSliderFrame:SetValueStep(0.01);
+						OmegaMapSliderFrame:SetValue(0.2);
+					</OnLoad>
+					<OnValueChanged>
+						OmegaMapFrame_ChangeOpacity();
+					</OnValueChanged>
+					<OnMouseUp>
+						
+					</OnMouseUp>
+				</Scripts>
+				<ThumbTexture file="Interface\Buttons\UI-SliderBar-Button-Vertical">
+					<Size x="32" y="32"/>
+				</ThumbTexture>
+			</Slider>
+		<Slider name="OmegaMapZoomSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
+					defaultValue="0.3" movable="true" parent="OmegaMapFrame">
+				<Size x="16" y="128"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapSliderFrame" relativePoint="BOTTOMLEFT" x="0" y="-25"/>
+				</Anchors>
+				<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+					<EdgeSize>
+						<AbsValue val="8"/>
+					</EdgeSize>
+					<TileSize>
+						<AbsValue val="8"/>
+					</TileSize>
+					<BackgroundInsets>
+						<AbsInset left="3" right="3" top="6" bottom="6"/>
+					</BackgroundInsets>
+				</Backdrop>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString name="$parentText" inherits="GameFontNormalSmall">
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOP"/>
+							</Anchors>
+						</FontString>
+						<FontString inherits="GameFontHighlightSmall" text="125%">
+							<Anchors>
+								<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="2" y="3"/>
+							</Anchors>
+						</FontString>
+						<FontString inherits="GameFontHighlightSmall" text="50%">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-2" y="3"/>
+							</Anchors>
+						</FontString>
+						<FontString inherits="GameFontHighlightSmall" text="Scale">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="15"/>
+							</Anchors>
+						</FontString>
+						
+					</Layer>
+				</Layers>
+								<Scripts>
+					<OnShow>
+						self:SetFrameLevel( OmegaMapButton:GetFrameLevel() + 1 );
+						OmegaMapZoomSliderFrame:SetValue(OmegaMapConfig.scale);
+					</OnShow>
+					<OnLoad>
+						OmegaMapZoomSliderFrame:SetMinMaxValues(.50,1.25);
+						OmegaMapZoomSliderFrame:SetValueStep(0.01);
+						OmegaMapZoomSliderFrame:SetValue(OmegaMapConfig.scale);
+					</OnLoad>
+					<OnValueChanged>
+		OmegaMapConfig.scale = OmegaMapZoomSliderFrame:GetValue();
+		OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
+
+					</OnValueChanged>
+					<OnMouseUp>
+								OmegaMapMasterFrame:SetScale( OmegaMapConfig.scale );
+								OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), true);
+								
+					</OnMouseUp>
+				</Scripts>
+				<ThumbTexture file="Interface\Buttons\UI-SliderBar-Button-Vertical">
+					<Size x="32" y="32"/>
+				</ThumbTexture>
+			</Slider>
+			<Frame name="OmegaMapCoordinates" movable="true" parent="OmegaMapFrame">
+					<Size x="90" y="30"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="OmegaMapFrame" relativePoint="BOTTOMLEFT"  x="25" y="75"/>
+					</Anchors>
+					<Layers>
+						<Layer level="ARTWORK">
+							<FontString name="OmegaMapLocationText" inherits="GameFontNormalLarge" text="Player" hidden="false" justifyH="CENTER" justifyV="CENTER" >
+								<Color r="1.0" g="1.0" b="1.0"/>
+								<Anchors>
+									<Anchor point="CENTER" x="0" y="0"/>
+								</Anchors>
+							</FontString>
+						</Layer>
+					</Layers>
+					<Frames>
+						<Frame name="OmegaMapCoordinatesMovementFrame" hidden="true" setAllPoints="true" enableMouse="false" movable="true">
+							<Scripts>
+								<OnShow>
+									self:SetFrameLevel(OmegaMapCoordinates:GetFrameLevel() + 1);
+								</OnShow>
+								<OnMouseDown>
+									OmegaMapCoordinatesisMoving = true;
+									if ( OmegaMapCoordinates.isMoving ) then
+										OmegaMapCoordinates:StartMoving();
+									end
+								</OnMouseDown>
+								<OnMouseUp>
+									if ( OmegaMapCoordinates.isMoving ) then
+										OmegaMapCoordinates:StopMovingOrSizing();
+										OmegaMapCoordinates.isMoving = false;
+									end
+								</OnMouseUp>
+							</Scripts>
+						</Frame>
+					</Frames>
+					<Scripts>
+						<OnUpdate>
+							OmegaMapCoordsOnUpdate(self, elapsed);
+						</OnUpdate>
+					</Scripts>
+					<Backdrop bgFile="Interface\TutorialFrame\TutorialFrameBackground" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+						<BackgroundInsets>
+							<AbsInset left="5" right="5" top="5" bottom="5"/>
+						</BackgroundInsets>
+						<TileSize>
+							<AbsValue val="16"/>
+						</TileSize>
+						<EdgeSize>
+							<AbsValue val="16"/>
+						</EdgeSize>
+					</Backdrop>
+			</Frame>
+			<Frame name="OmegaMapPOIFrame" parent="OmegaMapDetailFrame">
+				<Size x="1002" y="668"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame">
+					<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame"/>
+						<Offset>
+							<AbsDimension x="0" y="0"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+			</Frame>
+</Frames>
+		<Scripts>
+			<OnLoad function="OmegaMapFrame_OnLoad"/>
+			<OnShow function="OmegaMapFrame_OnShow"/>
+			<OnHide function="OmegaMapFrame_OnHide"/>
+			<OnEvent function="OmegaMapFrame_OnEvent"/>
+			<OnUpdate function="OmegaMapFrame_OnUpdate"/>
+		</Scripts>
+	</Frame>
+	<GameTooltip name="OmegaMapCompareTooltip1" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="ShoppingTooltipTemplate"/>
+	<GameTooltip name="OmegaMapCompareTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="ShoppingTooltipTemplate"/>
+	<GameTooltip name="OmegaMapCompareTooltip3" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="ShoppingTooltipTemplate"/>		
+	<GameTooltip name="OmegaMapTooltip" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="GameTooltipTemplate">
+		<Scripts>
+			<OnLoad>
+				self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+				self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+				self.shoppingTooltips = { OmegaMapCompareTooltip1, OmegaMapCompareTooltip2, OmegaMapCompareTooltip3 };
+			</OnLoad>
+		</Scripts>
+	</GameTooltip>
+	<Frame name="OmegaMapScreenAnchor" hidden="true" movable="true">
+		<Size x="1" y="1"/>
+		<Anchors>
+			<Anchor point="TOPLEFT" x="10" y="-118"/>
+		</Anchors>		
+	</Frame>
+
+
+
+
+</Frames>
+
+</Frame>
+
+
+</Ui>
