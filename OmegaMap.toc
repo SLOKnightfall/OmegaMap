@@ -5,7 +5,7 @@
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
-## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer
+## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo
 
 #Libraries
 Libs\LibStub\LibStub.lua
@@ -35,3 +35,4 @@ Plugins\MozzFullWorldMap.lua
 Plugins\PetTracker.xml
 Plugins\PetTracker.lua
 Plugins\Explorer.lua
+Plugins\Vuhdo.lua
