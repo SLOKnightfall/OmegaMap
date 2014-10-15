@@ -1,7 +1,5 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
-
 --	Code to show exterior & alternate BG maps and notes
-
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 local currentMapNotes = {} --Table of indexed note names & Tooltips
@@ -225,15 +223,14 @@ function OmegaMap_LoadAltMapNotes()
 			t = _G[ "OmegaMapFramePOI"..i ]
 		end
 
-	--
 		OmegaMapAltMapFrame:Show()
-		OmegaMapDetailFrame:Hide()
+		OmegaMapDetailTilesFrame:Hide()
 		OmegaMapNoteFrame:Hide()
 		OmegaMapFrameAreaFrame:Hide()
-		OmegaMapQuestScrollFrame:Hide()
+		OmegaMapQuestFrame_Hide()
+		QuestNPCModel:Hide()
 		OmegaMapBlobFrame:DrawNone();
 		OmegaMapArchaeologyDigSites:DrawNone();
-
 end
 
 --Hides the custom map & notes, while restoring the normal map
@@ -253,17 +250,11 @@ function OmegaMap_HideAltMap()
 	for k,v in pairs(currentMapNotes) do currentMapNotes[k]=nil end
 
 	OmegaMapAltMapFrame:Hide()
-	OmegaMapDetailFrame:Show()
+	OmegaMapDetailTilesFrame:Show()
 	if  not (OmegaMapConfig.clearMap) then
 		OmegaMapNoteFrame:Show()
 	end
 	OmegaMapFrameAreaFrame:Show()
-		--Used to hide the objective list, but keep POI on map
-		--if (not OmegaMapConfig.hideObjectives) and  OmegaMapDetailFrame:IsShown() then
-			--OmegaMapQuestScrollFrame:Show();
-		--else
-			--OmegaMapShowObjectivesButton:Show();
-		--end
 end
 
 --Code to retrieve & display BG POI Landmarks

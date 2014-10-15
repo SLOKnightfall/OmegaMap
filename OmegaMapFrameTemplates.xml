@@ -103,6 +103,35 @@
 			</OnLeave>
 		</Scripts>
 	</Frame>
+	<Frame name="OmegaMapStoryLineTemplate" hidden="true" virtual="true">
+		<Size>
+			<AbsDimension x="32" y="32"/>
+		</Size>
+		<HitRectInsets>
+			<AbsInset left="4" right="4" top="0" bottom="0"/>
+		</HitRectInsets>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Texture" file="Interface\Minimap\ObjectIcons" setAllPoints="true">
+					<TexCoords left="0.25" right="0.375" top="0.75" bottom="0.875"/>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnEnter>
+				local questLineName, questName, continentID, x, y = C_Questline.GetQuestlineInfoByIndex(self.index);
+				if ( questName ) then
+					OmegaMapTooltip:SetOwner(self, "ANCHOR_LEFT");
+					OmegaMapTooltip:SetText(questName);
+					OmegaMapTooltip:AddLine(AVAILABLE_QUEST, 1, 1, 1, true);
+					OmegaMapTooltip:Show();
+				end
+			</OnEnter>
+			<OnLeave>
+				OmegaMapTooltip:Hide();
+			</OnLeave>
+		</Scripts>
+	</Frame>
 	<Frame name="OmegaMapCorpseTemplate" hidden="true" virtual="true">
 		<Size>
 			<AbsDimension x="16" y="16"/>
@@ -122,7 +151,6 @@
 				RaiseFrameLevel(self)
 			</OnLoad>
 			<OnEnter>
-				OmegaMapPOIFrame.allowBlobTooltip = false
 				local x, y = self:GetCenter()
 				local parentX, parentY = self:GetParent():GetCenter()
 				if ( x > parentX ) then
@@ -134,71 +162,18 @@
 				OmegaMapTooltip:Show()
 			</OnEnter>
 			<OnLeave>
-				OmegaMapPOIFrame.allowBlobTooltip = true
 				OmegaMapTooltip:Hide()
 			</OnLeave>
 		</Scripts>
 	</Frame>
 
-	<Frame name="OmegaMapQuestFrameTemplate" enableMouse="false" virtual="true">
-		<Size>
-			<AbsDimension x="281" y="100"/>
-		</Size>
-		<Layers>
-			<Layer level="BACKGROUND">
-				<FontString name="$parentTitle" inherits="GameFontNormal" justifyH="LEFT"  justifyV="TOP" spacing="2" parentKey="title">
-					<Size>
-						<AbsDimension x="240" y="0"/>
-					</Size>					
-					<Anchors>
-						<Anchor point="TOPLEFT">
-							<Offset>
-								<AbsDimension x="34" y="-8"/>
-							</Offset>						
-						</Anchor>
-					</Anchors>
-					<Color r="1" g="0.82" b="0" />
-				</FontString>
-				<Texture name="$parentCheck" file="Interface\Buttons\UI-CheckBox-Check" hidden="true" parentKey="check">
-					<Size>
-						<AbsDimension x="16" y="16"/>
-					</Size>
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="TOPRIGHT" />
-					</Anchors> 
-				</Texture>
-				<FontString name="$parentDashes" inherits="GameFontNormal" justifyH="LEFT"  justifyV="BOTTOM" spacing="2" parentKey="dashes">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT">
-							<Offset>
-								<AbsDimension x="0" y="-4"/>
-							</Offset>						
-						</Anchor>
-					</Anchors>
-					<Color r="0.8" g="0.8" b="0.8" />				
-				</FontString>
-				<FontString name="$parentObjectives" inherits="GameFontNormal" justifyH="LEFT"  justifyV="BOTTOM" spacing="2" parentKey="objectives">
-					<Size>
-						<AbsDimension x="232" y="0"/>
-					</Size>					
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT">
-							<Offset>
-								<AbsDimension x="8" y="-4"/>
-							</Offset>						
-						</Anchor>
-					</Anchors>
-					<Color r="0.8" g="0.8" b="0.8" />
-				</FontString>				
-			</Layer>
-		</Layers>		
+	<Button name="OmegaMapFakeButtonTemplate" virtual="true">
 		<Scripts>
-		<OnEnter function="OmegaMapQuestFrame_OnEnter" />
-			<OnLeave function="OmegaMapQuestFrame_OnLeave" />
-			<OnMouseDown function="OmegaMapQuestFrame_OnMouseDown" />
-			<OnMouseUp function="OmegaMapQuestFrame_OnMouseUp" /> 
+			<OnMouseDown function="OmegaMapButton_OnMouseDown"/>
+			<OnMouseUp function="OmegaMapButton_OnMouseUp"/>
+			<OnClick function="OmegaMapFakeButton_OnClick"/>
 		</Scripts>
-	</Frame>
+	</Button>
 	<Button name="OmegaMapMaelstromButtonTemplate" hidden="true" virtual="true">
 		<Scripts>
 			<OnLoad>
@@ -211,13 +186,6 @@
 				self.petMaxLevel = MAELSTROM_ZONES_LEVELS[zoneName].petMaxLevel;
 
 			</OnLoad>
-			<OnClick>
-				if ( button == "LeftButton" ) then
-					SetMapByID(self.zoneID)
-				else
-					OmegaMapZoomOutButton_OnClick()
-				end
-			</OnClick>
 			<OnEnter>
 				OmegaMapFrame.maelstromZoneText = GetMapNameByID(self.zoneID)
 				OmegaMapFrame.minLevel = self.minLevel
@@ -236,18 +204,18 @@
 		</Scripts>
 	</Button>
 
-	 <Button name="OmegaMapEncounterButtonTemplate" virtual="true">
-        <Size x="50" y="49"/>
-        <Layers>
-            <Layer level="BACKGROUND">
-                <Texture name="$parentbgImage" parentKey="bgImage">
-                    <Size x="36" y="36"/>
-                    <Anchors>
-                        <Anchor point="CENTER" x="0" y="0"/>
-                    </Anchors>
-                </Texture>
-            </Layer>
-        </Layers>
+	<Button name="OmegaMapEncounterButtonTemplate" virtual="true">
+		<Size x="50" y="49"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture name="$parentbgImage" parentKey="bgImage">
+					<Size x="36" y="36"/>
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
 		<NormalTexture file="Interface\EncounterJournal\UI-EncounterJournalTextures">
 			<TexCoords left="0.84960938" right="0.97070313" top="0.42871094" bottom="0.48828125"/>
 		</NormalTexture>
@@ -257,38 +225,35 @@
 		<HighlightTexture file="Interface\EncounterJournal\UI-EncounterJournalTextures">
 			<TexCoords left="0.68945313" right="0.81054688" top="0.33300781" bottom="0.39257813"/>
 		</HighlightTexture>
-        <Scripts>
-            <OnEnter>
-                if self.tooltipTitle then
-                    OmegaMapTooltip:SetOwner(self, "ANCHOR_LEFT")
-                    OmegaMapTooltip:SetText(self.tooltipTitle,1,1,1)
-                    OmegaMapTooltip:AddLine(self.tooltipText, nil, nil, nil, 1)
-                    OmegaMapTooltip:Show()
-                    OmegaMapTooltip.EJ_using = true
-               end
-            </OnEnter>
-            <OnLeave>
-                OmegaMapTooltip:Hide()
-                OmegaMapTooltip.EJ_using = false
-            </OnLeave>
-            <OnShow>
-                self:SetFrameLevel(self:GetParent():GetFrameLevel() + 10)
-            </OnShow>
-            <OnClick>
-                --if WORLDMAP_SETTINGS.size ~= WORLDMAP_WINDOWED_SIZE then
-                   -- ToggleFrame(WorldMapFrame)
-               -- end
-             
-                if not EncounterJournal or not EncounterJournal:IsShown() then
-                    ToggleFrame(EncounterJournal)
-                end
-                EncounterJournal_ListInstances()
-                EncounterJournal_DisplayInstance(self.instanceID)
-                EncounterJournal_DisplayEncounter(self.encounterID)
-            </OnClick>
-        </Scripts>
-    </Button>
-
+		<Scripts>
+			<OnEnter>
+				if self.tooltipTitle then
+					OmegaMapTooltip:SetOwner(self, "ANCHOR_LEFT")
+					OmegaMapTooltip:SetText(self.tooltipTitle,1,1,1)
+					OmegaMapTooltip:AddLine(self.tooltipText, nil, nil, nil, 1)
+					OmegaMapTooltip:Show()
+			   end
+			</OnEnter>
+			<OnLeave>
+				OmegaMapTooltip:Hide()
+			</OnLeave>
+			<OnShow>
+				self:SetFrameLevel(self:GetParent():GetFrameLevel() + 10)
+			</OnShow>
+			<OnClick>
+				--if WORLDMAP_SETTINGS.size ~= WORLDMAP_WINDOWED_SIZE then
+				   -- ToggleFrame(WorldMapFrame)
+			   -- end
+			 
+				if not EncounterJournal or not EncounterJournal:IsShown() then
+					ToggleFrame(EncounterJournal)
+				end
+				EncounterJournal_ListInstances()
+				EncounterJournal_DisplayInstance(self.instanceID)
+				EncounterJournal_DisplayEncounter(self.encounterID)
+			</OnClick>
+		</Scripts>
+	</Button>
 
 
 	<Button name="OmegaMapCTNoteTemplate"  hidden="true" virtual="true">
@@ -395,5 +360,91 @@
 				</Scripts>
 				<NormalTexture file="Interface\WorldMap\GravePicker-Unselected"/>
 				<HighlightTexture file="Interface\AddOns\OmegaMap\Icons\Note-Selected" />
+	</Button>
+
+		<Frame name="OM_NavBarTemplate" parentKey="navBar" virtual="true">
+		<Size x="300" y="34"/>
+		<Layers>
+		</Layers>
+		<Frames>
+			<Frame name="$parentOverlay" parentKey="overlay">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="0" y="0"/>
+					<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY" textureSubLevel="5">
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetFrameLevel(50);
+					</OnLoad>
+				</Scripts>
+			</Frame>
+			<Button name="$parentOverflowButton" parentKey="overflow">
+				<Size x="44" y="30"/>
+				<Scripts>
+					<OnLoad>
+						self.xoffset = -18
+					</OnLoad>
+					<OnClick>
+						PlaySound("igMainMenuOptionCheckBoxOn");
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\HelpFrame\CS_HelpTextures">
+					<TexCoords left="0.54296875" right="0.62890625" top="0.75781250" bottom="0.99218750"/>
+				</NormalTexture>		
+				<PushedTexture file="Interface\HelpFrame\CS_HelpTextures">
+					<TexCoords left="0.45312500" right="0.53906250" top="0.75781250" bottom="0.99218750"/>
+				</PushedTexture>
+				<HighlightTexture file="Interface\HelpFrame\CS_HelpTextures" alphaMode="ADD" alpha="0.4">
+					<TexCoords left="0.54296875" right="0.62890625" top="0.75781250" bottom="0.99218750"/>
+				</HighlightTexture>
 			</Button>
+			<Button name="$parentHomeButton" parentKey="home" text="HOME">
+				<Size x="128" y="30"/>
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture name="$parentLeft" file="Interface\Common\ShadowOverlay-Left">
+							<Size x="30" y="30"/>
+							<Anchors>
+								<Anchor point="LEFT" x="0" y="0"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self.xoffset = -15;
+						local newWidth = min(128, self.text:GetStringWidth()+50)
+						local texCoordoffsetX = (newWidth/128)*0.25;
+							
+						self:GetNormalTexture():SetTexCoord(0.70312500-texCoordoffsetX, 0.70312500, 0.00781250, 0.24218750);
+						self:GetPushedTexture():SetTexCoord(0.70312500-texCoordoffsetX, 0.70312500, 0.25781250, 0.49218750);
+						self:GetHighlightTexture():SetTexCoord(0.70312500-texCoordoffsetX, 0.71312500, 0.50781250, 0.74218750);
+						
+						self:SetWidth(newWidth);
+					</OnLoad>
+					<OnClick>
+						PlaySound("igMainMenuOptionCheckBoxOn");
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\HelpFrame\CS_HelpTextures">
+				</NormalTexture>		
+				<PushedTexture file="Interface\HelpFrame\CS_HelpTextures">
+				</PushedTexture>
+				<HighlightTexture file="Interface\HelpFrame\CS_HelpTextures" alphaMode="ADD">
+				</HighlightTexture>
+				<ButtonText name="$parentText" inherits="GameFontNormal" justifyH="LEFT" parentKey="text">
+					<Size x="0" y="12"/>
+					<Anchors>
+						<Anchor point="LEFT" x="10" y="0"/>
+						<Anchor point="RIGHT" x="-30" y="0"/>
+					</Anchors>
+				</ButtonText>
+			</Button>
+		</Frames>
+	</Frame>
+
 </Ui>

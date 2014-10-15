@@ -10,13 +10,15 @@ if IsAddOnLoaded("PetTracker") then
 print(OMEGAMAP_PETTRACKER_LOADED_MESSAGE)
 
 if not PetTrackerOmegaMapOverlay then
-	local overlay = CreateFrame("Frame", "PetTrackerOmegaMapOverlay", OmegaMapNoteFrame)
+	local overlay = CreateFrame("Frame", "PetTrackerOmegaMapOverlay", OmegaMapDetailFrame)
 	overlay:SetAllPoints(true)
 end
 
 local ADDON, Addon = "PetTracker", PetTracker
 local Journal, Tamer = Addon.Journal, Addon.Tamer
-local MapFrame, BlipParent = OmegaMapDetailFrame, PetTrackerOmegaMapOverlay
+local MapFrame, BlipParent = OmegaMapDetailFrame, OmegaMapDetailFrame
+local FilterButton = OmegaMapFrame.UIElementsFrame.TrackingOptionsButton.Button
+
 
 local Map = Addon:NewModule('OmegaMap', OMPetTrackerMapFilter)
 local Tooltip = Addon.MapTip(OmegaMapFrame)
@@ -30,13 +32,64 @@ local SUGGESTIONS = {
 }
 
 
+--[[ Hacks ]]--
+
+do
+	local OnClick = OmegaMapPOI_OnClick
+	function OmegaMapPOI_OnClick(frame, ...)
+		local tamer = Map.tamers[frame]
+		if tamer then
+			tamer:Display()
+		else
+			OnClick(frame, ...)
+		end
+	end
+end
+
+do
+	local function BlizzLine(drop, value, cvar, text, tip, visible)
+		if visible then
+			drop:AddLine {
+				text = text, value = value,
+				tooltipTitle = tip,
+				checked = GetCVarBool(cvar),
+				func = OmegaMapTrackingOptionsDropDown_OnClick,
+				keepShownOnClick = 1,
+				isNotRadio = 1
+			}
+		end
+	end
+
+	local function CustomLine(drop, arg, text)
+		drop:AddLine {
+			text = text,
+			func = function() Map:Toggle(arg) end,
+			checked = Map:Active(arg),
+			keepShownOnClick = 1,
+			isNotRadio = 1
+		}
+	end
+
+	FilterButton:SetScript('OnClick', function(button)
+		SushiDropFrame:Toggle('TOPRIGHT', button:GetParent(), 'BOTTOM', 10, -15, true, function(drop)
+			BlizzLine(drop, 'quests', 'questPOI', SHOW_QUEST_OBJECTIVES_ON_MAP_TEXT, OPTION_TOOLTIP_SHOW_QUEST_OBJECTIVES_ON_MAP, 1)
+			BlizzLine(drop, 'bosses', 'showBosses', SHOW_BOSSES_ON_MAP_TEXT, OPTION_TOOLTIP_SHOW_BOSSES_ON_MAP, WorldMapFrame.hasBosses)
+			BlizzLine(drop, 'digsites', 'digSites', ARCHAEOLOGY_SHOW_DIG_SITES, OPTION_TOOLTIP_SHOW_DIG_SITES_ON_MAP, select(3, GetProfessions()))
+			BlizzLine(drop, 'tamers', 'showTamers', SHOW_BATTLE_PET_TAMERS_ON_MAP_TEXT, OPTION_TOOLTIP_SHOW_BATTLE_PET_TAMERS_ON_MAP, CanTrackBattlePets())
+			CustomLine(drop, 'Species', L.ShowPets)
+			CustomLine(drop, 'Stables', L.ShowStables)
+		end)
+	end)
+end
+
+
 --[[ Events ]]--
 
 function Map:Startup()
-	self.DefaultText = L.FilterPets
-	self:SetText(Addon.Sets.MapFilter or L.FilterPets)
-	self:SetPoint('TOPRIGHT', BlipParent, -6, -6)
-	self:SetFrameLevel(self:GetFrameLevel() + 16)
+	self:SetText(Addon.Sets.MapFilter or '')
+	self:SetPoint('RIGHT', FilterButton, 'LEFT', 0, 1)
+	self:SetFrameLevel(FilterButton:GetFrameLevel() - 1)
+	self.Instructions:SetText(L.FilterPets)
 	self.blips, self.tamers = {}, {}
 
 	self:RegisterEvent('ZONE_CHANGED_NEW_AREA')
@@ -46,9 +99,8 @@ function Map:Startup()
 	self:SetScript('OnUpdate', self.UpdateTip)
 	self:SetScript('OnHide', self.HideTip)
 
-
 	for i, text in ipairs(SUGGESTIONS) do
-		local button = CreateFrame('Button', '$parentButton'..i, self.Suggestions, 'OMPetTrackerSuggestionButton')
+		local button = CreateFrame('Button', '$parentButton'..i, self.Suggestions, 'PetTrackerSuggestionButton')
 		button:SetPoint('TOPLEFT', 18, -16*i + 7)
 		button:SetText(text)
 
@@ -59,7 +111,7 @@ function Map:Startup()
 	end
 
 	OmegaMapFrame:HookScript('OnShow', function() self:UpdateBlips() end)
-
+--[[
 	hooksecurefunc('OmegaMapShowDropDown_Initialize', function()
 		UIDropDownMenu_AddButton {
 			text = L.ShowPets,
@@ -77,6 +129,7 @@ function Map:Startup()
 			isNotRadio = true
 		}
 	end)
+	--]]
 end
 
 function Map:TrackingChanged()
@@ -87,12 +140,8 @@ function Map:TrackingChanged()
 end
 
 function Map:FilterChanged()
-	local text = self:GetText()
-	if text == '' or text == self.DefaultText then
-		text = nil
-	end
-
-	Addon.Sets.MapFilter = text
+	Addon.Sets.MapFilter = self:GetText()
+	self.Instructions:SetShown(self:GetText() == '')
 	self:TrackingChanged()
 end
 
@@ -100,14 +149,13 @@ end
 --[[ Blips ]]--
 
 function Map:UpdateBlips()
-	local showSpecies = self:Active('Species')
-	self:SetAlpha(showSpecies and 1 or 0)
-	self:EnableMouse(showSpecies)
 	self:ColorTamers()
 	self:ResetBlips()
 
-	if showSpecies then
+	if self:Active('Species') then
 		self:ShowSpecies()
+	else
+		self:ShowFilter(false)
 	end
 
 	if self:Active('Stables') then
@@ -134,6 +182,13 @@ function Map:ShowSpecies()
 			end
 		end
 	end
+
+	self:ShowFilter(next(species))
+end
+
+function Map:ShowFilter(show)
+	self:SetAlpha(show and 1 or 0)
+	self:EnableMouse(show)
 end
 
 function Map:ShowStables()
@@ -198,28 +253,6 @@ function Map:UpdateTip()
 		end
 	end
 
-	--[[
-	for i = 1, GetNumMapLandmarks() do
-		local frame = _G['OmegaMapFramePOI' .. i]
-
-		if frame and frame:IsMouseOver() then
-			local id = select(10, GetMapLandmarkInfo(i))
-			local tamer = Tamer:Get(id)
-
-			if tamer then
-				Tooltip:AddHeader(frame.name)
-				Tooltip:AddLine(NORMAL_FONT_COLOR_CODE .. frame.description .. FONT_COLOR_CODE_CLOSE)
-
-				for i, pet in ipairs(tamer) do
-					local r,g,b = Addon:GetQualityColor(pet:GetQuality())
-					local icon = format('|T%s:16:16:-3:0:128:256:60:100:130:170:255:255:255|t', Journal:GetTypeIcon(pet:GetSpecie()))
-
-					Tooltip:AddLine(icon .. pet:GetName() .. ' (' .. pet:GetLevel() .. ')', r,g,b)
-				end
-			end
-		end
-	end
-	--]]
 	for frame, tamer in pairs(self.tamers) do
 		if frame:IsMouseOver() then
 			Tooltip:AddHeader(frame.name)

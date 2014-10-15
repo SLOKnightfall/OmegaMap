@@ -37,7 +37,6 @@ function OmegaMapBarFrame_OnEnter(self)
 	local title = OmegaMapBarFrame_GetString("TITLE", tag, phase);
 	local tooltipText = OmegaMapBarFrame_GetString("TOOLTIP", tag, phase);
 	local percentage = math.floor(100 * C_MapBar.GetCurrentValue() / C_MapBar.GetMaxValue());
-	OmegaMapTooltip.MB_using = true;
 	OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	OmegaMapTooltip:SetText(format(MAP_BAR_TOOLTIP_TITLE, title, percentage), 1, 1, 1);
 	OmegaMapTooltip:AddLine(tooltipText, nil, nil, nil, true);
@@ -46,7 +45,6 @@ function OmegaMapBarFrame_OnEnter(self)
 end
 
 function OmegaMapBarFrame_OnLeave(self)
-	OmegaMapTooltip.MB_using = false;
 	OmegaMapTooltip:Hide();
 end
 
@@ -71,8 +69,6 @@ end
 
 function OmegaMapBarFrame_UpdateLayout(self)
 	self:SetFrameLevel(OmegaMapPOIFrame:GetFrameLevel() + 1);
-		self:SetScale(1);
-		self:SetPoint("TOPLEFT", OmegaMapButton, "TOPLEFT", 150, -70);
 end
 
 function OmegaMapBarFrame_GetString(stringType, tag, phase)

@@ -34,32 +34,44 @@ local LibStub = _G.LibStub
 --local OM_Fader = LibStub("LibFrameFade-1.0")
 
 
-NUM_OMEGAMAP_POIS = 0;
-NUM_OMEGAMAP_GRAVEYARDS = 0;
+
+
 NUM_OMEGAMAP_POI_COLUMNS = 14;
 OMEGAMAP_POI_TEXTURE_WIDTH = 256;
+
+
+NUM_OMEGAMAP_POIS = 0;
+NUM_OMEGAMAP_WORLDEFFECT_POIS = 0;
+NUM_OMEGAMAP_SCENARIO_POIS = 0;
+NUM_OMEGAMAP_TASK_POIS = 0;
+NUM_OMEGAMAP_GRAVEYARDS = 0;
 NUM_OMEGAMAP_OVERLAYS = 0;
 NUM_OMEGAMAP_FLAGS = 4;
+
+
+
+
 --QUESTFRAME_MINHEIGHT = 34;
 --QUESTFRAME_PADDING = 19;			-- needs to be one the highest frames in the MEDIUM strata
 OMEGAMAP_FULLMAP_SIZE = 1.0;
 OMEGAMAP_POI_FRAMELEVEL = 100;	-- needs to be one the highest frames in the MEDIUM strata
 
 OMEGAMAP_ALTMAP = false
-
+OMEGAMAP_QUEST_BONUS_OBJECTIVE = 49;
 local EJ_QUEST_POI_MINDIS_SQR = 2500;
+
+local QUEST_POI_FRAME_INSET = 12;		-- roughly half the width/height of a POI icon
+local QUEST_POI_FRAME_WIDTH;
+local QUEST_POI_FRAME_HEIGHT;
+
 local OMEGAMAP_DEFAULT_SCALE = .75;
-local OMEGAMAP_POI_MIN_X = 12;
-local OMEGAMAP_POI_MIN_Y = -12;
-local OMEGAMAP_POI_MAX_X;		-- changes based on current scale, see OmegaMapFrame_SetPOIMaxBounds
-local OMEGAMAP_POI_MAX_Y;		-- changes based on current scale, see OmegaMapFrame_SetPOIMaxBounds
+
 local PLAYER_ARROW_SIZE_WINDOW = 40;
 local PLAYER_ARROW_SIZE_FULL_WITH_QUESTS = 38;
 local PLAYER_ARROW_SIZE_FULL_NO_QUESTS = 28;
 
+local STORYLINE_FRAMES = { };
 
-local Update_Timer_P = 0;
-local Main_Update_Timer = 0;
 local incombat = false
 --local playercombatclose = false
 
@@ -71,10 +83,7 @@ OmegaMapConfig = {
 	opacity = 0,
 	scale = OMEGAMAP_DEFAULT_SCALE,
 	showScale = false, -- Show Scale slider on map
-	showQuest = false,  --Show Quest Objectives
-	showArch = false,	--Show Arch dig sites
-	showBoss = false,	--Show EJ Boss Icons
-	showObjectives = false,	--Hide quest objectives
+	showQuestList = false,  --Show Quest Objectives
 	clearMap = false,		--Hide all optional POI
 	solidify = false,		--Make map able to be clicked
 	showCoords = true,		--Show Coords on map
@@ -156,64 +165,89 @@ function omegareset()
 	OmegaMapConfig = OmegaMapConfigDefaults
 end
 
+
+--function OmegaMapToggle()
+function ToggleOmegaMap()
+	if ( OmegaMapFrame:IsVisible() ) then
+		OmegaMapFrame:Hide()
+		--OmegaMapBlobFrame:DrawNone();
+		--OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
+		--[[OmegaMapArchaeologyDigSites:DrawNone();
+		local numEntries = ArchaeologyMapUpdateAll();
+		for i = 1, numEntries do
+			local blobID = ArcheologyGetVisibleBlobID(i);
+			OmegaMapArchaeologyDigSites:DrawBlob(blobID, false);
+		end
+		]]--
+	else
+		OmegaMapFrame:Show()
+		OmegaMapQuestFrame:Show()
+		if OmegaMapConfig.showQuestList then
+			OmegaMapQuestFrame_Show()
+			OmegaMapFrame.UIElementsFrame.CloseQuestPanelButton:Show();
+		else
+			OmegaMapQuestFrame_Hide()
+			OmegaMapFrame.UIElementsFrame.OpenQuestPanelButton:Show();
+		end
+	end
+end
+
 function OmegaMapFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("WORLD_MAP_UPDATE");
 	self:RegisterEvent("CLOSE_WORLD_MAP");
 	self:RegisterEvent("VARIABLES_LOADED");
-	self:RegisterEvent("GROUP_ROSTER_UPDATE"); --New
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
-	self:RegisterEvent("QUEST_LOG_UPDATE");
-	self:RegisterEvent("QUEST_POI_UPDATE");
-	self:RegisterEvent("SKILL_LINES_CHANGED");
 	self:RegisterEvent("REQUEST_CEMETERY_LIST_RESPONSE");
 	self:RegisterEvent("UNIT_PORTRAIT_UPDATE");
-	self:RegisterEvent("ARTIFACT_DIG_SITE_UPDATED"); --New
+	self:RegisterEvent("ARTIFACT_DIG_SITE_UPDATED");
+	--new 6.0
+	self:RegisterEvent("SUPER_TRACKED_QUEST_CHANGED");
+	self:RegisterEvent("PLAYER_STARTED_MOVING");
+	self:RegisterEvent("PLAYER_STOPPED_MOVING");
+	self:RegisterEvent("QUESTLINE_UPDATE");
+	self:RegisterEvent("QUEST_LOG_UPDATE");
+	self:RegisterEvent("QUESTTASK_UPDATE");
 	-- added events
 	self:RegisterEvent("MODIFIER_STATE_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 
-	self:SetClampRectInsets(0, 0, 0, -60);				-- don't overlap the xp/rep bars
+	self:SetClampRectInsets(0, 0, 0, -60);-- don't overlap the xp/rep bars
 	self.poiHighlight = nil;
 	self.areaName = nil;
-	--CreateWorldMapArrowFrame(OmegaMapFrame);
-	--WorldMapFrameTexture18:SetVertexColor(0, 0, 0);		-- this texture just needs to be a black line
-	--InitWorldMapPing(OmegaMapFrame);
 	OmegaMapFrame_Update();
 
 	-- setup the zone minimap button
 	OmegaMapLevelDropDown_Update();
 
-	-- PlayerArrowEffectFrame is created in code: COmegaMap::CreateArrowFrame()
-	--PlayerArrowEffectFrame:SetAlpha(0.65);
+	local homeData = {
+		name = WORLD,
+		OnClick = OmegaMapNavBar_OnButtonSelect,
+		listFunc = OmegaMapNavBar_GetSibling,
+		id = WORLDMAP_COSMIC_ID,
+		isContinent = true,
+	}
 
-	-- font stuff for objectives text
-	local refFrame = OmegaMapFrame_GetQuestFrame(0);
-	local _, fontHeight = refFrame.objectives:GetFont();
-	refFrame.lineSpacing = refFrame.objectives:GetSpacing();
-	refFrame.lineHeight = fontHeight + refFrame.lineSpacing;
+
+	NavBar_Initialize(self.NavBar, "NavButtonTemplate", homeData, self.navBar.home, self.navBar.overflow);
+
+	--ButtonFrameTemplate_HidePortrait(OmegaMapFrame.BorderFrame);
+	--OmegaMapFrame.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
+	--OmegaMapFrame.BorderFrame.portrait:SetTexture("Interface\\QuestFrame\\UI-QuestLog-BookIcon");
+	--OmegaMapFrame.BorderFrame.CloseButton:SetScript("OnClick", function() HideUIPanel(OmegaMapFrame); end);
 	
-	OmegaMapFrame_ResetFrameLevels();
-	OmegaMapDetailFrame:SetScale(OMEGAMAP_FULLMAP_SIZE);
-	OmegaMapButton:SetScale(OMEGAMAP_FULLMAP_SIZE);
-	OmegaMapFrame_SetPOIMaxBounds();
-	--OmegaMapQuestDetailScrollChildFrame:SetScale(0.9);
-	--OmegaMapQuestRewardScrollChildFrame:SetScale(0.9);
-	OmegaMapFrame.numQuests = 0;
-	if (GetCVarBool("questPOI") > 0) then
-		WatchFrame.showObjectives = true;
-	else
-		WatchFrame.showObjectives = false;
-	end
-	OmegaMapPOIFrame.allowBlobTooltip = true;
-	-- scrollframes
-	--OmegaMapQuestDetailScrollFrame.scrollBarHideable = true;
-	--OmegaMapQuestRewardScrollFrame.scrollBarHideable = true;
-	--ScrollBar_AdjustAnchors(OmegaMapQuestDetailScrollFrameScrollBar, 1, -2);
-	--OmegaMapQuestDetailScrollFrameScrollBarTrack:SetAlpha(0.4);
-	--ScrollBar_AdjustAnchors(OmegaMapQuestRewardScrollFrameScrollBar, 1, -2);
-	--OmegaMapQuestRewardScrollFrameScrollBarTrack:SetAlpha(0.4);
+	local frameLevel = OmegaMapDetailFrame:GetFrameLevel();
+	OmegaMapPlayersFrame:SetFrameLevel(frameLevel + 1);
+	OmegaMapPOIFrame:SetFrameLevel(frameLevel + 2);
+	OmegaMapOtherPOIFrame:SetFrameLevel(frameLevel + 2);
+	OmegaMapFrame.UIElementsFrame:SetFrameLevel(frameLevel + 3);
+
+	QUEST_POI_FRAME_WIDTH = OmegaMapDetailFrame:GetWidth();
+	QUEST_POI_FRAME_HEIGHT = OmegaMapDetailFrame:GetHeight();
+	QuestPOI_Initialize(OmegaMapPOIFrame, OmegaMapPOIButton_Init);
+
 
 --Disable Mouse interaction with the map
 	OmegaMapButton:EnableMouse(false); --set to false to enable click trhough
@@ -241,11 +275,10 @@ end
 
 function OmegaMapFrame_OnShow(self)
 	SetupFullscreenScale(self);
-	OmegaMap_LoadTextures();
 	-- pet battle level size adjustment
-		WorldMapFrameAreaPetLevels:SetFontObject("SubZoneTextFont");
-		--if ( not WatchFrame.showObjectives and WORLDMAP_SETTINGS.size ~= WORLDMAP_FULLMAP_SIZE ) then
-		OmegaMapFrame_SetFullMapView();
+		OmegaMapFrameAreaPetLevels:SetFontObject("SubZoneTextFont");
+		--if ( not WatchFrame.showObjectives and OMEGAMAP_FULLMAP_SIZE ~= WORLDMAP_FULLMAP_SIZE ) then
+		--OmegaMapFrame_SetFullMapView();  --REVISIT
 		--end		
 		
 	--UpdateMicroButtons();
@@ -257,10 +290,10 @@ function OmegaMapFrame_OnShow(self)
 	end
 	PlaySound("igQuestLogOpen");
 	CloseDropDownMenus();
-	--OmegaMapFrame_PingPlayerPosition();	
 	OmegaMapFrame_UpdateUnits("OmegaMapRaid", "OmegaMapParty");
 	DoEmote("READ", nil, true);
 	OmegaMapFrame_Update();
+	OmegaMapFrame.fadeOut = false;  --new 6.0
 
 	if(OmegaMapConfig.showAlpha) then
 		OmegaMapSliderFrame:Show()
@@ -286,11 +319,13 @@ function OmegaMapFrame_OnShow(self)
 end
 
 function OmegaMapFrame_OnHide(self)
+--[[
 	if ( OpacityFrame:IsShown() and OpacityFrame.saveOpacityFunc and OpacityFrame.saveOpacityFunc == OmegaMapFrame_SaveOpacity ) then
 		OmegaMapFrame_SaveOpacity();
 		OpacityFrame.saveOpacityFunc = nil;
 		OpacityFrame:Hide();
 	end
+	]]-- out 60
 	OmegaMapConfig.hotSpotLock = false;
 	--self.fromJournal = false; 
 
@@ -298,7 +333,16 @@ function OmegaMapFrame_OnHide(self)
 	CloseDropDownMenus();
 	PlaySound("igQuestLogClose");
 	OmegaMap_ClearTextures();
-	OmegaMapPing.Ping:Stop();  --New
+	--New 6.0  REvisist
+	if ( not self.toggling ) then
+		OmegaMapQuestFrame_CloseQuestDetails();
+	end
+	if ( OmegaMapScrollFrame.zoomedIn ) then
+		OmegaMapScrollFrame_ResetZoom();
+	end
+	-- 
+
+	OmegaMapPing.Ping:Stop();
 	if ( self.showOnHide ) then
 		ShowUIPanel(self.showOnHide);
 		self.showOnHide = nil;
@@ -308,20 +352,24 @@ function OmegaMapFrame_OnHide(self)
 	if (OmegaMapOptionsFrame.Frame:IsShown()) then
 		OmegaMapOptionsFrame.Frame:Hide()
 	end 
-	OmegaMapConfig.showObjectives = false
+	--OmegaMapConfig.showObjectives = false
 
-	--Clears Blobs from map
+	--Clears Blobs from map.  This is a workaraound for the blob frame being protected
+
 	OmegaMapFrame:Hide()
+	--[[
 	OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
 	OmegaMapBlobFrame:DrawNone();
 	OmegaMapArchaeologyDigSites:DrawNone();
 	OmegaMapScenarioPOIFrame:DrawNone();
+
 
 	local numEntries = ArchaeologyMapUpdateAll();
 	for i = 1, numEntries do
 		local blobID = ArcheologyGetVisibleBlobID(i);
 		OmegaMapArchaeologyDigSites:DrawBlob(blobID, false);
 	end
+	--]]
 	OmegaMapSolidify("Off")
 
 	-- forces WatchFrame event via the WORLD_MAP_UPDATE event, needed to restore the POIs in the tracker to the current zone
@@ -331,14 +379,10 @@ function OmegaMapFrame_OnHide(self)
 		SetMapToCurrentZone();
 	end
 	CancelEmote();
-	--[[
-		if ( WORLDMAP_SETTINGS.superTrackedQuestID > 0 ) then
-		SetSuperTrackedQuestID(WORLDMAP_SETTINGS.superTrackedQuestID);
-		QuestPOI_SelectButtonByQuestId("WatchFrameLines", WORLDMAP_SETTINGS.superTrackedQuestID, true);
-		WORLDMAP_SETTINGS.superTrackedQuestID = 0;
-	end
-	]]--
 	self.mapID = nil;
+	self.AnimAlphaOut:Stop();
+	self.AnimAlphaIn:Stop();
+	--self:SetAlpha(WORLD_MAP_MAX_ALPHA);
 end
 
 function OmegaMapFrame_OnEvent(self, event, ...)
@@ -347,7 +391,7 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 			HideUIPanel(OmegaMapFrame);
 		end
 		
-	elseif ( event == "WORLD_MAP_UPDATE" or event == "REQUEST_CEMETERY_LIST_RESPONSE" ) then
+	elseif ( event == "WORLD_MAP_UPDATE" or event == "REQUEST_CEMETERY_LIST_RESPONSE" or event == "QUESTLINE_UPDATE" ) then
 		if ( not self.blockOmegaMapUpdate and self:IsShown() ) then
 			-- if we are exiting a micro dungeon we should update the world map
 			if (event == "REQUEST_CEMETERY_LIST_RESPONSE") then
@@ -367,6 +411,17 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 				local playerX, playerY = GetPlayerMapPosition("player");
 				if ( playerX ~= 0 or playerY ~= 0 ) then
 					OmegaMapPing.Ping:Play();
+				end
+			end
+			--New 6.0 Revisit
+			if ( OmegaMapQuestFrame.DetailsFrame.questMapID and OmegaMapQuestFrame.DetailsFrame.questMapID ~= GetCurrentMapAreaID() ) then
+				OmegaMapQuestFrame_CloseQuestDetails();
+			else
+				OmegaMapQuestFrame_UpdateAll();
+			end
+			if ( OmegaMapScrollFrame.zoomedIn ) then
+				if ( OmegaMapScrollFrame.continent ~= GetCurrentMapContinent() or OmegaMapScrollFrame.mapID ~= GetCurrentMapAreaID() ) then
+					OmegaMapScrollFrame_ResetZoom();
 				end
 			end
 		end
@@ -391,20 +446,76 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 		OmegaMapHotSpotToggle()
 	
 
-	elseif ( event == "GROUP_ROSTER_UPDATE" ) then --replaces elseif ( event == "PARTY_MEMBERS_CHANGED" or event == "RAID_ROSTER_UPDATE" ) then		if ( self:IsShown() ) then
+	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 		if ( self:IsShown() ) then
 			OmegaMapFrame_UpdateUnits("OmegaMapRaid", "OmegaMapParty");
 		end
-	elseif ( ( event == "QUEST_LOG_UPDATE" or event == "QUEST_POI_UPDATE" ) and self:IsShown() ) then
-		OmegaMapFrame_DisplayQuests();
-		OmegaMapQuestFrame_UpdateMouseOver();
-	elseif  ( event == "SKILL_LINES_CHANGED" ) then
-		OmegaMapShowDropDown_OnLoad(OmegaMapShowDropDown)
 	elseif ( event == "UNIT_PORTRAIT_UPDATE" ) then
 		OmegaMapJournal_UpdateMapButtonPortraits();
+	--new 6.0
+	elseif ( event == "SUPER_TRACKED_QUEST_CHANGED" ) then
+		local questID = ...;
+		local mapID, floorNumber = GetQuestWorldMapAreaID(questID);
+		if ( mapID ~= 0 ) then
+			SetMapByID(mapID, floorNumber);
+			if ( floorNumber ~= 0 ) then
+				SetDungeonMapLevel(floorNumber);
+			end
+		end
+		OmegaMapPOIFrame_SelectPOI(questID);
+	elseif ( event == "PLAYER_STARTED_MOVING" ) then
+		if ( GetCVarBool("mapFade") ) then
+			OmegaMapFrame_AnimAlphaOut(self, true);
+			OmegaMapFrame.fadeOut = true;
+		end
+	elseif ( event == "PLAYER_STOPPED_MOVING" ) then
+		OmegaMapFrame_AnimAlphaIn(self, true);
+		OmegaMapFrame.fadeOut = false;
+	elseif ( event == "QUEST_LOG_UPDATE" and OmegaMapFrame:IsVisible() ) then
+		OmegaMap_UpdateQuestBonusObjectives();
+	elseif ( event == "QUESTTASK_UPDATE" and OmegaMapFrame:IsVisible() ) then
+		--TaskPOI_OnEnter(_G["lastPOIButtonUsed"]);  -- Revisit
 	elseif ( event == "MODIFIER_STATE_CHANGED" ) then
 		OmegaMapSolidifyCheck(self,...)
 	end
+end
+--NEw Revisit
+function OmegaMapFrame_AnimAlphaIn(self, useStartDelay)
+	OmegaMapFrame_AnimateAlpha(self, useStartDelay, self.AnimAlphaIn, self.AnimAlphaOut, WORLD_MAP_MIN_ALPHA, WORLD_MAP_MAX_ALPHA);
+end
+
+function OmegaMapFrame_AnimAlphaOut(self, useStartDelay)
+	OmegaMapFrame_AnimateAlpha(self, useStartDelay, self.AnimAlphaOut, self.AnimAlphaIn, WORLD_MAP_MAX_ALPHA, WORLD_MAP_MIN_ALPHA);
+end
+
+function OmegaMapFrame_AnimateAlpha(self, useStartDelay, anim, otherAnim, startAlpha, endAlpha)
+	if ( not WorldMapFrame_InWindowedMode() or not self:IsShown() ) then
+		return;
+	end
+
+	if ( anim:IsPlaying() or self:GetAlpha() == endAlpha ) then
+		otherAnim:Stop();
+		return;
+	end
+	
+	local startDelay = 0;
+	if ( useStartDelay ) then
+		startDelay = tonumber(GetCVar("mapAnimStartDelay"));
+	end
+
+	if ( otherAnim:IsPlaying() ) then
+		startDelay = 0;
+		startAlpha = self:GetAlpha();
+		otherAnim:Stop();
+		self:SetAlpha(startAlpha);
+	end
+
+	local change = endAlpha - startAlpha;
+	local duration = (change / (WORLD_MAP_MAX_ALPHA - WORLD_MAP_MIN_ALPHA)) * tonumber(GetCVar("mapAnimDuration"));
+	anim.Alpha:SetChange(change);
+	anim.Alpha:SetDuration(abs(duration));
+	anim.Alpha:SetStartDelay(startDelay);
+	anim:Play();	
 end
 
 function OmegaMapFrame_OnUpdate(self)
@@ -418,9 +529,89 @@ function OmegaMapFrame_OnUpdate(self)
 	else
 		OmegaMapZoneInfo:Hide();
 	end
+--NEw REvisit  --New minimized world map fades when player is mooving
+	if ( WorldMapFrame_InWindowedMode() and IsPlayerMoving() and GetCVarBool("mapFade") and WorldMapFrame.fadeOut ) then
+		if ( self:IsMouseOver() ) then
+			WorldMapFrame_AnimAlphaIn(self);
+			self.wasMouseOver = true;
+		elseif ( self.wasMouseOver ) then
+			WorldMapFrame_AnimAlphaOut(self);
+			self.wasMouseOver = nil;
+		end
+	end
+
 end
 
-NUM_OMEGAMAP_SCENARIO_POIS = 0
+--[[
+function OmegaMapFrame_OnKeyDown(self, key)
+	local binding = GetBindingFromClick(key)
+	if ((binding == "TOGGLEOMEGAMAP") or (binding == "TOGGLEOMEGAMAP")) then
+		RunBinding("TOGGLEOMEGAMAP");
+	elseif ( binding == "SCREENSHOT" ) then
+		RunBinding("SCREENSHOT");
+	elseif ( binding == "MOVIE_RECORDING_STARTSTOP" ) then
+		RunBinding("MOVIE_RECORDING_STARTSTOP");
+	elseif ( binding == "TOGGLEWORLDMAPSIZE" ) then
+		RunBinding("TOGGLEWORLDMAPSIZE");
+	elseif ( binding == "TOGGLEQUESTLOG" ) then
+		RunBinding("TOGGLEQUESTLOG");
+	end
+end
+--]]
+
+--NEw
+-----------------------------------------------------------------
+-- Draw quest bonus objectives
+-----------------------------------------------------------------
+function OmegaMap_UpdateQuestBonusObjectives()
+	local mapAreaID = GetCurrentMapAreaID();
+	local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID);
+	local numTaskPOIs = 0;
+	if(taskInfo ~= nil) then
+		numTaskPOIs = #taskInfo;
+	end
+
+	--Ensure the button pool is big enough for all the world effect POI's
+	if ( NUM_OMEGAMAP_TASK_POIS < numTaskPOIs ) then
+		for i=NUM_OMEGAMAP_TASK_POIS+1, numTaskPOIs do
+			OmegaMap_CreateTaskPOI(i);
+		end
+		NUM_OMEGAMAP_TASK_POIS = numTaskPOIs;
+	end
+
+	local taskIconCount = 1;
+	if ( numTaskPOIs > 0 ) then
+		for _, info  in next, taskInfo do
+			local textureIndex = MINIMAP_QUEST_BONUS_OBJECTIVE;
+			local x = info.x;
+			local y = info.y;
+			local questid = info.questId;
+				
+			local taskPOIName = "OmegaMapFrameTaskPOI"..taskIconCount;
+			local taskPOI = _G[taskPOIName];
+				
+			local x1, x2, y1, y2 = GetWorldEffectTextureCoords(textureIndex);
+			_G[taskPOIName.."Texture"]:SetTexCoord(x1, x2, y1, y2);
+			x = x * OmegaMapButton:GetWidth();
+			y = -y * OmegaMapButton:GetHeight();
+			taskPOI:SetPoint("CENTER", "OmegaMapButton", "TOPLEFT", x, y);
+			taskPOI.name = taskPOIName;
+			taskPOI.questID = questid;
+			taskPOI:Show();
+
+			taskIconCount = taskIconCount + 1;
+		end
+	end
+	
+	-- Hide unused icons in the pool
+	for i=taskIconCount, NUM_OMEGAMAP_TASK_POIS do
+		local taskPOIName = "OmegaMapFrameTaskPOI"..i;
+		local taskPOI = _G[taskPOIName];
+		taskPOI:Hide();
+	end
+end
+
+
 
 function OmegaMap_DrawWorldEffects()
 	-----------------------------------------------------------------
@@ -482,7 +673,7 @@ function OmegaMap_DrawWorldEffects()
 	
 	-- Draw scenario icons
 	local scenarioIconCount = 1;
-	if((WatchFrame.showObjectives == true) and (scenarioIconInfo ~= nil))then
+	if( GetCVarBool("questPOI") and (scenarioIconInfo ~= nil))then
 		for _, info  in next, scenarioIconInfo do
 		
 			--textureIndex, x, y, name
@@ -528,11 +719,13 @@ function OmegaMapFrame_Update()
 			mapName = "Cosmic";
 			OmegaMapOutlandButton:Show();
 			OmegaMapAzerothButton:Show();
+			OmegaMapDraenorButton:Show();
 		else
 			-- Temporary Hack (Temporary meaning 6 yrs, haha)
 			mapName = "World";
 			OmegaMapOutlandButton:Hide();
 			OmegaMapAzerothButton:Hide();
+			OmegaMapDraenorButton:Hide();
 		end
 		OmegaMapDeepholmButton:Hide();
 		OmegaMapKezanButton:Hide();
@@ -541,6 +734,7 @@ function OmegaMapFrame_Update()
 	else
 		OmegaMapOutlandButton:Hide();
 		OmegaMapAzerothButton:Hide();
+		OmegaMapDraenorButton:Hide();
 		if ( GetCurrentMapContinent() == WORLDMAP_MAELSTROM_ID and GetCurrentMapZone() == 0 ) then
 			OmegaMapDeepholmButton:Show();
 			OmegaMapKezanButton:Show();
@@ -558,6 +752,11 @@ function OmegaMapFrame_Update()
 	if (DungeonUsesTerrainMap()) then
 		dungeonLevel = dungeonLevel - 1;
 	end
+
+	local mapWidth = OmegaMapDetailFrame:GetWidth();
+	local mapHeight = OmegaMapDetailFrame:GetHeight();
+
+	local mapID, isContinent = GetCurrentMapAreaID();
 
 	local fileName;
 
@@ -589,13 +788,6 @@ function OmegaMapFrame_Update()
 	end
 	--OmegaMapHighlight:Hide();
 
-	-- Enable/Disable zoom out button
-	if ( IsZoomOutAvailable() ) then
-		OmegaMapZoomOutButton:Enable();
-	else
-		OmegaMapZoomOutButton:Disable();
-	end
-
 	-- Setup the POI's
 	local numPOIs = GetNumMapLandmarks();
 	if ( NUM_OMEGAMAP_POIS < numPOIs ) then
@@ -610,63 +802,64 @@ function OmegaMapFrame_Update()
 		local omegaMapPOIName = "OmegaMapFramePOI"..i;
 		local omegaMapPOI = _G[omegaMapPOIName];
 		if ( i <= numPOIs ) then
-			local name, description, textureIndex, x, y, mapLinkID, inBattleMap, graveyardID, areaID, poiID, isObjectIcon = GetMapLandmarkInfo(i);
-			if( (GetCurrentMapAreaID() ~= WORLDMAP_WINTERGRASP_ID) and (areaID == WORLDMAP_WINTERGRASP_POI_AREAID) ) then
+			local name, description, textureIndex, x, y, mapLinkID, inBattleMap, graveyardID, areaID, poiID, isObjectIcon, atlasIcon = GetMapLandmarkInfo(i);
+			if( (mapID ~= WORLDMAP_WINTERGRASP_ID) and (areaID == WORLDMAP_WINTERGRASP_POI_AREAID) ) then
 				omegaMapPOI:Hide();
 			else
-
---alt map code
-
-	if (OMEGAMAP_ALTMAP) then
-		activeFrame = OmegaMapAltMapFrame
-	else
-		activeFrame = OmegaMapButton
-	end
-	x, y = OmegaMapOffsetAltMapCoords(x,y)
-			x = x * activeFrame:GetWidth();
-			y = -y * activeFrame:GetHeight();
-			--omegaMapPOI:SetPoint("CENTER", "OmegaMapButton", "TOPLEFT", x, y );
-			omegaMapPOI:SetPoint("CENTER", activeFrame, "TOPLEFT", x, y );
-			--new
-			if ( OmegaMap_IsSpecialPOI(poiID) ) then	--We have special handling for Isle of the Thunder King
-				OmegaMap_HandleSpecialPOI(omegaMapPOI, poiID);
-			else
-				OmegaMap_ResetPOI(omegaMapPOI, isObjectIcon);
-
-				local x1, x2, y1, y2
-				if (isObjectIcon == true) then
-					x1, x2, y1, y2 = GetObjectIconTextureCoords(textureIndex);
+				--alt map code
+				if (OMEGAMAP_ALTMAP) then
+					activeFrame = OmegaMapAltMapFrame
 				else
-					x1, x2, y1, y2 = GetPOITextureCoords(textureIndex);
+					activeFrame = OmegaMapButton
 				end
-				_G[omegaMapPOIName.."Texture"]:SetTexCoord(x1, x2, y1, y2);
-				omegaMapPOI.name = name;
-				omegaMapPOI.description = description;
-				omegaMapPOI.mapLinkID = mapLinkID;
-				if ( graveyardID and graveyardID > 0 ) then
-					omegaMapPOI.graveyard = graveyardID;
-					numGraveyards = numGraveyards + 1;
-					local graveyard = OmegaMap_GetGraveyardButton(numGraveyards);
-					graveyard:SetPoint("CENTER", omegaMapPOI);
-					graveyard:SetFrameLevel(omegaMapPOI:GetFrameLevel() - 1);
-					graveyard:Show();
-					if ( currentGraveyard == graveyardID ) then
-						graveyard.texture:SetTexture("Interface\\WorldMap\\GravePicker-Selected");
+				x, y = OmegaMapOffsetAltMapCoords(x,y)
+				x = x * activeFrame:GetWidth();
+				y = -y * activeFrame:GetHeight();
+				omegaMapPOI:SetPoint("CENTER", activeFrame, "TOPLEFT", x, y );
+
+				if ( OmegaMap_IsSpecialPOI(poiID) ) then	--We have special handling for Isle of the Thunder King
+					OmegaMap_HandleSpecialPOI(omegaMapPOI, poiID);
+				else
+					OmegaMap_ResetPOI(omegaMapPOI, isObjectIcon, atlasIcon);
+
+					local x1, x2, y1, y2
+					if (not atlasIcon) then
+						if (isObjectIcon == true) then
+							x1, x2, y1, y2 = GetObjectIconTextureCoords(textureIndex);
+						else
+							x1, x2, y1, y2 = GetPOITextureCoords(textureIndex);
+						end
+						_G[omegaMapPOIName.."Texture"]:SetTexCoord(x1, x2, y1, y2);
 					else
-						graveyard.texture:SetTexture("Interface\\WorldMap\\GravePicker-Unselected");
+						_G[omegaMapPOIName.."Texture"]:SetTexCoord(0, 1, 0, 1);
 					end
-					omegaMapPOI:Hide();		-- lame way to force tooltip redraw
-				else
-					omegaMapPOI.graveyard = nil;
+
+					omegaMapPOI.name = name;
+					omegaMapPOI.description = description;
+					omegaMapPOI.mapLinkID = mapLinkID;
+					if ( graveyardID and graveyardID > 0 ) then
+						omegaMapPOI.graveyard = graveyardID;
+						numGraveyards = numGraveyards + 1;
+						local graveyard = OmegaMap_GetGraveyardButton(numGraveyards);
+						graveyard:SetPoint("CENTER", omegaMapPOI);
+						graveyard:SetFrameLevel(omegaMapPOI:GetFrameLevel() - 1);
+						graveyard:Show();
+						if ( currentGraveyard == graveyardID ) then
+							graveyard.texture:SetTexture("Interface\\WorldMap\\GravePicker-Selected");
+						else
+							graveyard.texture:SetTexture("Interface\\WorldMap\\GravePicker-Unselected");
+						end
+						omegaMapPOI:Hide();		-- lame way to force tooltip redraw
+					else
+						omegaMapPOI.graveyard = nil;
+					end
+					omegaMapPOI:Show();	
 				end
-				omegaMapPOI:Show();	
-			end
 			end
 		else
 			omegaMapPOI:Hide();
 		end
 	end
-
 	if ( numGraveyards > NUM_OMEGAMAP_GRAVEYARDS ) then
 		NUM_OMEGAMAP_GRAVEYARDS = numGraveyards;
 	else
@@ -676,6 +869,7 @@ function OmegaMapFrame_Update()
 	end
 	
 	OmegaMap_DrawWorldEffects();
+	OmegaMap_UpdateQuestBonusObjectives();
 
 	-- Setup the overlays
 	local textureCount = 0;
@@ -687,7 +881,7 @@ function OmegaMapFrame_Update()
 			local neededTextures = textureCount + (numTexturesWide * numTexturesTall);
 			if ( neededTextures > NUM_OMEGAMAP_OVERLAYS ) then
 				for j=NUM_OMEGAMAP_OVERLAYS+1, neededTextures do
-					OmegaMapDetailFrame:CreateTexture("OmegaMapOverlay"..j, "ARTWORK");
+					OmegaMapDetailTilesFrame:CreateTexture("OmegaMapOverlay"..j, "ARTWORK");
 				end
 				NUM_OMEGAMAP_OVERLAYS = neededTextures;
 			end
@@ -737,6 +931,30 @@ function OmegaMapFrame_Update()
 	end
 	
 	OmegaMapJournal_AddMapButtons();
+
+	--New
+
+	-- position storyline quests, but not on continent or "world" maps
+	local numUsedStoryLineFrames = 0;
+	if ( not isContinent and mapID > 0 ) then
+		for i = 1, C_Questline.GetNumAvailableQuestlines() do
+			local questLineName, questName, continentID, x, y = C_Questline.GetQuestlineInfoByIndex(i);
+			if ( questLineName and x > 0 and y > 0 ) then
+				numUsedStoryLineFrames = numUsedStoryLineFrames + 1;
+				local frame = STORYLINE_FRAMES[numUsedStoryLineFrames];
+				if ( not frame ) then
+					frame = CreateFrame("FRAME", "OmegaMapStoryLine"..numUsedStoryLineFrames, OmegaMapOtherPOIFrame, "OmegaMapStoryLineTemplate");
+					STORYLINE_FRAMES[numUsedStoryLineFrames] = frame;
+				end
+				frame.index = i;
+				frame:SetPoint("CENTER", "OmegaMapDetailTilesFrame", "TOPLEFT", x * mapWidth, -y * mapHeight);
+				frame:Show();
+			end
+		end
+	end
+	for i = numUsedStoryLineFrames + 1, #STORYLINE_FRAMES do
+		STORYLINE_FRAMES[i]:Hide();
+	end
 
 -- sets up Gatherer POI
 	if (GathererOmegaMapOverlayParent) then
@@ -834,18 +1052,13 @@ function OmegaMapFrame_Update()
 
 	end
 
-	if  (Explorer) then
-
-
-	end
-
 --Shows Alternate map if avaliable
 	if OmegaMapConfig.showExteriors then
 		OmegaMap_LoadAltMapNotes()
 	else 
 		OmegaMap_HideAltMap()
 	end
-
+--[[
 -- Hides map blobs if an alt map is displayed
 	if  not InCombatLockdown() then
 		if OMEGAMAP_ALTMAP then
@@ -854,6 +1067,7 @@ function OmegaMapFrame_Update()
 			OmegaMapSpecialFrame:Show()
 		end
 	end
+	--]]
 end
 
 function OmegaMapFrame_UpdateUnits(raidUnitPrefix, partyUnitPrefix)
@@ -887,11 +1101,11 @@ function OmegaMapPOI_OnEnter(self)
 				OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 				if ( self.graveyard == GetCemeteryPreference() ) then
 					OmegaMapTooltip:SetText(GRAVEYARD_SELECTED);
-					OmegaMapTooltip:AddLine(GRAVEYARD_SELECTED_TOOLTIP, 1, 1, 1, 1);
+					OmegaMapTooltip:AddLine(GRAVEYARD_SELECTED_TOOLTIP, 1, 1, 1, true);
 					OmegaMapTooltip:Show();
 				else
 					OmegaMapTooltip:SetText(GRAVEYARD_ELIGIBLE);
-					OmegaMapTooltip:AddLine(GRAVEYARD_ELIGIBLE_TOOLTIP, 1, 1, 1, 1);
+					OmegaMapTooltip:AddLine(GRAVEYARD_ELIGIBLE_TOOLTIP, 1, 1, 1, true);
 					OmegaMapTooltip:Show();
 				end
 			end
@@ -999,7 +1213,6 @@ function OmegaMapEffectPOI_OnEnter(self)
 		OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		OmegaMapTooltip:SetText(WorldEffectPOITooltips[self.name]);
 		OmegaMapTooltip:Show();
-		OmegaMapTooltip.WE_using = true;
 	end
 end
 
@@ -1008,7 +1221,31 @@ function OmegaMapEffectPOI_OnLeave()
 	OmegaMapFrameAreaLabel:SetText(OmegaMapFrame.areaName);
 	OmegaMapFrameAreaDescription:SetText("");
 	OmegaMapTooltip:Hide();
-	OmegaMapTooltip.WE_using = false;
+end
+
+function OmegaMapTaskPOI_OnEnter(self)
+	if(self ~= nil and self.questID ~= nil) then
+		OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+		local name = C_TaskQuest.GetQuestTitleByQuestID(self.questID)
+		local objectives = C_TaskQuest.GetQuestObjectiveStrByQuestID(self.questID)
+
+		--_G["lastPOIButtonUsed"] = self;
+		
+		OmegaMapTooltip:SetText(name);
+		if ( objectives ~= nil ) then
+			for key,value in pairs(objectives) do
+				OmegaMapTooltip:AddLine(QUEST_DASH..value, 1, 1, 1, true);
+			end	
+		end
+		OmegaMapTooltip:Show();
+	end
+end
+
+function OmegaMapTaskPOI_OnLeave(self)
+	OmegaMapFrame.poiHighlight = nil;
+	OmegaMapFrameAreaLabel:SetText(OmegaMapFrame.areaName);
+	OmegaMapFrameAreaDescription:SetText("");
+	OmegaMapTooltip:Hide();
 end
 
 function OmegaMapScenarioPOI_OnEnter(self)
@@ -1016,7 +1253,6 @@ function OmegaMapScenarioPOI_OnEnter(self)
 		OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
 		OmegaMapTooltip:SetText(ScenarioPOITooltips[self.name]);
 		OmegaMapTooltip:Show();
-		OmegaMapTooltip.WE_using = true;
 	end
 end
 
@@ -1025,7 +1261,6 @@ function OmegaMapScenarioPOI_OnLeave()
 	OmegaMapFrameAreaLabel:SetText(OmegaMapFrame.areaName);
 	OmegaMapFrameAreaDescription:SetText("");
 	OmegaMapTooltip:Hide();
-	OmegaMapTooltip.WE_using = false;
 end
 
 function OmegaMapPOI_OnClick(self, button)
@@ -1043,8 +1278,8 @@ function OmegaMapPOI_OnClick(self, button)
 	end
 end
 
-function OmegaMap_CreatePOI(index, isObjectIcon)
-	local button = CreateFrame("Button", "OmegaMapFramePOI"..index, OmegaMapDetailFrame);
+function OmegaMap_CreatePOI(index, isObjectIcon, atlasIcon)
+	local button = CreateFrame("Button", "OmegaMapFramePOI"..index, OmegaMapOtherPOIFrame);
 	button:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	button:SetScript("OnEnter", OmegaMapPOI_OnEnter);
 	button:SetScript("OnLeave", OmegaMapPOI_OnLeave);
@@ -1052,11 +1287,15 @@ function OmegaMap_CreatePOI(index, isObjectIcon)
 
 	button.Texture = button:CreateTexture(button:GetName().."Texture", "BACKGROUND");
 
-	OmegaMap_ResetPOI(button, isObjectIcon);
+	OmegaMap_ResetPOI(button, isObjectIcon, atlasIcon);
 end
 
-function OmegaMap_ResetPOI(button, isObjectIcon)
-	if (isObjectIcon == true) then
+function OmegaMap_ResetPOI(button, isObjectIcon, atlasIcon)
+		if (atlasIcon) then
+		button.Texture:SetAtlas(atlasIcon, true);
+		button:SetSize(button.Texture:GetSize());
+		button.Texture:SetPoint("CENTER", 0, 0);
+	elseif (isObjectIcon == true) then
 		button:SetWidth(32);
 		button:SetHeight(32);
 		button.Texture:SetWidth(28);
@@ -1076,7 +1315,7 @@ function OmegaMap_ResetPOI(button, isObjectIcon)
 end
 
 function OmegadMap_CreateWorldEffectPOI(index)
-	local button = CreateFrame("Button", "OmegaMapFrameWorldEffectPOI"..index, OmegaMapButton);
+	local button = CreateFrame("Button", "OmegaMapFrameWorldEffectPOI"..index, OmegaMapOtherPOIFrame);
 	button:SetWidth(32);
 	button:SetHeight(32);
 	button:SetScript("OnEnter", OmegaMapEffectPOI_OnEnter);
@@ -1089,8 +1328,17 @@ function OmegadMap_CreateWorldEffectPOI(index)
 	texture:SetTexture("Interface\\Minimap\\OBJECTICONS");
 end
 
+function OmegaMap_CreateTaskPOI(index)
+	local button = CreateFrame("Button", "OmegaMapFrameTaskPOI"..index, OmegaMapOtherPOIFrame);
+	button:SetScript("OnEnter", OmegaMapTaskPOI_OnEnter);
+	button:SetScript("OnLeave", OmegaMapTaskPOI_OnLeave);
+	
+	button.Texture = button:CreateTexture(button:GetName().."Texture", "BACKGROUND");
+	OmegaMap_ResetPOI(button, true, false)
+end
+
 function OmegaMap_CreateScenarioPOI(index)
-	local button = CreateFrame("Button", "OmegaMapFrameScenarioPOI"..index, OmegaMapButton);
+	local button = CreateFrame("Button", "OmegaMapFrameScenarioPOI"..index, OmegaMapOtherPOIFrame);
 	button:SetWidth(32);
 	button:SetHeight(32);
 	button:SetScript("OnEnter", OmegaMapScenarioPOI_OnEnter);
@@ -1108,7 +1356,7 @@ function OmegaMap_GetGraveyardButton(index)
 	local frameName = "OmegaMapFrameGraveyard"..index;
 	local button = _G[frameName];
 	if ( not button ) then
-		button = CreateFrame("Button", frameName, OmegaMapButton);
+		button = CreateFrame("Button", frameName, OmegaMapOtherPOIFrame);
 		button:SetWidth(32);
 		button:SetHeight(32);
 		button:RegisterForClicks("LeftButtonUp", "RightButtonUp");
@@ -1117,63 +1365,12 @@ function OmegaMap_GetGraveyardButton(index)
 		button:SetScript("OnClick", nil);
 		
 		local texture = button:CreateTexture(button:GetName().."Texture", "ARTWORK");
-		texture:SetWidth(24);
-		texture:SetHeight(24);
+		texture:SetWidth(48);
+		texture:SetHeight(48);
 		texture:SetPoint("CENTER", 0, 0);
 		button.texture = texture;
 	end
 	return button;
-end
-
-
-function OmegaMapContinentsDropDown_Update()
-	UIDropDownMenu_Initialize(OmegaMapContinentDropDown, OmegaMapContinentsDropDown_Initialize);
-	UIDropDownMenu_SetWidth(OmegaMapContinentDropDown, 130);
-
-	if ( (GetCurrentMapContinent() == WORLDMAP_WORLD_ID) or (GetCurrentMapContinent() == WORLDMAP_COSMIC_ID) ) then
-		UIDropDownMenu_ClearAll(OmegaMapContinentDropDown);
-	else
-		UIDropDownMenu_SetSelectedID(OmegaMapContinentDropDown,GetCurrentMapContinent());
-	end
-end
-
-function OmegaMapContinentsDropDown_Initialize()
-	OmegaMapFrame_LoadContinents(GetMapContinents());
-end
-
-function OmegaMapFrame_LoadContinents(...)
-	local info = UIDropDownMenu_CreateInfo();
-	for i=1, select("#", ...), 1 do
-		info.text = select(i, ...);
-		info.func = OmegaMapContinentButton_OnClick;
-		info.checked = nil;
-		UIDropDownMenu_AddButton(info);
-	end
-end
-
-function OmegaMapZoneDropDown_Update()
-	UIDropDownMenu_Initialize(OmegaMapZoneDropDown, OmegaMapZoneDropDown_Initialize);
-	UIDropDownMenu_SetWidth(OmegaMapZoneDropDown, 130);
-
-	if ( (GetCurrentMapContinent() == WORLDMAP_WORLD_ID) or (GetCurrentMapContinent() == WORLDMAP_COSMIC_ID) ) then
-		UIDropDownMenu_ClearAll(OmegaMapZoneDropDown);
-	else
-		UIDropDownMenu_SetSelectedID(OmegaMapZoneDropDown, GetCurrentMapZone());
-	end
-end
-
-function OmegaMapZoneDropDown_Initialize()
-	OmegaMapFrame_LoadZones(GetMapZones(GetCurrentMapContinent()));
-end
-
-function OmegaMapFrame_LoadZones(...)
-	local info = UIDropDownMenu_CreateInfo();
-	for i=1, select("#", ...), 1 do
-		info.text = select(i, ...);
-		info.func = OmegaMapZoneButton_OnClick;
-		info.checked = nil;
-		UIDropDownMenu_AddButton(info);
-	end
 end
 
 function OmegaMapLevelDropDown_Update()
@@ -1183,13 +1380,12 @@ function OmegaMapLevelDropDown_Update()
 	if ( (GetNumDungeonMapLevels() == 0) ) then
 		UIDropDownMenu_ClearAll(OmegaMapLevelDropDown);
 		OmegaMapLevelDropDown:Hide();
-		OmegaMapLevelUpButton:Hide();
-		OmegaMapLevelDownButton:Hide();
 	else
+		local floorMapCount, firstFloor = GetNumDungeonMapLevels();
+		local levelID = GetCurrentMapDungeonLevel() - firstFloor + 1;
+
 		UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, GetCurrentMapDungeonLevel());
 		OmegaMapLevelDropDown:Show();
-		OmegaMapLevelUpButton:Show();
-		OmegaMapLevelDownButton:Show();
 	end
 end
 
@@ -1224,40 +1420,7 @@ function OmegaMapLevelButton_OnClick(self)
 	local level = firstFloor + self:GetID() - 1;
 	
 	SetDungeonMapLevel(level);
-end
-
-function OmegaMapLevelUp_OnClick(self)
-	CloseDropDownMenus();
-	local currMapLevel = GetCurrentMapDungeonLevel();
-	SetDungeonMapLevel(currMapLevel - 1);
-	local newMapLevel = GetCurrentMapDungeonLevel();
-	if ( currMapLevel ~= newMapLevel ) then
-		local floorMapCount, firstFloor = GetNumDungeonMapLevels();
-		UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, newMapLevel - firstFloor + 1)
-	end
-	PlaySound("UChatScrollButton");
-end
-
-function OmegaMapLevelDown_OnClick(self)
-	CloseDropDownMenus();
-	local currMapLevel = GetCurrentMapDungeonLevel();
-	SetDungeonMapLevel(currMapLevel + 1);
-	local newMapLevel = GetCurrentMapDungeonLevel();
-	if ( currMapLevel ~= newMapLevel ) then
-		local floorMapCount, firstFloor = GetNumDungeonMapLevels();
-		UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, newMapLevel - firstFloor + 1);
-	end
-	PlaySound("UChatScrollButton");
-end
-
-function OmegaMapContinentButton_OnClick(self)
-	UIDropDownMenu_SetSelectedID(OmegaMapContinentDropDown, self:GetID());
-	SetMapZoom(self:GetID());
-end
-
-function OmegaMapZoneButton_OnClick(self)
-	UIDropDownMenu_SetSelectedID(OmegaMapZoneDropDown, self:GetID());
-	SetMapZoom(GetCurrentMapContinent(), self:GetID());
+	OmegaMapScrollFrame_ResetZoom()
 end
 
 function OmegaMapZoomOutButton_OnClick()
@@ -1267,18 +1430,20 @@ function OmegaMapZoomOutButton_OnClick()
 	-- check if code needs to zoom out before going to the continent map
 	if ( ZoomOut() ~= nil ) then
 		return;
-	elseif ( GetCurrentMapZone() ~= WORLDMAP_WORLD_ID ) then
-		SetMapZoom(GetCurrentMapContinent());
-	elseif ( GetCurrentMapContinent() == WORLDMAP_WORLD_ID ) then
+	elseif ( GetCurrentMapContinent() == WORLDMAP_AZEROTH_ID ) then
 		SetMapZoom(WORLDMAP_COSMIC_ID);
-	elseif ( GetCurrentMapContinent() == WORLDMAP_OUTLAND_ID ) then
+	elseif ( GetCurrentMapContinent() == WORLDMAP_OUTLAND_ID or GetCurrentMapContinent() == WORLDMAP_DRAENOR_ID ) then
 		SetMapZoom(WORLDMAP_COSMIC_ID);
 	else
-		SetMapZoom(WORLDMAP_WORLD_ID);
+		SetMapZoom(WORLDMAP_AZEROTH_ID);
 	end
 end
 
 function OmegaMapButton_OnClick(button, mouseButton)
+	if ( OmegaMapButton.ignoreClick ) then
+		OmegaMapButton.ignoreClick = false;
+		return;
+	end
 	CloseDropDownMenus();
 	if ( mouseButton == "LeftButton" ) then
 		local x, y = GetCursorPosition();
@@ -1293,11 +1458,25 @@ function OmegaMapButton_OnClick(button, mouseButton)
 		ProcessMapClick( adjustedX, adjustedY);
 	elseif ( mouseButton == "RightButton" ) then
 	--Map Notes  plugin click register
+		OmegaMapZoomOutButton_OnClick();
+	elseif ( GetBindingFromClick(mouseButton) ==  "TOGGLEWORLDMAP" ) then  --Revisit
+		ToggleOmegaMap();
+	end
+end
 
-			OmegaMapZoomOutButton_OnClick();
-
-	elseif ( GetBindingFromClick(mouseButton) ==  "TOGGLEWORLDMAP" ) then
-		ToggleFrame(OmegaMapFrame);
+function OmegaMapFakeButton_OnClick(button, mouseButton)
+	if ( OmegaMapButton.ignoreClick ) then
+		OmegaMapButton.ignoreClick = false;
+		return;
+	end
+	if ( mouseButton == "LeftButton" ) then
+		if ( button.zoneID ) then
+			SetMapByID(button.zoneID);
+		elseif ( button.continent ) then
+			SetMapZoom(button.continent);
+		end
+	else
+		OmegaMapZoomOutButton_OnClick();
 	end
 end
 
@@ -1319,6 +1498,9 @@ local BLIP_RAID_Y_OFFSET = 0.5;
 
 function OmegaMapButton_OnUpdate(self, elapsed)
 	local x, y = GetCursorPosition();
+	if ( OmegaMapScrollFrame.panning ) then
+		OmegaMapScrollFrame_OnPan(x, y);
+	end
 	x = x / self:GetEffectiveScale();
 	y = y / self:GetEffectiveScale();
 
@@ -1362,14 +1544,14 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 			end
 			color = ConvertRGBtoColorString(color);
 			if (minLevel ~= maxLevel) then
-				OmegaMapFrameAreaLabel:SetText(OmegaMapFrameAreaLabel:GetText()..color.." ("..minLevel.."-"..maxLevel..")");
+				OmegaMapFrameAreaLabel:SetText(OmegaMapFrameAreaLabel:GetText()..color.." ("..minLevel.."-"..maxLevel..")"..FONT_COLOR_CODE_CLOSE);
 			else
-				OmegaMapFrameAreaLabel:SetText(OmegaMapFrameAreaLabel:GetText()..color.." ("..maxLevel..")");
+				OmegaMapFrameAreaLabel:SetText(OmegaMapFrameAreaLabel:GetText()..color.." ("..maxLevel..")"..FONT_COLOR_CODE_CLOSE);
 			end
 		end
 
 		local _, _, _, _, locked = C_PetJournal.GetPetLoadOutInfo(1);
-		if (not locked and IsTrackingBattlePets()) then --don't show pet levels for people who haven't unlocked battle petting
+		if (not locked) then --don't show pet levels for people who haven't unlocked battle petting
 			if (petMinLevel and petMaxLevel and petMinLevel > 0 and petMaxLevel > 0) then 
 				local teamLevel = C_PetJournal.GetPetTeamAverageLevel();
 				local color
@@ -1389,9 +1571,9 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 				end
 				color = ConvertRGBtoColorString(color);
 				if (petMinLevel ~= petMaxLevel) then
-					OmegaMapFrameAreaPetLevels:SetText(WORLD_MAP_WILDBATTLEPET_LEVEL..color.."("..petMinLevel.."-"..petMaxLevel..")");
+					OmegaMapFrameAreaPetLevels:SetText(WORLD_MAP_WILDBATTLEPET_LEVEL..color.."("..petMinLevel.."-"..petMaxLevel..")"..FONT_COLOR_CODE_CLOSE);
 				else
-					OmegaMapFrameAreaPetLevels:SetText(WORLD_MAP_WILDBATTLEPET_LEVEL..color.."("..petMaxLevel..")");
+					OmegaMapFrameAreaPetLevels:SetText(WORLD_MAP_WILDBATTLEPET_LEVEL..color.."("..petMaxLevel..")"..FONT_COLOR_CODE_CLOSE);
 				end
 			end
 		end
@@ -1407,7 +1589,7 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 		if ( (textureX > 0) and (textureY > 0) ) then
 			OmegaMapHighlight:SetWidth(textureX);
 			OmegaMapHighlight:SetHeight(textureY);
-			OmegaMapHighlight:SetPoint("TOPLEFT", "OmegaMapDetailFrame", "TOPLEFT", scrollChildX, scrollChildY);
+			OmegaMapHighlight:SetPoint("TOPLEFT", "OmegaMapDetailTilesFrame", "TOPLEFT", scrollChildX, scrollChildY);
 			OmegaMapHighlight:Show();
 			--OmegaMapFrameAreaLabel:SetPoint("TOP", "OmegaMapHighlight", "TOP", 0, 0);
 		end
@@ -1415,56 +1597,34 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 	else
 		OmegaMapHighlight:Hide();
 	end
+
+	local activeFrame = OmegaMapPlayersFrame
+	if (OMEGAMAP_ALTMAP) then
+		activeFrame = OmegaMapAltMapFrame
+	else
+		activeFrame = OmegaMapPlayersFrame
+	end
+
+	local playersFrameWidth = activeFrame:GetWidth();
+	local playersFrameHeight = activeFrame:GetHeight();
+
 	--Position player
 	local playerX, playerY = OmegaMapOffsetAltMapCoords( GetPlayerMapPosition("player"));
-	local activeFrame = OmegaMapDetailFrame
-
 	if ( (playerX == 0 and playerY == 0) ) then
 		OmegaMapPlayerLower:Hide();
 		OmegaMapPlayerUpper:Hide();
 	else
--- Code for exterior swtich
-	local uX, uY = OmegaMapOffsetAltMapCoords( playerX, playerY)
-
-	if (OMEGAMAP_ALTMAP) then
-		activeFrame = OmegaMapAltMapFrame
-	else
-		activeFrame = OmegaMapDetailFrame
-	end
-
-	playerX = playerX  * activeFrame:GetWidth();
-	playerY = -playerY  * activeFrame:GetHeight();
-	
-	--OmegaMapPlayer:SetPoint("CENTER", activeFrame, "TOPLEFT", playerX, playerY);
-
+		playerX = playerX * playersFrameWidth;
+		playerY = -playerY * playersFrameHeight;
 
 		-- Position clear button to detect mouseovers
-		--OmegaMapPlayer:Show();
 		OmegaMapPlayerLower:Show();
 		OmegaMapPlayerUpper:Show();
-		OmegaMapPlayerLower:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", playerX, playerY);
-		OmegaMapPlayerUpper:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", playerX, playerY);
+		OmegaMapPlayerLower:SetPoint("CENTER", OmegaMapPlayersFrame, "TOPLEFT", playerX, playerY);
+		OmegaMapPlayerUpper:SetPoint("CENTER", OmegaMapPlayersFrame, "TOPLEFT", playerX, playerY);
 		UpdateWorldMapArrow(OmegaMapPlayerLower.icon);
 		UpdateWorldMapArrow(OmegaMapPlayerUpper.icon);
-		OmegaMapPing:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", playerX, playerY);
---[[
-		--OmegaMapPlayer:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", playerX, playerY);
-		local angle = GetPlayerFacing() + 2.356;
-		local cos, sin = math.cos(angle), math.sin(angle);
-		OM_pArrow:SetTexCoord(	0.5-sin, 0.5+cos,
-							0.5+cos, 0.5+sin,
-							0.5-cos, 0.5-sin,
-							0.5+sin, 0.5-cos);
-
-		-- Position player ping if its shown
-		if ( OmegaMapPing:IsShown() ) then
-			OmegaMapPing:SetPoint("CENTER", activeFrame, "TOPLEFT", playerX, playerY);
-			--UIFrameFlash(OmegaMapPing, 0.25, 0.25, 20, false, 0.15, 0.15);
-			OM_Fader.FrameFlash(OmegaMapPing, 0.25, 0.25, 6, false, 0.15, 0.15);
-			-- If ping has a timer greater than 0 count it down, otherwise fade it out
-
-		end
-		]]--
+		OmegaMapPing:SetPoint("CENTER", OmegaMapPlayersFrame, "TOPLEFT", playerX, playerY);
 	end
 
 	--Position groupmates
@@ -1480,9 +1640,10 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 			if ( (partyX == 0 and partyY == 0) or UnitIsUnit(unit, "player") ) then
 				partyMemberFrame:Hide();
 			else
-				partyX = partyX * activeFrame:GetWidth();
-				partyY = -partyY * activeFrame:GetHeight();
+				partyX = partyX * playersFrameWidth;
+				partyY = -partyY * playersFrameHeight;
 				partyMemberFrame:SetPoint("CENTER", activeFrame, "TOPLEFT", partyX, partyY);
+
 				local class = select(2, UnitClass(unit));
 				if ( class ) then
 					if ( UnitInParty(unit) ) then
@@ -1518,8 +1679,8 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 			if ( partyX == 0 and partyY == 0 ) then
 				partyMemberFrame:Hide();
 			else
-				partyX = partyX * activeFrame:GetWidth();
-				partyY = -partyY * activeFrame:GetHeight();
+				partyX = partyX * playersFrameWidth;
+				partyY = -partyY * playersFrameWidth;
 				partyMemberFrame:SetPoint("CENTER", activeFrame, "TOPLEFT", partyX, partyY);
 				local class = select(2, UnitClass(unit));
 				if ( class ) then
@@ -1583,31 +1744,28 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 	
 	-- position vehicles
 	local numVehicles;
-	--if ( (GetCurrentMapContinent() ~= -1 and GetCurrentMapZone() == 0) ) then
-	if ( GetCurrentMapContinent() == WORLDMAP_WORLD_ID or (GetCurrentMapContinent() ~= -1 and GetCurrentMapZone() == 0) ) then
-
+	if ( GetCurrentMapContinent() == WORLDMAP_AZEROTH_ID or (GetCurrentMapContinent() ~= -1 and GetCurrentMapZone() == 0) ) then
 		-- Hide vehicles on the worldmap and continent maps
 		numVehicles = 0;
 	else
 		numVehicles = GetNumBattlefieldVehicles();
 	end
 	local totalVehicles = #OMEGAMAP_VEHICLES;
-	local playerBlipFrameLevel = WorldMapRaid1:GetFrameLevel();
+	local playerBlipFrameLevel = OmegaMapRaid1:GetFrameLevel();
 	local index = 0;
 	for i=1, numVehicles do
 		if (i > totalVehicles) then
 			local vehicleName = "OmegaMapVehicles"..i;
-			OMEGAMAP_VEHICLES[i] = CreateFrame("FRAME", vehicleName, OmegaMapButton, "OmegaMapVehicleTemplate");
+			OMEGAMAP_VEHICLES[i] = CreateFrame("FRAME", vehicleName, OmegaMapOtherPOIFrame, "OmegaMapVehicleTemplate");
 			OMEGAMAP_VEHICLES[i].texture = _G[vehicleName.."Texture"];
 		end
 		local vehicleX, vehicleY, unitName, isPossessed, vehicleType, orientation, isPlayer, isAlive = OmegaMapOffsetAltMapCoords( GetBattlefieldVehicleInfo(i));
 		if ( vehicleX and isAlive and not isPlayer and VEHICLE_TEXTURES[vehicleType]) then
-			--print("VF")
 			local mapVehicleFrame = OMEGAMAP_VEHICLES[i];
 			vehicleX = vehicleX * activeFrame:GetWidth();
 			vehicleY = -vehicleY * activeFrame:GetHeight();
 			mapVehicleFrame.texture:SetRotation(orientation);
-			mapVehicleFrame.texture:SetTexture(WorldMap_GetVehicleTexture(vehicleType, isPossessed));
+			mapVehicleFrame.texture:SetTexture(OmegaMap_GetVehicleTexture(vehicleType, isPossessed));
 			mapVehicleFrame:SetPoint("CENTER", activeFrame, "TOPLEFT", vehicleX, vehicleY);
 			mapVehicleFrame:SetWidth(VEHICLE_TEXTURES[vehicleType].width);
 			mapVehicleFrame:SetHeight(VEHICLE_TEXTURES[vehicleType].height);
@@ -1663,28 +1821,22 @@ function OmegaMap_GetVehicleTexture(vehicleType, isPossessed)
 	return VEHICLE_TEXTURES[vehicleType][isPossessed];
 end
 
-function OmegaMap_LoadTextures()
-end
-
 function OmegaMap_ClearTextures()
 	for i=1, NUM_OMEGAMAP_OVERLAYS do
 		_G["OmegaMapOverlay"..i]:SetTexture(nil);
 	end
 	local numOfDetailTiles = GetNumberOfDetailTiles();
 	for i=1, numOfDetailTiles do
-		--_G["OmegaMapFrameTexture"..i]:SetTexture(nil);
+		--_G["OmegaMapFrameTexture"..i]:SetTexture(nil);  --NEEDed?
 		_G["OmegaMapDetailTile"..i]:SetTexture(nil);
 	end
-
 end
-
 
 function OmegaMapUnit_OnLoad(self)
 	self:SetFrameLevel(self:GetFrameLevel() + 1);
 end
 
 function OmegaMapUnit_OnEnter(self, motion)
-	OmegaMapPOIFrame.allowBlobTooltip = false;
 	-- Adjust the tooltip based on which side the unit button is on
 	local x, y = self:GetCenter();
 	local parentX, parentY = self:GetParent():GetCenter();
@@ -1757,7 +1909,6 @@ function OmegaMapUnit_OnEnter(self, motion)
 end
 
 function OmegaMapUnit_OnLeave(self, motion)
-	OmegaMapPOIFrame.allowBlobTooltip = true;
 	OmegaMapTooltip:Hide();
 end
 
@@ -1781,7 +1932,7 @@ function OmegaMapUnit_OnMouseUp(self, mouseButton, raidUnitPrefix, partyUnitPref
 		BAD_BOY_COUNT = 0;
 
 		local inInstance, instanceType = IsInInstance();
-		if ( instanceType == "pvp" ) then
+		if ( instanceType == "pvp" or  IsInActiveWorldPVP() ) then
 			--Check Raid
 			local unitButton;
 			for i=1, MAX_RAID_MEMBERS do
@@ -1877,6 +2028,8 @@ function OmegaMapUnitDropDown_ReportAll_OnClick()
 	end
 end
 
+--OUT?
+--[[
 function OmegaMapFrame_ResetFrameLevels()
 	
 OmegaMapMasterFrame:SetFrameStrata("HIGH")
@@ -1894,82 +2047,10 @@ OmegaMapMasterFrame:SetFrameStrata("HIGH")
         _G["OmegaMapParty"..i]:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL + 100 - 1);
     end
 end
-
-function OmegaMapQuestShowObjectives_Toggle()
-	if ( not OmegaMapConfig.showObjectives ) then
-		WatchFrame.showObjectives= true;
-		QuestLogFrameShowMapButton:Show();		
-	else
-		WatchFrame.showObjectives = nil;
-		WatchFrame_Update();
-		QuestLogFrameShowMapButton:Hide();	
-	end
-end
+]]--
 
 
-function OmegaMapFrame_DisplayQuests(selectQuestId)
-if (QuestFrame:IsShown()) then return end --Fix for clearing quest rewards when opening 
-	if ( OmegaMapFrame_UpdateQuests() > 0 ) then
-		-- if a quest id wasn't passed in, try to select either current supertracked quest or original supertracked (saved when map was opened)
-		if ( not OmegaMapFrame_SelectQuestById(selectQuestId) and not OmegaMapFrame_SelectQuestById(GetSuperTrackedQuestID())
-			and not OmegaMapFrame_SelectQuestById(WORLDMAP_SETTINGS.superTrackedQuestID) ) then
-			-- quest id wasn't found on this map, select the first quest
-			if ( OmegaMapQuestFrame1 ) then
-				OmegaMapFrame_SelectQuestFrame(OmegaMapQuestFrame1);
-			end
-		end
-		if not InCombatLockdown() then 
-
-		OmegaMapBlobFrame:Show();
-		end
-		OmegaMapPOIFrame:Show();
-		OmegaMapShowObjectivesButton:Show()
-		--OmegaMapTrackQuest:Show();	
-		if (OmegaMapConfig.showObjectives) then
-			OmegaMapQuestScrollFrame:Show();
-		else
-			OmegaMapQuestScrollFrame:Hide();
-		end
-		--OmegaMapQuestDetailScrollFrame:Show();
-		--OmegaMapQuestRewardScrollFrame:Show()
-		--[[		--Used to hide the objective list, but keep POI on map
-		if (OmegaMapConfig.showObjectives) and  OmegaMapDetailFrame:IsShown() then
-			OmegaMapQuestScrollFrame:Show();
-		else			OmegaMapShowObjectivesButton:Show();
-		end --]]
-	else
-		if  InCombatLockdown() then 
-
-			OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
-		else
-			OmegaMapBlobFrame:Hide();
-		end
-		OmegaMapPOIFrame:Hide();
-		OmegaMapTrackQuest:Hide();
-		OmegaMapQuestScrollFrame:Hide()
-		--OmegaMapQuestDetailScrollFrame:Hide()
-		--OmegaMapQuestRewardScrollFrame:Hide()
-		OmegaMapShowObjectivesButton:Hide()
-	end
-end
-
-function OmegaMapFrame_SelectQuestById(questId)
-	if ( not questId or questId <= 0 ) then
-		return false;
-	end
-	local questFrame;
-	for i = 1, MAX_NUM_QUESTS do
-		questFrame = _G["OmegaMapQuestFrame"..i];
-		if ( not questFrame ) then
-			break
-		elseif ( questFrame.questId == questId ) then
-			OmegaMapFrame_SelectQuestFrame(questFrame);
-			return true;
-		end
-	end
-	return false;
-end
-
+--[[  -- OUT REVISIT
 function OmegaMapFrame_SetFullMapView()
 	OmegaMapConfig.size = OMEGAMAP_FULLMAP_SIZE;
 	OmegaMapDetailFrame:SetScale(OMEGAMAP_FULLMAP_SIZE);
@@ -1995,21 +2076,19 @@ function OmegaMapFrame_SetFullMapView()
 	OmegaMapBarFrame_UpdateLayout(OmegaMapBarFrame);  
 end
 
-function OmegaMapFrame_UpdateMap(questId)
+]]--
+
+function OmegaMapFrame_UpdateMap()
 	OmegaMapFrame_Update();
-	OmegaMapContinentsDropDown_Update();
-	OmegaMapZoneDropDown_Update();
 	OmegaMapLevelDropDown_Update();
-	if ( WatchFrame.showObjectives ) then
-		OmegaMapFrame_DisplayQuests(questId);
-	end
+	OmegaMapNavBar_Update();
 end
 
 function OmegaMapScenarioPOIFrame_OnUpdate()
 	if (not OmegaMapFrame:IsVisible()) then return end
 
 	OmegaMapScenarioPOIFrame:DrawNone();
-	if(WatchFrame.showObjectives == true) then
+	if( GetCVarBool("questPOI") ) then
 		OmegaMapScenarioPOIFrame:DrawAll();
 	end
 end
@@ -2025,359 +2104,12 @@ function ArchaeologyDigSiteFrame_OnUpdate()
 	end
 end
 
-function OmegaMapFrame_UpdateQuests()
-	local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily;
-	local questId, questLogIndex, startEvent;
-	local questFrame;
-	local lastFrame;
-	local refFrame = OmegaMapQuestFrame0;
-	local questCount = 0;
-	local numObjectives, requiredMoney;
-	local text, _, finished;
-	local playerMoney = GetMoney();
-	
-	local numPOINumeric = 0;
-	local numPOICompleteSwap = 0;
-	
-	local numEntries = QuestMapUpdateAllQuests();
-	OmegaMapFrame_ClearQuestPOIs();
-	QuestPOIUpdateIcons();
-	if ( OmegaMapQuestScrollFrame.highlightedFrame ) then
-		OmegaMapQuestScrollFrame.highlightedFrame.ownPOI:UnlockHighlight();
-	end
-	QuestPOI_HideAllButtons("OmegaMapQuestScrollChildFrame");
-	-- clear blobs
-	OmegaMapBlobFrame:DrawNone();
-	-- populate quest frames
-	for i = 1, numEntries do
-		questId, questLogIndex = QuestPOIGetQuestIDByVisibleIndex(i);
-		if ( questLogIndex and questLogIndex > 0 ) then
-			questCount = questCount + 1;
-			title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily, questId, startEvent = GetQuestLogTitle(questLogIndex);
-			requiredMoney = GetQuestLogRequiredMoney(questLogIndex);
-			numObjectives = GetNumQuestLeaderBoards(questLogIndex);
-			if ( isComplete and isComplete < 0 ) then
-				isComplete = false;
-			elseif ( numObjectives == 0 and playerMoney >= requiredMoney and not startEvent) then
-				isComplete = true;
-			end
-			questFrame = OmegaMapFrame_GetQuestFrame(questCount, isComplete);
-			if ( lastFrame ) then
-				questFrame:SetPoint("TOPLEFT", lastFrame, "BOTTOMLEFT", 0, 0);
-			else
-				questFrame:SetPoint("TOPLEFT", OmegaMapQuestScrollChildFrame, "TOPLEFT", 2, 0);
-			end
-			-- set up indexes
-			questFrame.questId = questId;
-			questFrame.questLogIndex = questLogIndex;
-			questFrame.completed = isComplete;
-			questFrame.level = level;		-- for difficulty color
-			-- display map POI
-			OmegaMapFrame_DisplayQuestPOI(questFrame, isComplete);
-			-- set quest text
-			questFrame.title:SetText(title);
-			if ( IsQuestWatched(questLogIndex) ) then
-				questFrame.title:SetWidth(224);
-				questFrame.check:Show();
-			else
-				questFrame.title:SetWidth(240);
-				questFrame.check:Hide();
-			end
-			numObjectives = GetNumQuestLeaderBoards(questLogIndex);
-			if ( isComplete ) then
-				numPOICompleteSwap = numPOICompleteSwap + 1;
-				questFrame.objectives:SetText(GetQuestLogCompletionText(questLogIndex));
-				questFrame.dashes:SetText(QUEST_DASH);
-			else
-				numPOINumeric = numPOINumeric + 1;
-				local questText = "";
-				local dashText = "";
-				local reversedText;
-				local numLines;
-				for j = 1, numObjectives do
-					local text, objectiveType, finished = GetQuestLogLeaderBoard(j, questLogIndex);
-					if ( text and not finished ) then
-						reversedText = ReverseQuestObjective(text, objectiveType);
-						questText = questText..reversedText.."|n";
-						refFrame.objectives:SetText(reversedText);
-						-- need to add 1 spacing's worth to height because for n number of lines there are n-1 spacings
-						numLines = (refFrame.objectives:GetHeight() + refFrame.lineSpacing) / refFrame.lineHeight;
-						-- round numLines to the closest integer
-						numLines = floor(numLines + 0.5);
-						dashText = dashText..QUEST_DASH..string.rep("|n", numLines);
-					end
-				end
-				if ( requiredMoney > playerMoney ) then
-					questText = questText.."- "..GetMoneyString(playerMoney).." / "..GetMoneyString(requiredMoney);
-					dashText = dashText..QUEST_DASH;
-				end				
-				questFrame.objectives:SetText(questText);
-				questFrame.dashes:SetText(dashText);
-			end
-			questFrame.title:SetTextColor(1,1,0)
-			questFrame.objectives:SetTextColor(1,1,0)
-			questFrame.dashes:SetTextColor(1,1,0)
-			-- difficulty
-			if ( MAP_QUEST_DIFFICULTY == "1" ) then
-				local color = GetQuestDifficultyColor(level);
-				questFrame.title:SetTextColor(color.r, color.g, color.b);
-			end
-			-- size and show
-			questFrame:SetHeight(max(questFrame.title:GetHeight() + questFrame.objectives:GetHeight() + QUESTFRAME_PADDING, QUESTFRAME_MINHEIGHT));
-			questFrame:Show();
-			lastFrame = questFrame;
-		end
-	end
-	OmegaMapFrame.numQuests = questCount;
-	-- hide frames not being used for this map
-	for i = questCount + 1, MAX_NUM_QUESTS do
-		questFrame = _G["OmegaMapQuestFrame"..i];
-		if ( not questFrame ) then
-			break;
-		end		
-		questFrame:Hide();
-		questFrame.questId = 0;
-	end
-	QuestPOI_HideButtons("OmegaMapPOIFrame", QUEST_POI_NUMERIC, numPOINumeric + 1);
-	QuestPOI_HideButtons("OmegaMapPOIFrame", QUEST_POI_COMPLETE_SWAP, numPOICompleteSwap + 1);
-	
-	OmegaMapJournal_CheckQuestButtons();
-	return questCount;
-end
-
-function OmegaMapFrame_SelectQuestFrame(questFrame, userAction)
-	local poiIcon;
-	local color;
-	-- clear current selection	
-	if ( WORLDMAP_SETTINGS.selectedQuest ) then
-		local currentSelection = WORLDMAP_SETTINGS.selectedQuest;
-		poiIcon = currentSelection.poiIcon;
-		QuestPOI_DeselectButton(poiIcon);
-		QuestPOI_DeselectButtonByParent("OmegaMapQuestScrollChildFrame");
-		OmegaMapBlobFrame:DrawBlob(currentSelection.questId, false);
-		if ( MAP_QUEST_DIFFICULTY == "1" ) then
-			color = GetQuestDifficultyColor(currentSelection.level);
-			currentSelection.title:SetTextColor(color.r, color.g, color.b);
-		end
-		poiIcon:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL);
-	end
-	WORLDMAP_SETTINGS.selectedQuest = questFrame;
-	-- Change the supertrackedquestID on user action
-	if ( userAction ) then
-		WORLDMAP_SETTINGS.superTrackedQuestID = questFrame.questId;
-	end
-	SetSuperTrackedQuestID(questFrame.questId);
-	OmegaMapQuestSelectedFrame:SetPoint("TOPLEFT", questFrame, "TOPLEFT", -10, 0);
-	OmegaMapQuestSelectedFrame:SetHeight(questFrame:GetHeight());
-	OmegaMapQuestSelectedFrame:Show();
-	poiIcon = questFrame.poiIcon;
-	QuestPOI_SelectButton(poiIcon);
-	QuestPOI_SelectButton(questFrame.ownPOI);
-	poiIcon:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL + 1);
-	-- colors
-	if ( MAP_QUEST_DIFFICULTY == "1" ) then
-		questFrame.title:SetTextColor(1, 1, 1);
-		color = GetQuestDifficultyColor(questFrame.level);
-		OmegaMapQuestSelectBar:SetVertexColor(color.r, color.g, color.b);
-	end
-	-- only display quest info if omegamap frame is embiggened
-		--SelectQuestLogEntry(questFrame.questLogIndex);
-		--QuestInfo_Display(QUEST_TEMPLATE_MAP1, OmegaMapQuestDetailScrollChildFrame);
-		--OmegaMapQuestDetailScrollFrameScrollBar:SetValue(0);
-		--ScrollFrame_OnScrollRangeChanged(OmegaMapQuestDetailScrollFrame);
-		--QuestInfo_Display(QUEST_TEMPLATE_MAP2, OmegaMapQuestRewardScrollChildFrame);
-		--OmegaMapQuestRewardScrollFrameScrollBar:SetValue(0);
-		--ScrollFrame_OnScrollRangeChanged(OmegaMapQuestRewardScrollFrame);
-
-	-- track quest checkbark
-	OmegaMapTrackQuest:SetChecked(IsQuestWatched(questFrame.questLogIndex));
-	-- quest blob
-	if ( questFrame.completed ) then
-		OmegaMapBlobFrame:DrawBlob(questFrame.questId, false);
-	else
-		OmegaMapBlobFrame:DrawBlob(questFrame.questId, true);
-	end
-	OmegaMap_DrawWorldEffects();
-end
-
-local numCompletedQuests = 0;
-function OmegaMapFrame_ClearQuestPOIs()
-	QuestPOI_HideButtons("OmegaMapPOIFrame", QUEST_POI_NUMERIC, 1);
-	QuestPOI_HideButtons("OmegaMapPOIFrame", QUEST_POI_COMPLETE_IN, 1);
-	numCompletedQuests = 0;
-end
-
-function OmegaMapFrame_DisplayQuestPOI(questFrame, isComplete)
-	local index = questFrame.index;
-	local poiButton;
-	if ( isComplete ) then
-		poiButton = QuestPOI_DisplayButton("OmegaMapPOIFrame", QUEST_POI_COMPLETE_IN, questFrame.completedIndex, questFrame.questId);
-	else
-		poiButton = QuestPOI_DisplayButton("OmegaMapPOIFrame", QUEST_POI_NUMERIC, index - numCompletedQuests, questFrame.questId);
-	end
-	questFrame.poiIcon = poiButton;
-	local _, posX, posY, objective = QuestPOIGetIconInfo(questFrame.questId);
-	if ( posX and posY ) then
-		local POIscale;
-		POIscale = 1;
-		posX = posX * OmegaMapDetailFrame:GetWidth() * POIscale;
-		posY = -posY * OmegaMapDetailFrame:GetHeight() * POIscale;
-		-- keep outlying POIs within map borders
-		if ( posY > OMEGAMAP_POI_MIN_Y ) then
-			posY = OMEGAMAP_POI_MIN_Y;
-		elseif ( posY < OMEGAMAP_POI_MAX_Y ) then
-			posY = OMEGAMAP_POI_MAX_Y
-		end
-		if ( posX < OMEGAMAP_POI_MIN_X ) then
-			posX = OMEGAMAP_POI_MIN_X;
-		elseif ( posX > OMEGAMAP_POI_MAX_X ) then
-			posX = OMEGAMAP_POI_MAX_X;
-		end
-		poiButton:SetPoint("CENTER", "OmegaMapPOIFrame", "TOPLEFT", posX, posY);
-		poiButton:SetScript("OnEnter", OmegaMapQuestPOI_OnEnter);
-		poiButton:SetScript("OnLeave", OmegaMapQuestPOI_OnLeave);
-		poiButton:SetScript("OnClick", OmegaMapQuestPOI_OnClick)
-	end
-	poiButton.quest = questFrame;
-end
-
-function OmegaMapFrame_SetPOIMaxBounds()
-	OMEGAMAP_POI_MAX_Y = OmegaMapDetailFrame:GetHeight() * -OmegaMapConfig.size + 12;
-	OMEGAMAP_POI_MAX_X = OmegaMapDetailFrame:GetWidth() * OmegaMapConfig.size + 12;
-end
-
-function OmegaMapFrame_GetQuestFrame(index, isComplete)
-	local frame = _G["OmegaMapQuestFrame"..index];
-	if ( not frame ) then
-		frame = CreateFrame("Frame", "OmegaMapQuestFrame"..index, OmegaMapQuestScrollChildFrame, "OmegaMapQuestFrameTemplate");
-		frame.index = index;
-	end
-	
-	local poiButton;
-	if ( isComplete ) then
-		numCompletedQuests = numCompletedQuests + 1;
-		poiButton = QuestPOI_DisplayButton("OmegaMapQuestScrollChildFrame", QUEST_POI_COMPLETE_IN, numCompletedQuests, 0);
-		frame.completedIndex = numCompletedQuests;
-	else
-		poiButton = QuestPOI_DisplayButton("OmegaMapQuestScrollChildFrame", QUEST_POI_NUMERIC, index - numCompletedQuests, 0);
-	end
-	poiButton:SetPoint("TOPLEFT", frame, 4, 0);
-	frame.ownPOI = poiButton;
-	return frame;
-end
-
-function OmegaMapQuestFrame_OnEnter(self)
-	self.ownPOI:LockHighlight();
-	OmegaMapQuestScrollFrame.highlightedFrame = self;
-	if ( WORLDMAP_SETTINGS.selectedQuest == self ) then
-		return;
-	end
-	OmegaMapQuestHighlightedFrame:SetPoint("TOPLEFT", self, "TOPLEFT", -10, -1);
-	OmegaMapQuestHighlightedFrame:SetHeight(self:GetHeight() - 2);
-	if ( MAP_QUEST_DIFFICULTY == "1" ) then
-		local color = GetQuestDifficultyColor(self.level);
-		self.title:SetTextColor(1, 1, 1);
-		OmegaMapQuestHighlightBar:SetVertexColor(color.r, color.g, color.b);
-	end	
-	OmegaMapQuestHighlightedFrame:Show();
-	if ( not self.completed ) then
-		OmegaMapBlobFrame:DrawBlob(self.questId, true);
-	end
-end
-
-function OmegaMapQuestFrame_OnLeave(self)
-	self.ownPOI:UnlockHighlight();
-	OmegaMapQuestScrollFrame.highlightedFrame = nil;
-	if ( WORLDMAP_SETTINGS.selectedQuest == self ) then
-		return;
-	end
-	if ( MAP_QUEST_DIFFICULTY == "1" ) then
-		local color = GetQuestDifficultyColor(self.level);
-		self.title:SetTextColor(color.r, color.g, color.b);
-	end		
-	OmegaMapQuestHighlightedFrame:Hide();
-	if ( not self.completed ) then
-		OmegaMapBlobFrame:DrawBlob(self.questId, false);
-	end
-end
-
-function OmegaMapQuestFrame_OnMouseDown(self)
-	self.title:SetPoint("TOPLEFT", 35, -9);
-	self.ownPOI:SetButtonState("PUSHED");
-	QuestPOIButton_OnMouseDown(self.ownPOI);	
-end
-
-function OmegaMapQuestFrame_OnMouseUp(self)
-	self.title:SetPoint("TOPLEFT", 34, -8);
-	self.ownPOI:SetButtonState("NORMAL");
-	QuestPOIButton_OnMouseUp(self.ownPOI);
-	if ( self:IsMouseOver() ) then
-		if ( WORLDMAP_SETTINGS.selectedQuest ~= self ) then
-			OmegaMapQuestHighlightedFrame:Hide();
-			PlaySound("igMainMenuOptionCheckBoxOn");
-		end
-		OmegaMapFrame_SelectQuestFrame(self, true);
-		if ( IsShiftKeyDown() ) then
-			local isChecked = not OmegaMapTrackQuest:GetChecked();
-			OmegaMapTrackQuest:SetChecked(isChecked);		
-			OmegaMapTrackQuest_Toggle(isChecked);
-			OmegaMapQuestFrame_UpdateMouseOver();			
-		end		
-	end
-end
-
-function OmegaMapQuestFrame_UpdateMouseOver()
-	if ( OmegaMapQuestScrollFrame:IsMouseOver() ) then
-		for i = 1, OmegaMapFrame.numQuests do
-			local questFrame = _G["OmegaMapQuestFrame"..i];
-			if ( questFrame:IsMouseOver() ) then
-				OmegaMapQuestFrame_OnEnter(questFrame);
-				break;
-			end
-		end
-	end
-end
-
-function OmegaMapQuestPOI_OnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
-	if ( self.quest ~= WORLDMAP_SETTINGS.selectedQuest ) then
-		if ( WORLDMAP_SETTINGS.selectedQuest ) then
-			OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
-		end
-	end
-	OmegaMapFrame_SelectQuestFrame(self.quest, true);
-	if ( IsShiftKeyDown() ) then
-		local isChecked = not OmegaMapTrackQuest:GetChecked();
-		OmegaMapTrackQuest:SetChecked(isChecked);		
-		OmegaMapTrackQuest_Toggle(isChecked);
-	end
-end
-
-function OmegaMapQuestPOI_OnEnter(self)
-	OmegaMapPOIFrame.allowBlobTooltip = false;
-	OmegaMapQuestPOI_SetTooltip(self, self.quest.questLogIndex);	
-end
-
-function OmegaMapQuestPOI_OnLeave(self)
-	OmegaMapPOIFrame.allowBlobTooltip = true;
-end
-
 function OmegaMapQuestPOI_SetTooltip(poiButton, questLogIndex, numObjectives)
 	local title = GetQuestLogTitle(questLogIndex);
-	OmegaMapTooltip:SetOwner(OmegaMapFrame, "ANCHOR_CURSOR_RIGHT", 5, 2);
+	OmegaMapTooltip:SetOwner(poiButton or OmegaMapBlobFrame, "ANCHOR_CURSOR_RIGHT", 5, 2);
 	OmegaMapTooltip:SetText(title);
-	if ( poiButton and poiButton.type == QUEST_POI_COMPLETE_SWAP ) then
-		if ( poiButton.type == QUEST_POI_COMPLETE_SWAP ) then
-			OmegaMapTooltip:AddLine("- "..GetQuestLogCompletionText(questLogIndex), 1, 1, 1, 1);
-		else
-			local numObjectives = GetNumQuestLeaderBoards(questLogIndex);
-			for i = 1, numObjectives do
-				local text, objectiveType, finished = GetQuestLogLeaderBoard(i, questLogIndex);
-				if ( text and not finished ) then
-					OmegaMapTooltip:AddLine("- "..ReverseQuestObjective(text, objectiveType), 1, 1, 1, 1);
-				end
-			end
-		end
+	if ( poiButton and poiButton.style ~= "numeric" ) then
+		OmegaMapTooltip:AddLine("- "..GetQuestLogCompletionText(questLogIndex), 1, 1, 1, true);
 	else
 		local text, finished, objectiveType;
 		local numItemDropTooltips = GetNumQuestItemDrops(questLogIndex);
@@ -2385,7 +2117,7 @@ function OmegaMapQuestPOI_SetTooltip(poiButton, questLogIndex, numObjectives)
 			for i = 1, numItemDropTooltips do
 				text, objectiveType, finished = GetQuestLogItemDrop(i, questLogIndex);
 				if ( text and not finished ) then
-					OmegaMapTooltip:AddLine("- "..ReverseQuestObjective(text, objectiveType), 1, 1, 1, 1);
+					OmegaMapTooltip:AddLine(QUEST_DASH..text, 1, 1, 1, true);
 				end
 			end
 		else
@@ -2399,11 +2131,47 @@ function OmegaMapQuestPOI_SetTooltip(poiButton, questLogIndex, numObjectives)
 					text, objectiveType, finished = GetQuestLogLeaderBoard(i, questLogIndex);
 				end
 				if ( text and not finished ) then
-					OmegaMapTooltip:AddLine("- "..ReverseQuestObjective(text, objectiveType), 1, 1, 1, 1);
+					OmegaMapTooltip:AddLine(QUEST_DASH..text, 1, 1, 1, true);
 				end
 			end		
 		end
-	end	
+	end
+	OmegaMapTooltip:Show();
+end
+
+
+function OmegaMapQuestPOI_AppendTooltip(poiButton, questLogIndex)
+	local title = GetQuestLogTitle(questLogIndex);
+	OmegaMapTooltip:AddLine(" ");
+	OmegaMapTooltip:AddLine(title);
+	if ( poiButton and poiButton.style ~= "numeric" ) then
+		OmegaMapTooltip:AddLine("- "..GetQuestLogCompletionText(questLogIndex), 1, 1, 1, true);
+	else
+		local text, finished, objectiveType;
+		local numItemDropTooltips = GetNumQuestItemDrops(questLogIndex);
+		if(numItemDropTooltips and numItemDropTooltips > 0) then
+			for i = 1, numItemDropTooltips do
+				text, objectiveType, finished = GetQuestLogItemDrop(i, questLogIndex);
+				if ( text and not finished ) then
+					OmegaMapTooltip:AddLine(QUEST_DASH..text, 1, 1, 1, true);
+				end
+			end
+		else
+			local numPOITooltips = OmegaMapBlobFrame:GetNumTooltips();
+			numObjectives = numObjectives or GetNumQuestLeaderBoards(questLogIndex);
+			for i = 1, numObjectives do
+				if(numPOITooltips and (numPOITooltips == numObjectives)) then
+					local questPOIIndex = OmegaMapBlobFrame:GetTooltipIndex(i);
+					text, objectiveType, finished = GetQuestPOILeaderBoard(questPOIIndex, questLogIndex);
+				else
+					text, objectiveType, finished = GetQuestLogLeaderBoard(i, questLogIndex);
+				end
+				if ( text and not finished ) then
+					OmegaMapTooltip:AddLine(QUEST_DASH..text, 1, 1, 1, true);
+				end
+			end		
+		end
+	end
 	OmegaMapTooltip:Show();
 end
 
@@ -2415,122 +2183,287 @@ function OmegaMapBlobFrame_OnLoad(self)
 	self:SetBorderScalar(1.0);
 end
 
+-- for when we need to wait a frame
+function OmegaMapBlobFrame_DelayedUpdateBlobs()	
+	OmegaMapBlobFrame.updateBlobs = true;
+end
+
 function OmegaMapBlobFrame_OnUpdate(self)
-	if ( not OmegaMapPOIFrame.allowBlobTooltip or not OmegaMapDetailFrame:IsMouseOver() ) then
+	if ( self.updateBlobs ) then
+		OmegaMapBlobFrame_UpdateBlobs();
+		self.updateBlobs = nil;
+	end
+
+	if ( not OmegaMapBlobFrame:IsMouseOver() ) then
 		return;
 	end
-	if ( not self.xRatio ) then
+	if ( OmegaMapTooltip:IsShown() and OmegaMapTooltip:GetOwner() ~= OmegaMapBlobFrame ) then
+		return;
+	end
+
+	if ( not self.scale ) then
 		OmegaMapBlobFrame_CalculateHitTranslations();
 	end
-	local x, y = GetCursorPosition();
-	local adjustedX = x / self.xRatio - self.xOffset;
-	local adjustedY = self.yOffset - y / self.yRatio;
+	
+	local cursorX, cursorY = GetCursorPosition();
+	local frameX = cursorX / self.scale - self.offsetX;
+	local frameY = - cursorY / self.scale + self.offsetY;
+	local adjustedX = frameX / QUEST_POI_FRAME_WIDTH;
+	local adjustedY = frameY / QUEST_POI_FRAME_HEIGHT;
+
 	local questLogIndex, numObjectives = self:UpdateMouseOverTooltip(adjustedX, adjustedY);
-	if(numObjectives) then
-		OmegaMapTooltip:SetOwner(OmegaMapFrame, "ANCHOR_CURSOR");
+	if ( numObjectives ) then
+		OmegaMapTooltip:SetOwner(OmegaMapBlobFrame, "ANCHOR_CURSOR");
 		OmegaMapQuestPOI_SetTooltip(nil, questLogIndex, numObjectives);
-	elseif(not OmegaMapTooltip.EJ_using) and (not OmegaMapTooltip.WE_using) and (not OmegaMapTooltip.MB_using) then
+	else
 		OmegaMapTooltip:Hide();
 	end
 end
 
+function OmegaMapBlobFrame_ResetHitTranslations()
+	OmegaMapBlobFrame.scale = nil;
+end
+
 function OmegaMapBlobFrame_CalculateHitTranslations()
 	local self = OmegaMapBlobFrame;
-	local centerX, centerY = self:GetCenter();
-	local width = self:GetWidth();
-	local height = self:GetHeight();
-	local scale = self:GetEffectiveScale();
-	self.yOffset = centerY / height + 0.5;
-	self.yRatio = height * scale;
-	self.xOffset = centerX / width - 0.5;
-	self.xRatio = width * scale;
+	--if ( WorldMapFrame_InWindowedMode() ) then
+	--	self.scale = UIParent:GetScale();
+	--else
+		self.scale = OmegaMapFrame:GetScale();
+	--end
+	self.offsetX = OmegaMapScrollFrame:GetLeft() - OmegaMapScrollFrame:GetHorizontalScroll();
+	self.offsetY = OmegaMapScrollFrame:GetTop() + OmegaMapScrollFrame:GetVerticalScroll();
 end
 
 function OmegaMapFrame_ResetQuestColors()
-	if ( MAP_QUEST_DIFFICULTY == "0" ) then
-		OmegaMapQuestSelectBar:SetVertexColor(1, 0.824, 0);
-		OmegaMapQuestHighlightBar:SetVertexColor(0.243, 0.570, 1);
-		for i = 1, MAX_NUM_QUESTS do
-			local questFrame = _G["OmegaMapQuestFrame"..i];
-			if ( not questFrame ) then
-				break;
-			end
-			questFrame.title:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		end
-	end
+	-- FIXME
 end
-
-function OmegaMap_OpenToQuest(questID, frameToShowOnClose)
-	OmegaMapFrame.blockOmegaMapUpdate = true;
-	ShowUIPanel(OmegaMapFrame);	
-	local mapID, floorNumber = GetQuestOmegaMapAreaID(questID);
-	if ( mapID ~= 0 ) then
-		SetMapByID(mapID);
-		if ( floorNumber ~= 0 ) then
-			SetDungeonMapLevel(floorNumber);
-		end
-	end
-	OmegaMapFrame.blockOmegaMapUpdate = nil;
-	OmegaMapFrame_UpdateMap(questID);	
-end
-
 
 --- advanced options ---
-function OmegaMapFrame_ChangeOpacity()
-	OmegaMapConfig.opacity = OmegaMapSliderFrame:GetValue();
-	OmegaMapFrame_SetOpacity(OmegaMapConfig.opacity);
+
+-- *****************************************************************************************************
+-- ***** PAN AND ZOOM
+-- *****************************************************************************************************
+local MAX_ZOOM = 1.495;
+
+function OmegaMapScrollFrame_OnMouseWheel(self, delta)
+
+	--Blocks pan/zoom if alt exterior/battleground map is displayed
+	if OMEGAMAP_ALTMAP then return end
+
+	local scrollFrame = OmegaMapScrollFrame;
+	local oldScrollH = scrollFrame:GetHorizontalScroll();
+	local oldScrollV = scrollFrame:GetVerticalScroll();
+
+	-- get the mouse position on the frame, with 0,0 at top left
+	local cursorX, cursorY = GetCursorPosition();
+	local relativeFrame;
+	--if ( OmegaMapFrame_InWindowedMode() ) then
+		--relativeFrame = UIParent;
+	--else
+		relativeFrame = OmegaMapFrame;
+	--end
+	local frameX = cursorX / relativeFrame:GetScale() - scrollFrame:GetLeft();
+	local frameY = scrollFrame:GetTop() - cursorY / relativeFrame:GetScale();
+
+	local oldScale = OmegaMapDetailFrame:GetScale();
+	local newScale = oldScale + delta * 0.3;
+	newScale = max(OMEGAMAP_FULLMAP_SIZE, newScale);  --CHECK
+	newScale = min(MAX_ZOOM, newScale);
+	OmegaMapDetailFrame:SetScale(newScale);
+	QUEST_POI_FRAME_WIDTH = OmegaMapDetailFrame:GetWidth() * newScale;
+	QUEST_POI_FRAME_HEIGHT = OmegaMapDetailFrame:GetHeight() * newScale;
+
+	scrollFrame.maxX = QUEST_POI_FRAME_WIDTH - 1002 * OMEGAMAP_FULLMAP_SIZE;
+	scrollFrame.maxY = QUEST_POI_FRAME_HEIGHT - 668 * OMEGAMAP_FULLMAP_SIZE;
+	scrollFrame.zoomedIn = abs(OmegaMapDetailFrame:GetScale() - OMEGAMAP_FULLMAP_SIZE) > 0.05;
+	scrollFrame.continent = GetCurrentMapContinent();
+	scrollFrame.mapID = GetCurrentMapAreaID();
+
+	-- figure out new scroll values
+	local scaleChange = newScale / oldScale;
+	local newScrollH = scaleChange * ( frameX + oldScrollH ) - frameX;
+	local newScrollV = scaleChange * ( frameY + oldScrollV ) - frameY;
+	-- clamp scroll values
+	newScrollH = min(newScrollH, scrollFrame.maxX);
+	newScrollH = max(0, newScrollH);
+	newScrollV = min(newScrollV, scrollFrame.maxY);
+	newScrollV = max(0, newScrollV);
+	-- set scroll values
+	scrollFrame:SetHorizontalScroll(newScrollH);
+	scrollFrame:SetVerticalScroll(newScrollV);
+
+	OmegaMapFrame_Update();
+	OmegaMapScrollFrame_ReanchorQuestPOIs();
+	OmegaMapBlobFrame_ResetHitTranslations();
+	OmegaMapBlobFrame_DelayedUpdateBlobs();
 end
 
---Sets the opacity of the various parts of themap
-function OmegaMapFrame_SetOpacity(opacity)
-	local alpha;
-	-- set border alphas
-	alpha = 0.5 + (1.0 - opacity) * 0.50;
-	OmegaMapFrameCloseButton:SetAlpha(alpha);
-	-- set map alpha
-	--alpha = 0.35 + (1.0 - opacity) * 0.65;
-	alpha = (1.0 - opacity);
+function OmegaMapScrollFrame_ResetZoom()
+	OmegaMapScrollFrame.panning = false;
+	OmegaMapDetailFrame:SetScale(OMEGAMAP_FULLMAP_SIZE);  --CHECK/FIX
+	QUEST_POI_FRAME_WIDTH = OmegaMapDetailFrame:GetWidth() * OMEGAMAP_FULLMAP_SIZE;--CHECK/FIX
+	QUEST_POI_FRAME_HEIGHT = OmegaMapDetailFrame:GetHeight() * OMEGAMAP_FULLMAP_SIZE;	--CHECK/FIX
+	OmegaMapScrollFrame:SetHorizontalScroll(0);
+	OmegaMapScrollFrame:SetVerticalScroll(0);
+	OmegaMapScrollFrame.zoomedIn = false;
+	OmegaMapFrame_Update();
+	OmegaMapScrollFrame_ReanchorQuestPOIs();
+	OmegaMapBlobFrame_ResetHitTranslations();
+	OmegaMapBlobFrame_DelayedUpdateBlobs();
 
-	OmegaMapDetailFrame:SetAlpha(alpha);
-	if OmegaMapAltMapFrame then
-		OmegaMapAltMapFrame:SetAlpha(alpha);
+end
+
+function OmegaMapScrollFrame_ReanchorQuestPOIs()
+	for _, poiType in pairs(OmegaMapPOIFrame.poiTable) do
+		for _, poiButton in pairs(poiType) do
+			if ( poiButton.used ) then
+				local _, posX, posY = QuestPOIGetIconInfo(poiButton.questID);
+				OmegaMapPOIFrame_AnchorPOI(poiButton, posX, posY);			
+			end
+		end
 	end
-	OmegaMapNoteFrame:SetAlpha(alpha);
-	-- set blob alpha
-	alpha = 0.65 + (1.0 - opacity) * 0.55;
-	
-
-	--OmegaMapPOIFrame:SetAlpha(alpha);
-	OmegaMapBlobFrame:SetFillAlpha(128 * alpha);
-	OmegaMapBlobFrame:SetBorderAlpha(192 * alpha);
-	OmegaMapArchaeologyDigSites:SetFillAlpha(128 * alpha);
-	OmegaMapArchaeologyDigSites:SetBorderAlpha(192 * alpha);
-	--OmegaMapBossButtonFrame:SetAlpha(alpha);
 end
 
-function OmegaMapTrackQuest_Toggle(isChecked)
-	local questIndex = WORLDMAP_SETTINGS.selectedQuest.questLogIndex;
-	local questId = GetSuperTrackedQuestID();
-	if ( isChecked ) then
-		if ( GetNumQuestWatches() > MAX_WATCHABLE_QUESTS ) then
-			UIErrorsFrame:AddMessage(format(QUEST_WATCH_TOO_MANY, MAX_WATCHABLE_QUESTS), 1.0, 0.1, 0.1, 1.0);
-			OmegaMapTrackQuest:SetChecked(false);
-			return;
+function OmegaMapScrollFrame_OnPan(cursorX, cursorY)
+	local dx = OmegaMapScrollFrame.cursorX - cursorX;
+	local dy = cursorY - OmegaMapScrollFrame.cursorY;
+	if ( abs(dx) >= 1 or abs(dy) >= 1 ) then
+		OmegaMapScrollFrame.moved = true;
+		local x = max(0, dx + OmegaMapScrollFrame.x);
+		x = min(x, OmegaMapScrollFrame.maxX);
+		OmegaMapScrollFrame:SetHorizontalScroll(x);
+		local y = max(0, dy + OmegaMapScrollFrame.y);
+		y = min(y, OmegaMapScrollFrame.maxY);
+		OmegaMapScrollFrame:SetVerticalScroll(y);
+		OmegaMapBlobFrame_ResetHitTranslations();
+		OmegaMapBlobFrame_DelayedUpdateBlobs();
+	end
+end
+
+function OmegaMapButton_OnMouseDown(self, button)
+	if ( button == "LeftButton" and OmegaMapScrollFrame.zoomedIn ) then
+		OmegaMapScrollFrame.panning = true;
+		local x, y = GetCursorPosition();		
+		OmegaMapScrollFrame.cursorX = x;
+		OmegaMapScrollFrame.cursorY = y;
+		OmegaMapScrollFrame.x = OmegaMapScrollFrame:GetHorizontalScroll();
+		OmegaMapScrollFrame.y = OmegaMapScrollFrame:GetVerticalScroll();
+		OmegaMapScrollFrame.moved = false;
+	end
+end
+
+function OmegaMapButton_OnMouseUp(self, button)
+	if ( button == "LeftButton" and OmegaMapScrollFrame.panning ) then
+		OmegaMapScrollFrame.panning = false;
+		if ( OmegaMapScrollFrame.moved ) then
+			OmegaMapButton.ignoreClick = true;
 		end
-		if ( LOCAL_MAP_QUESTS["zone"] == GetCurrentMapZone() ) then
-			LOCAL_MAP_QUESTS[questId] = true;
+	end
+end
+
+
+-- *****************************************************************************************************
+-- ***** POI FRAME
+-- *****************************************************************************************************
+
+function OmegaMapPOIFrame_AnchorPOI(poiButton, posX, posY)
+	if ( posX and posY ) then
+		posX = posX * QUEST_POI_FRAME_WIDTH;
+		posY = posY * QUEST_POI_FRAME_HEIGHT;
+		-- keep outlying POIs within map borders
+		if ( posY < QUEST_POI_FRAME_INSET ) then
+			posY = QUEST_POI_FRAME_INSET;
+		elseif ( posY > QUEST_POI_FRAME_HEIGHT - 12 ) then
+			posY = QUEST_POI_FRAME_HEIGHT - 12;
 		end
-		AddQuestWatch(questIndex);	
+		if ( posX < QUEST_POI_FRAME_INSET ) then
+			posX = QUEST_POI_FRAME_INSET;
+		elseif ( posX > QUEST_POI_FRAME_WIDTH - 12 ) then
+			posX = QUEST_POI_FRAME_WIDTH - 12;
+		end
+		poiButton:SetPoint("CENTER", OmegaMapPOIFrame, "TOPLEFT", posX, -posY);
+	end
+end
+
+function OmegaMapPOIFrame_Update(poiTable)
+	QuestPOI_ResetUsage(OmegaMapPOIFrame);
+	local detailQuestID = OmegaMapQuestFrame_GetDetailQuestID();
+	local poiButton;
+	for index, questID in pairs(poiTable) do
+		if ( not detailQuestID or questID == detailQuestID ) then
+			local _, posX, posY = QuestPOIGetIconInfo(questID);
+			if ( posX and posY ) then
+				local storyQuest = IsStoryQuest(questID);
+				if ( IsQuestComplete(questID) ) then
+					poiButton = QuestPOI_GetButton(OmegaMapPOIFrame, questID, "map", nil, storyQuest);
+				else
+					-- if a quest is being viewed there is only going to be one POI and it's going to have number 1
+					poiButton = QuestPOI_GetButton(OmegaMapPOIFrame, questID, "numeric", (detailQuestID and 1) or index, storyQuest);
+				end
+				OmegaMapPOIFrame_AnchorPOI(poiButton, posX, posY);
+			end
+		end
+	end
+	OmegaMapPOIFrame_SelectPOI(GetSuperTrackedQuestID());
+	QuestPOI_HideUnusedButtons(OmegaMapPOIFrame);
+end
+
+function OmegaMapPOIFrame_SelectPOI(questID)
+	-- POIs can overlap each other, bring the selection to the top
+	local poiButton = QuestPOI_FindButton(OmegaMapPOIFrame, questID);
+	if ( poiButton ) then
+		QuestPOI_SelectButton(poiButton);
+		poiButton:Raise();
 	else
-		LOCAL_MAP_QUESTS[questId] = nil
-		RemoveQuestWatch(questIndex);
+		QuestPOI_ClearSelection(OmegaMapPOIFrame);
 	end
-	WatchFrame_Update();
-	OmegaMapFrame_DisplayQuests(questId);
+	OmegaMapBlobFrame_UpdateBlobs();	
 end
 
+function OmegaMapBlobFrame_UpdateBlobs()
+	OmegaMapBlobFrame:DrawNone();
+	-- always draw the blob for either the quest being viewed or the supertracked
+	local questID = OmegaMapQuestFrame_GetDetailQuestID() or GetSuperTrackedQuestID();
+	-- see if there is a poiButton for it (no button == not on viewed map)
+	local poiButton = QuestPOI_FindButton(OmegaMapPOIFrame, questID);
+	if ( poiButton and not IsQuestComplete(questID) ) then
+		OmegaMapBlobFrame:DrawBlob(questID, true);
+	end
+end
 
---- For EJ boss butons
+function OmegaMapPOIButton_Init(self)
+	self:SetScript("OnEnter", OmegaMapPOIButton_OnEnter);
+	self:SetScript("OnLeave", OmegaMapPOIButton_OnLeave);
+end
+
+--BLOB_OVERLAP_DELTA = math.pow(0.005, 2);
+
+function OmegaMapPOIButton_OnEnter(self)
+	OmegaMapQuestPOI_SetTooltip(self, GetQuestLogIndexByID(self.questID));
+
+	local _, posX, posY = QuestPOIGetIconInfo(self.questID);
+	for _, poiType in pairs(OmegaMapPOIFrame.poiTable) do
+		for _, poiButton in pairs(poiType) do
+			if ( poiButton ~= self and poiButton.used ) then
+				local _, otherPosX, otherPosY = QuestPOIGetIconInfo(poiButton.questID);
+
+				if ((math.pow(posX - otherPosX, 2) + math.pow(posY - otherPosY, 2)) < BLOB_OVERLAP_DELTA) then
+					OmegaMapQuestPOI_AppendTooltip(poiButton, GetQuestLogIndexByID(poiButton.questID));
+				end
+			end
+		end
+	end
+end
+
+function OmegaMapPOIButton_OnLeave(self)
+	OmegaMapTooltip:Hide();
+end
+
+-- *****************************************************************************************************
+-- ***** ENCOUNTER JOURNAL STUFF
+-- *****************************************************************************************************
+
 function OmegaMapJournal_AddMapButtons()
 	local left = OmegaMapBossButtonFrame:GetLeft();
 	local right = OmegaMapBossButtonFrame:GetRight();
@@ -2546,9 +2479,9 @@ function OmegaMapJournal_AddMapButtons()
 		OmegaMapBossButtonFrame:SetScript("OnUpdate", nil);
 	end
 	
-	local scale = OmegaMapDetailFrame:GetScale();
-	local width = OmegaMapDetailFrame:GetWidth() * scale;
-	local height = OmegaMapDetailFrame:GetHeight() * scale;
+	local width = OmegaMapDetailFrame:GetWidth();
+	local height = OmegaMapDetailFrame:GetHeight();
+
 	local bossButton, questPOI, displayInfo, _;
 	local index = 1;
 	local x, y, instanceID, name, description, encounterID = EJ_GetMapEncounter(index);
@@ -2556,35 +2489,26 @@ function OmegaMapJournal_AddMapButtons()
 		bossButton = _G["EJOmegaMapButton"..index];
 		if not bossButton then -- create button
 			bossButton = CreateFrame("Button", "EJOmegaMapButton"..index, OmegaMapBossButtonFrame, "OmegaMapEncounterButtonTemplate");
-	end
-	
-	bossButton.instanceID = instanceID;
-	bossButton.encounterID = encounterID;
-	bossButton.tooltipTitle = name;
-	bossButton.tooltipText = description;
-	bossButton:SetPoint("CENTER", OmegaMapBossButtonFrame, "BOTTOMLEFT", x*width, y*height);
-	local _, _, _, displayInfo = EJ_GetCreatureInfo(1, encounterID);
-	bossButton.displayInfo = displayInfo;
-	if ( displayInfo ) then
+		end
+		
+		bossButton.instanceID = instanceID;
+		bossButton.encounterID = encounterID;
+		bossButton.tooltipTitle = name;
+		bossButton.tooltipText = description;
+		bossButton:SetPoint("CENTER", OmegaMapBossButtonFrame, "BOTTOMLEFT", x*width, y*height);
+		local _, _, _, displayInfo = EJ_GetCreatureInfo(1, encounterID);
+		bossButton.displayInfo = displayInfo;
+		if ( displayInfo ) then
 			SetPortraitTexture(bossButton.bgImage, displayInfo);
 		else 
 			bossButton.bgImage:SetTexture("DoesNotExist");
 		end
 
-	bossButton:Show();
-	  -- bossButton:SetFrameLevel(100 - 5);
-	index = index + 1;
-	x, y, instanceID, name, description, encounterID = EJ_GetMapEncounter(index);
-
+		bossButton:Show();
+		index = index + 1;
+		x, y, instanceID, name, description, encounterID = EJ_GetMapEncounter(index, OmegaMapFrame.fromJournal);
 	end
 
- --   if (index == 1) then --not looking at dungeon map
-		--OmegaMapQuestShowObjectives:Show();
-		--OmegaMapShowDropDown:Hide();
-	--else
-	---- OmegaMapQuestShowObjectives:Hide();
-	--   OmegaMapShowDropDown:Show();
-	--end
 	OmegaMapFrame.hasBosses = index ~= 1;
 	if (not GetCVarBool("showBosses")) then
 		index = 1;
@@ -2599,10 +2523,8 @@ function OmegaMapJournal_AddMapButtons()
 	
 	OmegaMapBossButtonFrame.ready = true;
 	OmegaMapJournal_CheckQuestButtons();
-	
 end
 
---- For EJ boss butons	
 function OmegaMapJournal_UpdateMapButtonPortraits()
 	if ( OmegaMapFrame:IsShown() ) then
 		local index = 1;
@@ -2615,7 +2537,6 @@ function OmegaMapJournal_UpdateMapButtonPortraits()
 	end
 end
 
---- For EJ boss butons	
 function OmegaMapJournal_CheckQuestButtons()
 	if not OmegaMapBossButtonFrame.ready then
 		return;
@@ -2652,43 +2573,31 @@ function OmegaMapJournal_CheckQuestButtons()
 	if _G["EEJOmegaMapButton1"] then
 		_G["EJOmegaMapButton1"]:SetScript("OnUpdate", nil);
 	end
-
 end
 
--- functions to deal with map options dropdown that shows up when looking at a dungeon map
-function OmegaMapShowDropDown_OnLoad(self)
-	UIDropDownMenu_Initialize(self, OmegaMapShowDropDown_Initialize);
-	UIDropDownMenu_SetText(self, MAP_OPTIONS_TEXT);
-	UIDropDownMenu_SetWidth(self, 150);
-end
+-- *****************************************************************************************************
+-- ***** MAP TRACKING DROPDOWN
+-- *****************************************************************************************************
 
-
-function OmegaMapShowDropDown_Initialize()
+function OmegaMapTrackingOptionsDropDown_Initialize()
 	local info = UIDropDownMenu_CreateInfo();
+
 	-- Show quests button
 	info.text = SHOW_QUEST_OBJECTIVES_ON_MAP_TEXT;
 	info.value = "quests";
-	info.func = OmegaMapShowDropDown_OnClick;
+	info.func = OmegaMapTrackingOptionsDropDown_OnClick;
 	info.checked = GetCVarBool("questPOI");
 	info.isNotRadio = true;
 	info.keepShownOnClick = 1;
-	UIDropDownMenu_AddButton(info);
-
-	-- Show bosses button
-	info.text = SHOW_BOSSES_ON_MAP_TEXT;
-	info.value = "bosses";
-	info.func = OmegaMapShowDropDown_OnClick;
-	info.checked = GetCVarBool("showBosses");
-	info.isNotRadio = true;
-	info.keepShownOnClick = 1
 	info.tooltipText = OPTION_TOOLTIP_SHOW_QUEST_OBJECTIVES_ON_MAP;
 	info.tooltipOnButton = OPTION_TOOLTIP_SHOW_QUEST_OBJECTIVES_ON_MAP;
 	UIDropDownMenu_AddButton(info);
-	if (WorldMapFrame.hasBosses) then
+
+	if (OmegaMapFrame.hasBosses) then
 		-- Show bosses button
 		info.text = SHOW_BOSSES_ON_MAP_TEXT;
 		info.value = "bosses";
-		info.func = OmegaMapShowDropDown_OnClick;
+		info.func = OmegaMapTrackingOptionsDropDown_OnClick;
 		info.checked = GetCVarBool("showBosses");
 		info.isNotRadio = true;
 		info.keepShownOnClick = 1;
@@ -2703,7 +2612,7 @@ function OmegaMapShowDropDown_Initialize()
 			-- Show bosses button
 			info.text = ARCHAEOLOGY_SHOW_DIG_SITES;
 			info.value = "digsites";
-			info.func = OmegaMapShowDropDown_OnClick;
+			info.func = OmegaMapTrackingOptionsDropDown_OnClick;
 			info.checked = showDig;
 			info.isNotRadio = true;
 			info.keepShownOnClick = 1;
@@ -2723,7 +2632,7 @@ function OmegaMapShowDropDown_Initialize()
 		if (CanTrackBattlePets()) then
 			info.text = SHOW_BATTLE_PET_TAMERS_ON_MAP_TEXT;
 			info.value = "tamers";
-			info.func = OmegaMapShowDropDown_OnClick;
+			info.func = OmegaMapTrackingOptionsDropDown_OnClick;
 			info.checked = showTamers;
 			info.isNotRadio = true;
 			info.keepShownOnClick = 1;
@@ -2735,8 +2644,7 @@ function OmegaMapShowDropDown_Initialize()
 
 end
 
-
-function OmegaMapShowDropDown_OnClick(self)
+function OmegaMapTrackingOptionsDropDown_OnClick(self)
 	local checked = self.checked;
 	local value = self.value;
 	
@@ -2748,15 +2656,7 @@ function OmegaMapShowDropDown_OnClick(self)
 	
 	if (value == "quests") then
 		SetCVar("questPOI", checked and "1" or "0");
-		WatchFrame.showObjectives = checked;
-		if (checked) then
-			QuestLogFrameShowMapButton:Show();
-		else
-			QuestLogFrameShowMapButton:Hide();
-			WatchFrame_Update();
-		end
-		OmegaMapFrame_DisplayQuests();
-		OmegaMapFrame_Update();
+		OmegaMapQuestFrame_UpdateAll(); --CHECK
 	elseif (value == "bosses") then
 		SetCVar("showBosses", checked and "1" or "0");
 		OmegaMapFrame_Update();
@@ -2774,20 +2674,193 @@ function OmegaMapShowDropDown_OnClick(self)
 	end
 end
 
----  New Functions
-function OmegaMapToggle()
-	if ( OmegaMapFrame:IsVisible() ) then
-		OmegaMapFrame:Hide()
-		OmegaMapBlobFrame:DrawBlob(GetSuperTrackedQuestID(), false);
-		OmegaMapArchaeologyDigSites:DrawNone();
-		local numEntries = ArchaeologyMapUpdateAll();
-		for i = 1, numEntries do
-			local blobID = ArcheologyGetVisibleBlobID(i);
-			OmegaMapArchaeologyDigSites:DrawBlob(blobID, false);
+-- *****************************************************************************************************
+-- ***** NAV BAR
+-- *****************************************************************************************************
+
+local SIBLING_MENU_DATA = { };
+local SIBLING_MENU_PARENT_ID;
+local SIBLING_MENU_PARENT_IS_CONTINENT;
+
+function OmegaMapNavBar_LoadSiblings(parentID, isContinent, doSort, ...)
+	if ( parentID == SIBLING_MENU_PARENT_ID ) then
+		-- we already have this loaded
+		return;
+	end
+
+	wipe(SIBLING_MENU_DATA);
+	local count = select("#", ...);
+	for i = 1, count, 2 do
+		local id = select(i, ...);
+		local name = select(i+1, ...);
+		if ( name ) then
+			local t = { id = id, name = name };
+			tinsert(SIBLING_MENU_DATA, t);
+		end
+	end
+	if ( doSort ) then
+		table.sort(SIBLING_MENU_DATA, OmegaMapNavBar_SortSiblings);
+	end
+	SIBLING_MENU_PARENT_ID = parentID;
+	SIBLING_MENU_PARENT_IS_CONTINENT = isContinent;
+end
+
+function OmegaMapNavBar_SortSiblings(map1, map2)
+	return map1.name < map2.name;
+end
+
+function OmegaMapNavBar_OnButtonSelect(self, button)
+	if ( self.data.isContinent ) then
+		SetMapZoom(self.data.id);
+	else
+		SetMapByID(self.data.id);
+	end
+end
+
+function OmegaMapNavBar_SelectSibling(self, index, navBar)
+	if ( SIBLING_MENU_PARENT_IS_CONTINENT ) then
+		SetMapZoom(SIBLING_MENU_DATA[index].id);
+	else
+		SetMapByID(SIBLING_MENU_DATA[index].id);
+	end
+end
+
+function OmegaMapNavBar_GetSibling(self, index)
+	if ( self.data.isContinent ) then
+		if ( self.data.id ~= WORLDMAP_COSMIC_ID ) then
+			-- storing continent index as a negative ID to prevent collision with map ID
+			-- this is only used for SIBLING_MENU_PARENT_ID comparisons
+			local continentID = -self.data.id;
+			-- for Azeroth or Outland, add them both
+			if ( self.data.id == WORLDMAP_OUTLAND_ID or self.data.id == WORLDMAP_AZEROTH_ID or self.data.id == WORLDMAP_DRAENOR_ID ) then
+				OmegaMapNavBar_LoadSiblings(continentID, true, true, WORLDMAP_OUTLAND_ID, GetContinentName(WORLDMAP_OUTLAND_ID), WORLDMAP_AZEROTH_ID, AZEROTH, WORLDMAP_DRAENOR_ID, GetContinentName(WORLDMAP_DRAENOR_ID));
+			else
+				local continentData = { GetMapContinents() };		-- mapID1, mapName1, mapID2, mapName2, ...
+				-- SetMap needs index for continent so replace the IDs
+				local index = 0;
+				for i = 1, #continentData, 2 do
+					index = index + 1;
+					continentData[i] = index;
+					-- this list is meant for continents on Azeroth so remove Outland
+					if ( index == WORLDMAP_OUTLAND_ID or index == WORLDMAP_DRAENOR_ID ) then
+						continentData[i + 1] = nil;
+					end
+				end
+				OmegaMapNavBar_LoadSiblings(continentID, true, true, unpack(continentData));
+			end
 		end
 	else
-		OmegaMapFrame:Show()
+		local parentData = self.navParent.data;
+		-- if this button is right after a continent button then it's a regular zone
+		if ( parentData.isContinent ) then
+			-- this zone data is already sorted
+			OmegaMapNavBar_LoadSiblings(parentData.id, false, false, GetMapZones(parentData.id));
+		else
+			-- this is a "subzone", like Northshire
+			OmegaMapNavBar_LoadSiblings(parentData.id, false, true, GetMapSubzones(parentData.id));
+		end
 	end
+	if ( SIBLING_MENU_DATA[index] ) then
+		return SIBLING_MENU_DATA[index].name, OmegaMapNavBar_SelectSibling;
+	end
+end
+
+function OmegaMapNavBar_Update()
+	local parentData = GetMapHierarchy();
+	local currentContinent = GetCurrentMapContinent();
+	-- if the last parent is not a continent and we're not on the cosmic view we need to add the current continent
+	local haveParentContinent = parentData[#parentData] and parentData[#parentData].isContinent;
+	if ( not haveParentContinent and currentContinent ~= WORLDMAP_COSMIC_ID ) then
+		local continentData = { };
+		if ( currentContinent == WORLDMAP_AZEROTH_ID ) then
+			continentData.name = AZEROTH;
+		else
+			continentData.name = GetContinentName(currentContinent);
+		end
+		continentData.id = currentContinent;
+		continentData.isContinent = true;
+		tinsert(parentData, continentData);
+	elseif ( haveParentContinent ) then
+		currentContinent = parentData[#parentData] and parentData[#parentData].id;
+	end
+	-- most continents have Azeroth as a parent
+	if ( currentContinent ~= WORLDMAP_COSMIC_ID and currentContinent ~= WORLDMAP_AZEROTH_ID and currentContinent ~= WORLDMAP_OUTLAND_ID and currentContinent ~= WORLDMAP_DRAENOR_ID ) then
+		local continentData = { };
+		continentData.name = AZEROTH;
+		continentData.id = WORLDMAP_AZEROTH_ID;
+		continentData.isContinent = true;
+		tinsert(parentData, continentData);		
+	end
+
+	local mapID, isContinent = GetCurrentMapAreaID();	
+	-- time to add the buttons
+	NavBar_Reset(OmegaMapFrame.NavBar);
+	for i = #parentData, 1, -1 do
+		local id = parentData[i].id;
+		-- might get self back as part of hierarchy in the case of dungeon maps - see Dalaran floor The Underbelly
+		if ( id and id ~= mapID ) then
+			local buttonData = {
+				name = parentData[i].name,
+				id = parentData[i].id,
+				isContinent = parentData[i].isContinent,
+				OnClick = OmegaMapNavBar_OnButtonSelect,
+				listFunc = OmegaMapNavBar_GetSibling,
+			}
+			NavBar_AddButton(OmegaMapFrame.NavBar, buttonData);
+		end
+	end
+	-- add the current map unless it's a continent
+	if ( mapID and mapID ~= -1 and not isContinent ) then
+		local buttonData = {
+			name = GetMapNameByID(mapID),
+			id = mapID,
+			isContinent = false,
+			OnClick = OmegaMapNavBar_OnButtonSelect,
+		}
+		-- only do a dropdown menu if its parent is not a continent
+		if ( parentData[1] and parentData[1].isContinent ) then
+			buttonData.listFunc = OmegaMapNavBar_GetSibling;
+		end
+		NavBar_AddButton(OmegaMapFrame.NavBar, buttonData);
+	end
+end
+
+---  New Functions
+
+function OmegaMapFrame_ChangeOpacity()
+	OmegaMapConfig.opacity = OmegaMapSliderFrame:GetValue();
+	OmegaMapFrame_SetOpacity(OmegaMapConfig.opacity);
+end
+
+--Sets the opacity of the various parts of themap
+function OmegaMapFrame_SetOpacity(opacity)
+	local alpha;
+	-- set border alphas
+	alpha = 0.5 + (1.0 - opacity) * 0.50;
+	OmegaMapFrameCloseButton:SetAlpha(alpha);
+
+	alpha = 0.2 + (1.0 - opacity) * 0.50;
+	OmegaMapOtherPOIFrame:SetAlpha(alpha);
+
+	-- set map alpha
+	--alpha = 0.35 + (1.0 - opacity) * 0.65;
+	alpha = (1.0 - opacity);
+	OmegaMapDetailFrame:SetAlpha(alpha);
+	OmegaMapButton.AzerothHighlight:SetAlpha(alpha);
+	OmegaMapButton.DraenorHighlight:SetAlpha(alpha);
+	OmegaMapButton.OutlandHighlight:SetAlpha(alpha);
+	if OmegaMapAltMapFrame then
+		OmegaMapAltMapFrame:SetAlpha(alpha);
+	end
+
+	-- set blob alpha
+	alpha = 0.65 + (1.0 - opacity) * 0.55;
+	--OmegaMapPOIFrame:SetAlpha(alpha);
+	OmegaMapBlobFrame:SetFillAlpha(128 * alpha);
+	OmegaMapBlobFrame:SetBorderAlpha(192 * alpha);
+	OmegaMapArchaeologyDigSites:SetFillAlpha(128 * alpha);
+	OmegaMapArchaeologyDigSites:SetBorderAlpha(192 * alpha);
+	--OmegaMapBossButtonFrame:SetAlpha(alpha);
 end
 
 --Converts standard map cords to relative altmap cords
@@ -2840,21 +2913,21 @@ function OmegaMapOffsetAltMapCoords(pX, pY,...)
 	if ( negY ) then
 		pY = -(pY);
 	end
-
 	return pX , pY,...;
 end
-
 
 --Solidifies Map to allow clicks & movement
 function OmegaMapSolidify(state)
 	if  (state == "Off")then
 		OmegaMapButton:EnableMouse(false);
+		OmegaMapScrollFrame:EnableMouseWheel(false);
 		OmegaMapMovementFrameTop:Hide();
 		OmegaMapMovementFrameTop:EnableMouse(false)
 		OmegaMapMovementFrameBottom:Hide();
 		OmegaMapMovementFrameBottom:EnableMouse(false)
 	elseif (state == "On") then
 		OmegaMapButton:EnableMouse(true);
+		OmegaMapScrollFrame:EnableMouseWheel(true)
 		--OmegaMapConfig.solidify = true
 		OmegaMapMovementFrameTop:Show();
 		OmegaMapMovementFrameTop:EnableMouse(true)
@@ -2894,28 +2967,8 @@ function OmegaMapCoordsOnUpdate(self, elapsed)
 			else
 				OmegaMapCoordinates:SetHeight(30);
 			end
-
-			--OmegaMapSetCoordsPos();
 		end
 	end
-end
-
-function OmegaMapSetCoordsPos()
-	local x, y = OmegaMapConfig.coordsLocX, OmegaMapConfig.coordsLocY;
-
-	local UnitScale = .8;
---[[
-	OmegaMapCoordinates:ClearAllPoints();
-	OmegaMapCoordinates:SetUserPlaced(0);
-	OmegaMapCoordinates:SetParent(OmegaMapFrame);
-	OmegaMapCoordinates:SetScale( UnitScale );
-	OmegaMapCoordinates:SetPoint("CENTER", "OmegaMapFrame", "BOTTOMLEFT", x / UnitScale, y / UnitScale);
-	OmegaMapCoordinates:SetFrameLevel( OmegaMapFrame:GetFrameLevel() + 3);
-	OmegaMapCoordinates:Show();
-	if ( not OmegaMapConfig.showCoords ) then
-		OmegaMapCoordinates:Hide();
-	end
-	]]--
 end
 
 --Gets coords of cursor in relation to its positon over the map
@@ -2976,21 +3029,18 @@ function OmegaMapCompactView()
 	local curZoneName = GetMapInfo()
 	local broken = false
 	local shown = true
-
 	local _, _, _, isSubzone = GetMapInfo();
-
 	local compact = GetMapOverlayInfo(1)
 
 	--if MozzFullWorldMap and not MozzFullWorldMap.Enabled then shown = false end
 
 	--fix to display map on isele of thunder king
-	if curZoneName == "IsleoftheThunderKing" then		
+	if curZoneName == "IsleoftheThunderKing" then
 		for i=1, GetNumberOfDetailTiles(), 1 do
 			_G["OmegaMapDetailTile"..i]:Show();
 		end
 		return
 	end
-	
 	
 	if (zone ~=0  and isSubzone == false and shown and compact) and OmegaMapConfig.showCompactMode then 
  		for i=1, GetNumberOfDetailTiles(), 1 do
@@ -3002,7 +3052,3 @@ function OmegaMapCompactView()
 		end
 	end
 end
-
-
-
-

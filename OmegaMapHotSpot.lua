@@ -18,7 +18,7 @@ local OmegaMapLDB = LibStub("LibDataBroker-1.1"):NewDataObject("OmegaMapMini", {
 		if (button == "RightButton") then
 			OmegaMapOptionsFrame.Toggle()
 		elseif (button == "LeftButton") then
-			OmegaMapToggle()
+			ToggleOmegaMap()
 		elseif (button == "MiddleButton") then
 		OmegaMapConfig.showHotSpot = not OmegaMapConfig.showHotSpot
 		OmegaMapHotSpotToggle()
@@ -104,7 +104,7 @@ then return
 elseif OmegaMapConfig.hotSpotLock == true then
 return
 else
-OmegaMapToggle()
+ToggleOmegaMap()
 --OmegaMapConfig.hotSpotLock = false
 end
 

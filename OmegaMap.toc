@@ -1,7 +1,7 @@
-## Interface: 50400
+## Interface: 60000
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 5.4
+## Game Version: 6.0
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
@@ -19,6 +19,7 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 localization.en.lua
 OmegaMapOptions.lua
 OmegaMapFrame.xml
+QuestMapFrame.xml
 OmegaMapBar.xml
 
 #Addon Plugins
@@ -34,5 +35,6 @@ Plugins\QuestHelperLite.lua
 Plugins\MozzFullWorldMap.lua
 Plugins\PetTracker.xml
 Plugins\PetTracker.lua
+Plugins\Explorer.lua
 Plugins\Explorer.lua
 Plugins\Vuhdo.lua
