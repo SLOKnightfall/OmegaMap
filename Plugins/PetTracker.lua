@@ -1,7 +1,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 -- Code to display PetTracer POI within OmegaMap
--- This is modified code taken from Features/WorldMap.lua from PetTracker (V 5.4.25)
+-- This is modified code taken from Features/WorldMap.lua from PetTracker (V 6.0.3)
 -- PetTracker is written by Jaliborc at http://www.curse.com/addons/wow/pettracker
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
