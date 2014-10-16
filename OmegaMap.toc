@@ -19,7 +19,7 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 localization.en.lua
 OmegaMapOptions.lua
 OmegaMapFrame.xml
-QuestMapFrame.xml
+OmegaMapQuestFrame.xml
 OmegaMapBar.xml
 
 #Addon Plugins
