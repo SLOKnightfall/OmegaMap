@@ -198,7 +198,6 @@ end
 local function addTomTomWaypoint(button,pin)
 	if TomTom then
 		local c, z = GetCurrentMapContinent(), GetCurrentMapZone()
-		local x, y, level = GatherMate.mapData:DecodeLoc(pin.coords)
 		local x, y, level = GatherMate:DecodeLoc(pin.coords)
 		TomTom:AddZWaypoint(c, z, x*100, y*100, pin.title, nil, true, true)
 	end
