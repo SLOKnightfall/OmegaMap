@@ -151,7 +151,7 @@ end
 function OmegaMapQuestFrame_UpdateAll()
 	local numPOIs = QuestMapUpdateAllQuests();
 	QuestPOIUpdateIcons();
-	QuestObjectiveTracker_UpdatePOIs();
+	--QuestObjectiveTracker_UpdatePOIs();
 	if ( OmegaMapFrame:IsShown() ) then	
 		local poiTable = { };
 		if ( numPOIs > 0 and GetCVarBool("questPOI") ) then

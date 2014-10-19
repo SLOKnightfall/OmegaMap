@@ -1680,7 +1680,7 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 				partyMemberFrame:Hide();
 			else
 				partyX = partyX * playersFrameWidth;
-				partyY = -partyY * playersFrameWidth;
+				partyY = -partyY * playersFrameHeight;
 				partyMemberFrame:SetPoint("CENTER", activeFrame, "TOPLEFT", partyX, partyY);
 				local class = select(2, UnitClass(unit));
 				if ( class ) then
