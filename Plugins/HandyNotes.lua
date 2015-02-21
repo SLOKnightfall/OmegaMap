@@ -201,6 +201,7 @@ end
 -- Build data
 local continentMapFile = {
 	[WORLDMAP_COSMIC_ID] = "Cosmic", -- That constant is -1
+	[WORLDMAP_AZEROTH_ID] = "World",
 }
 local continentList = {}
 local zoneList = {}
@@ -209,15 +210,19 @@ local reverseZoneZ = {}
 local zonetoMapID = {}
 local mapIDtoMapFile = {
 	[WORLDMAP_COSMIC_ID] = "Cosmic",
+	[WORLDMAP_AZEROTH_ID] = "World",
 }
 local mapFiletoMapID = {
 	["Cosmic"] = -1,
+	["World"] = 0,
 }
 local reverseMapFileC = {
 	["Cosmic"] = WORLDMAP_COSMIC_ID,
+	["World"] = WORLDMAP_AZEROTH_ID,
 }
 local reverseMapFileZ = {
 	["Cosmic"] = 0,
+	["World"] = 0,
 }
 local continentTempList = {GetMapContinents()}
 for i = 1, #continentTempList, 2 do
@@ -249,6 +254,37 @@ for i = 1, #continentTempList, 2 do
 		mapFiletoMapID[mapFile] = mapID
 		zonetoMapID[ZName] = mapID
 	end
+
+		-- map things we don't have on the map zones
+	local areas = GetAreaMaps()
+	for i, mapID in pairs(areas) do
+		SetMapByID(mapID)
+		local mapFile = GetMapInfo()
+		local ZName = GetMapNameByID(mapID)
+		local C, Z = GetCurrentMapContinent(), GetCurrentMapZone()
+		
+		-- nil out invalid C/Z values (Cosmic/World)
+		if C == -1 or C == 0 then C = nil end
+		if Z == 0 then Z = nil end
+		
+		-- insert into the zonelist, but don't overwrite entries
+		if C and zoneList[C] and Z and not zoneList[C][Z] then
+			zoneList[C][Z] = ZName
+		end
+		mapIDtoMapFile[mapID] = mapFile
+		-- since some mapfiles are used twice, don't overwrite them here
+		-- the second usage is usually a much weirder place (instances, scenarios, ...)
+		if not mapFiletoMapID[mapFile] then
+			mapFiletoMapID[mapFile] = mapID
+			reverseMapFileC[mapFile] = C
+			reverseMapFileZ[mapFile] = Z
+		end
+		if not zonetoMapID[ZName] then
+			zonetoMapID[ZName] = mapID
+			reverseZoneC[ZName] = C
+			reverseZoneZ[ZName] = Z
+		end
+	end
 end
 
 ---------------------------------------------------------
@@ -257,11 +293,11 @@ end
 -- This function updates all the icons of one plugin on the world map
 local function UpdateOmegaMapPlugin(pluginName)
 	if not OmegaMapOverlay:IsVisible() then return end
-	if not omegamapPins[pluginName] then return end
+	--if not omegamapPins[pluginName] then return end
 	clearAllPins(omegamapPins[pluginName])
 	if not db.enabledPlugins[pluginName] then return end
 	local ourScale, ourAlpha = 12 * db.icon_scale, db.icon_alpha
-	local mapFile, mapID, level = HandyNotes:WhereAmI(continent, zone)
+	local mapFile, mapID, level = HandyNotes:WhereAmI()
 	local pluginHandler = HandyNotes.plugins[pluginName]
 	local frameLevel = OmegaMapOverlay:GetFrameLevel() + 5
 	local frameStrata = OmegaMapOverlay:GetFrameStrata()
@@ -389,12 +425,12 @@ end
 hooksecurefunc(HandyNotes,"OnProfileChanged", OnProfileChanged); 
 
 --Hooking HandyNotes:RegisterPluginDB()
-local function RegisterPluginDB(pluginName, pluginHandler, optionsTable)
+local function RegisterPluginDB(self, pluginName, pluginHandler, optionsTable)
 	omegamapPins[pluginName] = {}
 end
 hooksecurefunc(HandyNotes,"RegisterPluginDB", RegisterPluginDB);
 
-RegisterPluginDB("HandyNotes", HNHandler, options)
+RegisterPluginDB("HandyNotes","HandyNotes", HNHandler, options)
 
 
 print(OMEGAMAP_HANDYNOTES_LOADED_MESSAGE)
