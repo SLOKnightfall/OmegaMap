@@ -373,7 +373,7 @@ end
 hooksecurefunc(HandyNotes,"UpdatePluginMap", UpdatePluginMap);
 
 
-local function HandyNotes_OnClick(button, mouseButton)
+local function HandyNotes_OnClick(button, mouseButton,...)
 	if mouseButton == "RightButton" and IsAltKeyDown() then
 		local C, Z, L = GetCurrentMapContinent(), GetCurrentMapZone(), GetCurrentMapDungeonLevel()
 		local mapFile = HandyNotes:WhereAmI()
@@ -397,14 +397,14 @@ local function HandyNotes_OnClick(button, mouseButton)
 		HNEditFrame:Hide() -- Hide first to trigger the OnShow handler
 		HNEditFrame:Show()
 	else
-		return OmegaMapButton_OnClick and OmegaMapButton_OnClick(button, mouseButton) or true
+		return OmegaMapButton_OnClick(button, mouseButton,...)
 	end
 end
 
 --Hooking HandyNotes:OnEnable()
 local function OnEnable()
 	HandyNotes:UpdateOmegaMap()
-	OmegaMapButton:SetScript("OnMouseUp",HandyNotes_OnClick)
+	OmegaMapButton:SetScript("OnClick",HandyNotes_OnClick)
 end
 hooksecurefunc(HandyNotes,"OnEnable", OnEnable); 
 
@@ -414,7 +414,7 @@ local function OnDisable()
 	for pluginName, pluginHandler in pairs(HandyNotes.plugins) do
 		clearAllPins(omegamapPins[pluginName])
 	end
-	OmegaMapButton:SetScript("OnMouseUp",OmegaMapButton_OnClick)
+	OmegaMapButton:SetScript("OnClick",OmegaMapButton_OnClick)
 end
 hooksecurefunc(HandyNotes,"OnDisable", OnDisable); 
 

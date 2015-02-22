@@ -1424,9 +1424,11 @@ function OmegaMapLevelButton_OnClick(self)
 end
 
 function OmegaMapZoomOutButton_OnClick()
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	--PlaySound("igMainMenuOptionCheckBoxOn");
 	OmegaMapTooltip:Hide();
-	
+	WorldMapZoomOutButton_OnClick()
+
+	--[[
 	-- check if code needs to zoom out before going to the continent map
 	if ( ZoomOut() ~= nil ) then
 		return;
@@ -1437,6 +1439,7 @@ function OmegaMapZoomOutButton_OnClick()
 	else
 		SetMapZoom(WORLDMAP_AZEROTH_ID);
 	end
+	--]]
 end
 
 function OmegaMapButton_OnClick(button, mouseButton)
