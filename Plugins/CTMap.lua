@@ -1,7 +1,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 -- Code to display CTMapMod POI within OmegaMap
--- This is modified code taken from CT_ MapMod.lua from CT_MapMod (v5.3)
+-- This is modified code taken from CT_ MapMod.lua from CT_MapMod (v6.0.3.0)
 -- CTMapMod is written and maintained by the CT_Mod crew @ http://www.ctmod.net/
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
@@ -23,7 +23,6 @@ if not CTMapOmegaMapOverlay then
 end
 
 local CT_UserMap_NoteButtons = 0;
-
 -- Initialization
 
 local module = { };
@@ -32,13 +31,51 @@ local _G = getfenv(0);
 local MODULE_NAME = "CT_MapMod";
 local MODULE_VERSION = strmatch(GetAddOnMetadata(MODULE_NAME, "version"), "^([%d.]+)");
 
-module.name = MODULE_NAME..1;
+module.name = MODULE_NAME;
 module.version = MODULE_VERSION;
 
-_G[MODULE_NAME..1] = module;
+_G[MODULE_NAME] = module;
 CT_Library:registerModule(module);
 
 --------------------------------------------
+-- Upvalues
+
+local abs = abs
+local ipairs = ipairs
+local math = math
+local pairs = pairs
+local select = select
+local string = string
+local strlen = strlen
+local strlower = strlower
+local strsub = strsub
+local strupper = strupper
+local tinsert = tinsert
+local tonumber = tonumber
+local tremove = tremove
+local type = type
+
+local CreateFrame = CreateFrame
+
+local DungeonUsesTerrainMap = DungeonUsesTerrainMap
+local GetCurrentMapAreaID = GetCurrentMapAreaID
+local GetCurrentMapContinent = GetCurrentMapContinent
+local GetCurrentMapDungeonLevel = GetCurrentMapDungeonLevel
+local GetCurrentMapZone = GetCurrentMapZone
+local GetCursorPosition = GetCursorPosition
+local GetMapContinents = GetMapContinents
+local GetMapInfo = GetMapInfo
+local GetMapNameByID = GetMapNameByID
+local GetMapZones = GetMapZones
+local GetPlayerMapPosition = GetPlayerMapPosition
+local GetRealmName = GetRealmName
+local IsControlKeyDown = IsControlKeyDown
+local PlaySound = PlaySound
+local SetMapToCurrentZone = SetMapToCurrentZone
+local SetMapZoom = SetMapZoom
+local UnitName = UnitName
+
+
 
 local CT_UserMap_NoteButtons = 0;
 
@@ -51,12 +88,15 @@ CT_MapMod_Print = ( CT_Print or function(msg, r, g, b) DEFAULT_CHAT_FRAME:AddMes
 
 local function round(num, dec)
 	local mult = 10 ^ (dec or 0);
+	if (mult == 0) then
+		return 0;
+	end
 	return math.floor(num * mult + 0.5) / mult;
 end
 
 local function CT_MapMod_GetCharKey()
 	-- Get the current character's name key (combination of player name and server name).
-	local characterKey = UnitName("player") .. "@" .. GetCVar("realmName");
+	local characterKey = UnitName("player") .. "@" .. GetRealmName();
 
 	-- autoGather == (1 or nil) -- No longer used in 4.0100
 	-- autoHerbs ==  (true or false) -- Added in 4.0100
@@ -91,14 +131,41 @@ local function CT_MapMod_GetCharKey()
 		};
 	end
 
-	return UnitName("player") .. "@" .. GetCVar("realmName");
+	return UnitName("player") .. "@" .. GetRealmName();
+end
+
+local function CT_MapMod_GetWorldMapZoneName()
+	local mapName, _, _, isMicroDungeon, microDungeonMapName = GetMapInfo()
+	local name = WORLD_MAP
+	if GetCurrentMapZone() > 0 then
+		name = GetMapNameByID(GetCurrentMapAreaID())
+		local floorNum = DungeonUsesTerrainMap() and GetCurrentMapDungeonLevel() - 1 or GetCurrentMapDungeonLevel()
+		if floorNum > 0 then
+			if not _G["DUNGEON_FLOOR_" .. strupper(mapName or "") .. floorNum] then
+				name = name .. ': ' .. strupper(mapName or "") .. floorNum
+			else
+				name = name .. ': ' .. _G["DUNGEON_FLOOR_" .. strupper(mapName or "") .. floorNum]
+			end
+		end
+	else
+		local currentContinent = GetCurrentMapContinent()
+		if currentContinent ~= WORLDMAP_WORLD_ID and currentContinent ~= WORLDMAP_COSMIC_ID then
+			name = select(currentContinent, GetMapContinents())
+		end
+	end
+	return name or (isMicroDungeon and microDungeonMapName or mapName)
 end
 
 local function CT_MapMod_GetMapName()
-local continent = GetCurrentMapContinent()
-local zones = {GetMapZones(continent)}
-local zoneName = zones[GetCurrentMapZone()]
-return zoneName
+	-- Get the name of the current map.
+	-- This is for use when the player is looking at the map.
+	if (GetCurrentMapZone() == 0) then
+		-- Map does not have any zones.
+		-- This applies to universe maps, continent maps, instance maps.
+		return nil;
+	end
+	-- Return the name currently assigned to the zone drop down menu.
+	return CT_MapMod_GetWorldMapZoneName();
 end
 
 local function CT_MapMod_IsDialogShown()
@@ -133,7 +200,7 @@ local function CT_MapMod_anchorFrame(ancFrame)
 		relFrame = WorldMapDetailFrame;
 	else
 		-- Full screen size world map
-		relFrame = WorldMapPositioningGuide;
+		relFrame = WorldMapDetailFrame;
 	end
 
 	local ancFrameScale, ancFrameBottom, ancFrameLeft;
@@ -147,8 +214,13 @@ local function CT_MapMod_anchorFrame(ancFrame)
 	relLeft = (relFrame:GetLeft() or 0) * relScale;
 
 	local xOffset, yOffset;
-	yOffset = (ancFrameBottom - relBottom) / ancFrameScale;
-	xOffset = (ancFrameLeft - relLeft) / ancFrameScale;
+	if (ancFrameScale == 0) then
+		yOffset = 0;
+		xOffset = 0;
+	else
+		yOffset = (ancFrameBottom - relBottom) / ancFrameScale;
+		xOffset = (ancFrameLeft - relLeft) / ancFrameScale;
+	end
 
 	ancFrame:ClearAllPoints();
 	ancFrame:SetPoint("BOTTOMLEFT", relFrame, "BOTTOMLEFT", xOffset, yOffset);
@@ -158,13 +230,28 @@ end
 local function CT_MapMod_GetCursorMapPosition()
 	local button = WorldMapButton;
 	local x, y = GetCursorPosition();
-	x = x / button:GetEffectiveScale();
-	y = y / button:GetEffectiveScale();
+	local scale = button:GetEffectiveScale();
+	if (scale == 0) then
+		x = 0;
+		y = 0;
+	else
+		x = x / scale;
+		y = y / scale;
+	end
 	local centerX, centerY = button:GetCenter();
 	local width = button:GetWidth();
 	local height = button:GetHeight();
-	local adjustedY = (centerY + (height/2) - y) / height;
-	local adjustedX = (x - (centerX - (width/2))) / width;
+	local adjustedY, adjustedX;
+	if (height == 0) then
+		adjustedY = 0;
+	else
+		adjustedY = (centerY + (height/2) - y) / height;
+	end
+	if (width == 0) then
+		adjustedX = 0;
+	else
+		adjustedX = (x - (centerX - (width/2))) / width;
+	end
 	if (adjustedX < 0) then
 		adjustedX = 0;
 	elseif (adjustedX > 1) then
@@ -175,7 +262,6 @@ local function CT_MapMod_GetCursorMapPosition()
 	elseif (adjustedY > 1) then
 		adjustedY = 1;
 	end
-
 ---
 if (OmegaMapFrame:IsShown()) then
 	local x, y = GetCursorPosition()
@@ -324,7 +410,6 @@ local function CT_MapMod_UpdateMap()
 	if ( not mapName or not notes ) then
 		CT_MapMod_HideNotes(1, CT_UserMap_NoteButtons);
 		CT_NumNotes:SetText("|c00FFFFFF0|r/|c00FFFFFF0|r");
-
 		return;
 	end
 
@@ -347,8 +432,8 @@ local function CT_MapMod_UpdateMap()
 				string.find(strlower(var.descript), strlower(CT_MapMod_Filter))
 			)
 		) then
-			local note;
-			local IconTexture;
+			local note, OMnote;
+			local IconTexture, OMIconTexture;
 
 			if ( count > CT_UserMap_NoteButtons ) then
 				CT_MapMod_CreateNoteButton();
@@ -359,12 +444,11 @@ local function CT_MapMod_UpdateMap()
 
 			OMnote = _G["OmegaCT_UserMap_Note".. count]
 			OMIconTexture = _G["OmegaCT_UserMap_Note" .. count .."Icon"]
-
+			
 			if ( var.set == 7 ) then
 				-- Herbalism notes.
 				-- If icon is 1 and the name is not what the default was, then try correcting the icon.
-				--if (var.icon == 1 and var.name and string.lower(var.name) ~= "bruiseweed") then
-				if (var.name) then
+				if (var.icon == 1 and var.name and string.lower(var.name) ~= "bruiseweed") then
 					var.icon = CT_MapMod_FindResourceIcon(var.name, "Herb_")
 				end
 				if ( CT_UserMap_HerbIcons[var.icon] ) then
@@ -377,9 +461,7 @@ local function CT_MapMod_UpdateMap()
 			elseif ( var.set == 8 ) then
 				-- Mining notes.
 				-- If icon is 1 and the name is not what the default was, then try correcting the icon.
-				--if (var.icon == 1 and var.name and string.lower(var.name) ~= "copper vein") then
-					if (var.name) then
-
+				if (var.icon == 1 and var.name and string.lower(var.name) ~= "copper vein") then
 					var.icon = CT_MapMod_FindResourceIcon(var.name, "Ore_")
 				end
 				if ( CT_UserMap_OreIcons[var.icon] ) then
@@ -399,7 +481,7 @@ local function CT_MapMod_UpdateMap()
 			OMnote:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", var.x * OmegaMapButton:GetWidth(), -var.y * OmegaMapButton:GetHeight());			
 			OMnote:Show();
 			OMnote:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL)
-
+			
 			if ( not var.name ) then
 				var.name = "";
 			end
@@ -417,7 +499,7 @@ local function CT_MapMod_UpdateMap()
 			note.x = var.x;
 			note.y = var.y;
 
---Set Omega Map notes
+			--Set Omega Map notes
 			OMnote.name = var.name;
 			OMnote.set = CT_MAPMOD_SETS[var.set];
 			OMnote.descript = var.descript;
@@ -505,7 +587,7 @@ local function CT_MapMod_EditNote(id)
 		if (id > 0) then
 			CT_MapMod_NoteWindow.note = id;
 			CT_MapMod_NoteWindow.zone = mapName;
-			CT_MapMod_NoteWindow:Show();
+			CT_MapMod_NoteWindow_Show();
 		end
 	end
 end
@@ -518,7 +600,7 @@ local function CT_MapMod_CreateNoteOnCursor()
 		local id = CT_MapMod_AddNote(x, y, mapName, "New note at cursor", "", 1, 1);
 		CT_MapMod_NoteWindow.note = id;
 		CT_MapMod_NoteWindow.zone = mapName;
-		CT_MapMod_NoteWindow:Show();
+		CT_MapMod_NoteWindow_Show();
 	end
 end
 
@@ -528,10 +610,10 @@ local function CT_MapMod_CreateNoteOnPlayer()
 	if (not (x == 0 and y == 0)) then
 		local mapName = CT_MapMod_GetMapName();
 		if (mapName) then
-			local id = CT_MapMod_AddNote(x, y, mapName, "New note at player", "", 1, 1,x,y);
+			local id = CT_MapMod_AddNote(x, y, mapName, "New note at player", "", 1, 1);
 			CT_MapMod_NoteWindow.note = id;
 			CT_MapMod_NoteWindow.zone = mapName;
-			CT_MapMod_NoteWindow:Show();
+			CT_MapMod_NoteWindow_Show();
 		end
 	end
 end
@@ -557,7 +639,6 @@ function CT_MapMod_OnNoteOver(self)
 	end
 	WorldMapTooltip:AddLine("Right-click to edit.", 0, 0.5, 0.9, 1);
 	WorldMapTooltip:Show();
-
 end
 
 function CT_MapMod_OnNoteLeave(self)
@@ -594,6 +675,20 @@ function CT_MapMod_NoteWindow_OnLoad(self)
 	CT_MapMod_NoteWindowDeleteButton:SetText(CT_MAPMOD_BUTTON_DELETE);
 	CT_MapMod_NoteWindowEditButton:SetText(CT_MAPMOD_BUTTON_EDITGROUPS);
 	CT_MapMod_NoteWindowSendButton:SetText(CT_MAPMOD_BUTTON_SEND);
+end
+
+local notewindowDropDownInitialized;
+function CT_MapMod_NoteWindow_Show()
+	CT_MapMod_NoteWindow:SetFrameStrata("DIALOG")
+	if (not notewindowDropDownInitialized) then
+		-- We're delaying the initialization of the dropdown menus until as late as possible
+		-- to make sure that Blizzard has had time to create CompactRaidFrame1.
+		-- At this time (2012-08-29), if you create a drop down menu containing 8 or more buttons before
+		-- CompactRaidFrame1 gets created, CompactRaidFrame1 will be tainted when it gets created.
+		CT_MapMod_NoteWindow_GroupDropDown_OnLoad(CT_MapMod_NoteWindowGroupDropDown);
+		notewindowDropDownInitialized = true;
+	end
+	CT_MapMod_NoteWindow:Show();
 end
 
 function CT_MapMod_NoteWindow_OnShow(self)
@@ -726,6 +821,8 @@ function CT_MapMod_FilterWindow_OnShow(self)
 	-- The filter window is being shown.
 	CT_MapMod_MapButtonFrame:Hide();
 	CT_MapMod_MainButton:Disable();
+
+	self:SetFrameStrata("DIALOG")
 
 	local eb = CT_MapMod_FilterWindowFilterEB;
 	eb:SetText(CT_MapMod_Filter or "");
@@ -1148,11 +1245,11 @@ local function CT_MapMod_Coord_ResetPosition(clearSaved)
 	if ( WORLDMAP_SETTINGS.size == WORLDMAP_WINDOWED_SIZE ) then
 		-- Small size world map
 		CT_MapMod_Coord:ClearAllPoints();
-		CT_MapMod_Coord:SetPoint("TOPLEFT", WorldMapDetailFrame, "TOPLEFT", 0, 20);
+		CT_MapMod_Coord:SetPoint("TOPLEFT", WorldMapFrame, "TOPLEFT", 95, -5);
 	else
 		-- Full screen size world map
 		CT_MapMod_Coord:ClearAllPoints();
-		CT_MapMod_Coord:SetPoint("TOPLEFT", WorldMapPositioningGuide, "TOPLEFT", 10, -5);
+		CT_MapMod_Coord:SetPoint("BOTTOMRIGHT", WorldMapFrame, "BOTTOMRIGHT", -170, 10);
 	end
 	if (clearSaved) then
 		local optName = CT_MapMod_Coord_GetPositionOptionName();
@@ -1180,8 +1277,12 @@ function CT_MapMod_Coord_RestorePosition()
 	local pos = CT_MapMod_Options[characterKey][optName];
 	if (pos) then
 		-- Restore to the saved position.
-		button:ClearAllPoints();
-		button:SetPoint(pos[1], pos[2], pos[3], pos[4], pos[5]);
+		if pos[2] == "WorldMapPositioningGuide" then
+			CT_MapMod_Coord_ResetPositions()
+		else
+			button:ClearAllPoints();
+			button:SetPoint(pos[1], pos[2], pos[3], pos[4], pos[5]);
+		end
 	else
 		-- Restore to default position.
 		CT_MapMod_Coord_ResetPosition(false)
@@ -1236,6 +1337,9 @@ function CT_MapMod_MapFrame_OnUpdate()
 	end
 end
 
+function CT_MapMod_MapFrame_OnShow()
+end
+
 ---------------------------------------------
 -- Main button
 
@@ -1273,12 +1377,20 @@ function CT_MapMod_MainButton_OnEnter(self)
 	end
 	text = text .. "\n\nTo move the Notes button, shift left-click it. Click the button again to stop moving it.";
 
+if OmegaMapFrame:IsShown() then
+
+--WorldMapTooltip:SetOwner(OmegaMapFrame, "ANCHOR_NONE");
+else
 	WorldMapTooltip:SetOwner(self, "ANCHOR_NONE");
+end
+	
 	WorldMapTooltip:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, 0);
 	WorldMapTooltip:SetText("Notes", nil, nil, nil, nil, 1);
 	WorldMapTooltip:AddLine(text, 1, 1, 1, 1);
 	WorldMapTooltip:Show();
 end
+
+CT_MapMod_MainButton:SetScript('OnEnter', CT_MapMod_MainButton_OnEnter)
 
 function CT_MapMod_MainButton_OnLeave(self)
 	-- Undo what we did in CT_MapMod_MainButton_OnEnter()
@@ -1338,6 +1450,17 @@ function CT_MapMod_MainButton_OnClick(self, button)
 	else
 		-- Toggle the main menu
 		local dropdown = CT_MapMod_MainMenuDropDown;
+
+		local mainmenuDropDownInitialized;
+		if (not mainmenuDropDownInitialized) then
+			-- We're delaying the initialization of the dropdown menus until the map frame is shown
+			-- to make sure that Blizzard has had time to create CompactRaidFrame1.
+			-- At this time (2012-08-29), if you create a drop down menu containing 8 or more buttons before
+			-- CompactRaidFrame1 gets created, CompactRaidFrame1 will be tainted when it gets created.
+			CT_MapMod_MainMenu_DropDown_OnLoad(CT_MapMod_MainMenuDropDown);
+			mainmenuDropDownInitialized = true;
+		end
+
 		CT_MapMod_MainButton_OnLeave(self);
 
 		local uscale = UIParent:GetEffectiveScale();
@@ -1379,11 +1502,11 @@ local function CT_MapMod_MainButton_ResetPosition(clearSaved)
 	if ( WORLDMAP_SETTINGS.size == WORLDMAP_WINDOWED_SIZE ) then
 		-- Small size world map
 		CT_MapMod_MainButton:ClearAllPoints();
-		CT_MapMod_MainButton:SetPoint("TOPRIGHT", WorldMapDetailFrame, "TOPRIGHT", -40, 23);
+		CT_MapMod_MainButton:SetPoint("RIGHT", WorldMapFrameSizeUpButton, "LEFT", 3, 0);
 	else
 		-- Full screen size world map
 		CT_MapMod_MainButton:ClearAllPoints();
-		CT_MapMod_MainButton:SetPoint("TOPRIGHT", WorldMapPositioningGuide, "TOPRIGHT", -43, -2);
+		CT_MapMod_MainButton:SetPoint("RIGHT", WorldMapFrameSizeUpButton, "LEFT", 3, 0);
 	end
 	if (clearSaved) then
 		local optName = CT_MapMod_MainButton_GetPositionOptionName();
@@ -1411,8 +1534,12 @@ function CT_MapMod_MainButton_RestorePosition()
 	local pos = CT_MapMod_Options[characterKey][optName];
 	if (pos) then
 		-- Restore to the saved position.
-		button:ClearAllPoints();
-		button:SetPoint(pos[1], pos[2], pos[3], pos[4], pos[5]);
+		if pos[2] == "WorldMapPositioningGuide" then
+			CT_MapMod_MainButton_ResetPositions()
+		else
+			button:ClearAllPoints();
+			button:SetPoint(pos[1], pos[2], pos[3], pos[4], pos[5]);
+		end
 	else
 		-- Restore to default position.
 		CT_MapMod_MainButton_ResetPosition(false)
@@ -1455,7 +1582,7 @@ local function CT_MapMod_MainButton_ToggleCountPosition()
 	-- Change the position of the note count text on the current map size
 	local characterKey = CT_MapMod_GetCharKey();
 	local optName = CT_MapMod_MainButton_GetCountPositionOptionName();
-	pos = CT_MapMod_Options[characterKey][optName] or 1;
+	local pos = CT_MapMod_Options[characterKey][optName] or 1;
 	pos = pos + 1;
 	if (pos > 4) then
 		pos = 1;
@@ -1917,7 +2044,7 @@ end
 hooksecurefunc("WorldMap_ToggleSizeDown", CT_MapMod_WorldMap_ToggleSizeDown);
 
 
-hooksecurefunc("WorldMapFrame_SetOpacity",
+--[[hooksecurefunc("WorldMapFrame_SetOpacity",
 	function(opacity)
 		local alpha;
 		alpha = 0.5 + (1.0 - opacity) * 0.50;
@@ -1925,15 +2052,16 @@ hooksecurefunc("WorldMapFrame_SetOpacity",
 		CT_MapMod_Coord:SetAlpha(alpha);
 		CT_MapMod_MapButtonFrame:SetAlpha(alpha);
 		WorldMapTrackQuest:SetAlpha(alpha);
-		WorldMapQuestShowObjectives:SetAlpha(alpha);
+--		WorldMapQuestShowObjectives:SetAlpha(alpha);
+		WorldMapShowDropDown:SetAlpha(alpha);
 	end
-);
+);]]
 
-hooksecurefunc("WorldMap_OpenToQuest",
+--[[hooksecurefunc("WorldMap_OpenToQuest",
 	function(...)
 		CT_MapMod_UpdateMap();
 	end
-);
+);]]
 
 hooksecurefunc("WorldMapFrame_ToggleWindowSize",
 	function(...)
@@ -1942,7 +2070,7 @@ hooksecurefunc("WorldMapFrame_ToggleWindowSize",
 );
 
 --Hooks the CT_MapMod_NoteWindow so it can be displayed on OmegaMap
-hooksecurefunc("OmegaMapToggle", function()
+hooksecurefunc("ToggleOmegaMap", function()
 	if ( OmegaMapFrame:IsVisible() ) then
 	--Sets the window to OmegaMap
 		CT_MapMod_NoteWindow:SetParent(OmegaMapFrame);
@@ -1962,147 +2090,6 @@ hooksecurefunc("OmegaMapToggle", function()
 end)
 
 
-
-
-
---------------------------------------------
--- Options Frame Code
-
--- Slash command
-local function slashCommand(msg)
-	module:showModuleOptions(module.name);
-end
-
-module:setSlashCmd(slashCommand, "/ctmapmod", "/ctmap", "/mapmod");
-
-
-local theOptionsFrame;
-
-local optionsFrameList;
-
-local function optionsInit()
-	optionsFrameList = {};
-
-	-- Dummy frame representing a master frame.
-	local frame = {};
-	frame.offset = 0;
-	frame.size = 0;
-	frame.details = "";
-	frame.yoffset = 0;
-	frame.top = 0;
-	frame.data = {};
-
-	tinsert(optionsFrameList, frame);
-end
-
-local function optionsGetData()
-	local frame = optionsFrameList[#optionsFrameList];
-	return frame.data;
-end
-
-local function optionsAddFrame(offset, size, details, data)
-	local yoffset;
-	local prevFrame = optionsFrameList[#optionsFrameList];
-	if (prevFrame) then
-		yoffset = prevFrame.yoffset;
-	else
-		yoffset = 0;
-	end
-	yoffset = yoffset + offset;
-
-	local frame = {};
-	frame.offset = offset;
-	frame.size = size;
-	frame.details = details;
-	frame.yoffset = 0;
-	frame.top = yoffset;
-	frame.data = data or {};
-
-	tinsert(optionsFrameList, frame);
-end
-
-local function optionsAddObject(offset, size, details)
-	local frame = optionsFrameList[#optionsFrameList];
-	local yoffset = frame.yoffset + offset;
-
-	details = gsub(details, "%%y", yoffset);
-	details = gsub(details, "%%b", yoffset - size);
-	details = gsub(details, "%%s", size);
-	tinsert(frame.data, details);
-
-	frame.yoffset = yoffset - size;
-end
-
-local function optionsAddScript(name, func)
-	local frame = optionsFrameList[#optionsFrameList];
-	frame.data[name] = func;
-end
-
-local function optionsEndFrame()
-	local frame = tremove(optionsFrameList);
-
-	local size = frame.size;
-	local top = frame.top;
-	local bot;
-	if (size == 0) then
-		bot = top + frame.yoffset;
-		size = top - bot + 1;
-	else
-		bot = top - size - 1;
-	end
-
-	local details = frame.details;
-
-	details = gsub(details, "%%y", top);
-	details = gsub(details, "%%b", bot);
-	details = gsub(details, "%%s", size);
-
-	local prevFrame = optionsFrameList[#optionsFrameList];
-	prevFrame.yoffset = bot;
-	prevFrame.data[details] = frame.data;
-end
-
--- Options frame
-module.frame = function()
-	local textColor0 = "1.0:1.0:1.0";
-	local textColor1 = "0.9:0.9:0.9";
-	local textColor2 = "0.7:0.7:0.7";
-	local textColor3 = "0.9:0.72:0.0";
-	local xoffset, yoffset;
-
-	optionsInit();
-
-	optionsAddFrame(-5, 0, "frame#tl:0:%y#r");
-		optionsAddObject(  0,   17, "font#tl:5:%y#v:GameFontNormalLarge#Tips");
-		optionsAddObject( -2, 3*14, "font#t:0:%y#s:0:%s#l:13:0#r#You can use /ctmap, /ctmapmod, or /mapmod to open this options window directly.#" .. textColor2 .. ":l");
-		optionsAddObject( -5, 3*14, "font#t:0:%y#s:0:%s#l:13:0#r#To access most of the options for CT_MapMod, open the game's World Map and click on the 'Notes' button.#" .. textColor2 .. ":l");
-
-		optionsAddObject(-20,   17, "font#tl:5:%y#v:GameFontNormalLarge#Notes Button");
-		optionsAddObject(-10, 3*14, "font#t:0:%y#s:0:%s#l:13:0#r#Click the button below to reset the position of the Notes button and the coordinates on the map window.#" .. textColor2 .. ":l");
-		optionsAddFrame( -10,   30, "button#t:0:%y#s:120:%s#v:UIPanelButtonTemplate#Reset position");
-			optionsAddScript("onclick",
-				function(self)
-					CT_MapMod_MainButton_ResetPositions();
-					CT_MapMod_Coord_ResetPositions();
-				end
-			);
-		optionsEndFrame();
-
-		optionsAddScript("onload",
-			function(self)
-				theOptionsFrame = self;
-			end
-		);
-	optionsEndFrame();
-
-	return "frame#all", optionsGetData();
-end
-
-module.update = function(self, optName, value)
-	if (optName == "init") then
-	else
-	end
-end
 
 print(OMEGAMAP_CTMAP_LOADED_MESSAGE)
 
