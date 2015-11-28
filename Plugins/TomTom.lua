@@ -11,9 +11,12 @@ local firstDisplay = true
 local LastWay = nil
 
 --Will only load if the TomTom addon is loaded
-local AstrolabeMapMonitor = DongleStub("AstrolabeMapMonitor");
+--local AstrolabeMapMonitor = DongleStub("AstrolabeMapMonitor");
 --AstrolabeMapMonitor:RegisterAstrolabeLibrary(Astrolabe, LIBRARY_VERSION_MAJOR);
-AstrolabeMapMonitor:MonitorWorldMap( OmegaMapFrame )
+--AstrolabeMapMonitor:MonitorWorldMap( OmegaMapFrame )
+
+--local hbd = addon.hbd
+local hbdp = LibStub("HereBeDragons-Pins-1.0")
 
 
 function OmegaMap_DrawTomToms()
@@ -55,7 +58,7 @@ local origScript = OmegaMapButton_OnClick   -- Hook for Checking Clicks to add b
 
 local waypointMap = {}
 local pool = {}
-local astrolabe = DongleStub("Astrolabe-1.0")
+--local astrolabe = DongleStub("Astrolabe-1.0")
 local all_points = {}
 
 

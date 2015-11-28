@@ -5,7 +5,7 @@
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
-## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo
+## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo, HereBeDragons-1.0
 
 #Libraries
 Libs\LibStub\LibStub.lua
@@ -23,6 +23,7 @@ OmegaMapQuestFrame.xml
 OmegaMapBar.xml
 
 #Addon Plugins
+Plugins\HereBeDragons-Pins.lua
 Plugins\HandyNotes.lua
 Plugins\Gatherer.lua
 Plugins\GatherMate2.lua

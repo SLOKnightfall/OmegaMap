@@ -18,7 +18,8 @@ end
 -- Addon declaration
 local HandyNotes = HandyNotes
 local L = LibStub("AceLocale-3.0"):GetLocale("HandyNotes", false)
-local Astrolabe = DongleStub("Astrolabe-1.0")
+local HBD = LibStub("HereBeDragons-1.0")
+local HBDPins = LibStub("HereBeDragons-Pins-1.0")
 
 
 ---------------------------------------------------------
@@ -27,7 +28,22 @@ local hnotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
 local db = hnotes.db.profile
 local HN = hnotes:GetModule(("HandyNotes"))
 local dbdata = HN.db.global
-
+--[[
+local db
+local options
+local defaults = {
+	profile = {
+		enabled       = true,
+		icon_scale    = 1.0,
+		icon_alpha    = 1.0,
+		icon_scale_minimap = 1.0,
+		icon_alpha_minimap = 1.0,
+		enabledPlugins = {
+			['*'] = true,
+		},
+	},
+}
+]]--
 ---------------------------------------------------------
 -- Localize some globals
 local floor = floor
@@ -199,93 +215,82 @@ end
 
 
 -- Build data
-local continentMapFile = {
-	[WORLDMAP_COSMIC_ID] = "Cosmic", -- That constant is -1
-	[WORLDMAP_AZEROTH_ID] = "World",
-}
-local continentList = {}
-local zoneList = {}
 local reverseZoneC = {}
 local reverseZoneZ = {}
 local zonetoMapID = {}
-local mapIDtoMapFile = {
-	[WORLDMAP_COSMIC_ID] = "Cosmic",
-	[WORLDMAP_AZEROTH_ID] = "World",
-}
-local mapFiletoMapID = {
-	["Cosmic"] = -1,
-	["World"] = 0,
-}
-local reverseMapFileC = {
-	["Cosmic"] = WORLDMAP_COSMIC_ID,
-	["World"] = WORLDMAP_AZEROTH_ID,
-}
-local reverseMapFileZ = {
-	["Cosmic"] = 0,
-	["World"] = 0,
-}
-local continentTempList = {GetMapContinents()}
-for i = 1, #continentTempList, 2 do
-	local C = (i + 1) / 2
-	local mapID, CName = continentTempList[i], continentTempList[i+1]
-	SetMapZoom(C, 0)
-	local mapFile = GetMapInfo()
-	continentList[C] = CName
-	reverseMapFileC[mapFile] = C
-	reverseMapFileZ[mapFile] = 0
-	reverseZoneC[CName] = C
-	reverseZoneZ[CName] = 0
-	mapIDtoMapFile[mapID] = mapFile
-	mapFiletoMapID[mapFile] = mapID
-	continentMapFile[C] = mapFile
-	zoneList[C] = {}
-	local zoneTempList = {GetMapZones(C)}
-	for j = 1, #zoneTempList, 2 do
-		local mapID, ZName = zoneTempList[j], zoneTempList[j+1]
-		SetMapByID(mapID)
-		local Z = GetCurrentMapZone()
-		local mapFile = GetMapInfo()
-		zoneList[C][Z] = ZName
-		reverseMapFileC[mapFile] = C
-		reverseMapFileZ[mapFile] = Z
-		reverseZoneC[ZName] = C
-		reverseZoneZ[ZName] = Z
-		mapIDtoMapFile[mapID] = mapFile
-		mapFiletoMapID[mapFile] = mapID
-		zonetoMapID[ZName] = mapID
+local allMapIDs = HBD:GetAllMapIDs()
+for _, mapID in pairs(allMapIDs) do
+	local C, Z = HBD:GetCZFromMapID(mapID)
+	local name = HBD:GetLocalizedMap(mapID)
+
+	if name and C > 0 and Z >= 0 then
+		reverseZoneC[name] = C
+		reverseZoneZ[name] = Z
+
+		-- always set here to prefer zones with valid C/Z
+		zonetoMapID[name] = mapID
 	end
 
-		-- map things we don't have on the map zones
-	local areas = GetAreaMaps()
-	for i, mapID in pairs(areas) do
-		SetMapByID(mapID)
-		local mapFile = GetMapInfo()
-		local ZName = GetMapNameByID(mapID)
-		local C, Z = GetCurrentMapContinent(), GetCurrentMapZone()
-		
-		-- nil out invalid C/Z values (Cosmic/World)
-		if C == -1 or C == 0 then C = nil end
-		if Z == 0 then Z = nil end
-		
-		-- insert into the zonelist, but don't overwrite entries
-		if C and zoneList[C] and Z and not zoneList[C][Z] then
-			zoneList[C][Z] = ZName
-		end
-		mapIDtoMapFile[mapID] = mapFile
-		-- since some mapfiles are used twice, don't overwrite them here
-		-- the second usage is usually a much weirder place (instances, scenarios, ...)
-		if not mapFiletoMapID[mapFile] then
-			mapFiletoMapID[mapFile] = mapID
-			reverseMapFileC[mapFile] = C
-			reverseMapFileZ[mapFile] = Z
-		end
-		if not zonetoMapID[ZName] then
-			zonetoMapID[ZName] = mapID
-			reverseZoneC[ZName] = C
-			reverseZoneZ[ZName] = Z
-		end
+	if name and not zonetoMapID[name] then
+		zonetoMapID[name] = mapID
 	end
 end
+allMapIDs = nil
+
+local continentMapFile = {
+	["Kalimdor"]              = HBD.continentZoneMap[1],
+	["Azeroth"]               = HBD.continentZoneMap[2],
+	["Expansion01"]           = HBD.continentZoneMap[3],
+	["Northrend"]             = HBD.continentZoneMap[4],
+	["TheMaelstromContinent"] = HBD.continentZoneMap[5],
+	["Vashjir"]               = {[0] = 613, 614, 615, 610}, -- Vashjir isn't an actual continent, but the map treats it like one, so hardcode its 3 zones (+ continent map)
+	["Pandaria"]              = HBD.continentZoneMap[6],
+	["Draenor"]               = HBD.continentZoneMap[7],
+}
+--[[
+-- Public function to get a list of zones in a continent
+-- Note: This list is not an array, it uses the Z value as a key, which is not continous
+function HandyNotes:GetContinentZoneList(mapFile)
+	return continentMapFile[mapFile]
+end
+
+-- Public functions for plugins to convert between MapFile <-> C,Z
+function HandyNotes:GetMapFile(C, Z)
+	return HBD:GetMapFileFromID(HBD:GetMapIDFromCZ(C, Z))
+end
+function HandyNotes:GetCZ(mapFile)
+	return HBD:GetCZFromMapID(HBD:GetMapIDFromFile(mapFile))
+end
+
+-- Public functions for plugins to convert between coords <--> x,y
+function HandyNotes:getCoord(x, y)
+	return floor(x * 10000 + 0.5) * 10000 + floor(y * 10000 + 0.5)
+end
+function HandyNotes:getXY(id)
+	return floor(id / 10000) / 10000, (id % 10000) / 10000
+end
+
+-- Public functions for plugins to convert between GetRealZoneText() <-> C,Z
+function HandyNotes:GetZoneToCZ(zone)
+	return reverseZoneC[zone], reverseZoneZ[zone]
+end
+function HandyNotes:GetCZToZone(C, Z)
+	return HBD:GetLocalizedMap(HBD:GetMapIDFromCZ(C, Z))
+end
+
+-- Public functions for plugins to convert between MapFile <-> Map ID
+function HandyNotes:GetMapFiletoMapID(mapFile)
+	return mapFile and HBD:GetMapIDFromFile(mapFile)
+end
+function HandyNotes:GetMapIDtoMapFile(mapID)
+	return mapID and HBD:GetMapFileFromID(mapID)
+end
+
+-- Public function for plugins to convert between GetRealZoneText() <-> Map ID
+function HandyNotes:GetZoneToMapID(zone)
+	return zonetoMapID[zone]
+end
+--]]
 
 ---------------------------------------------------------
 -- Core functions
@@ -294,6 +299,7 @@ end
 local function UpdateOmegaMapPlugin(pluginName)
 	if not OmegaMapOverlay:IsVisible() then return end
 	--if not omegamapPins[pluginName] then return end
+	HBDPins:RemoveAllWorldMapIcons("HandyNotes" .. pluginName)
 	clearAllPins(omegamapPins[pluginName])
 	if not db.enabledPlugins[pluginName] then return end
 	local ourScale, ourAlpha = 12 * db.icon_scale, db.icon_alpha
@@ -340,7 +346,7 @@ local function UpdateOmegaMapPlugin(pluginName)
 			icon:SetPoint("CENTER", OmegaMapOverlay, "TOPLEFT", x*OmegaMapOverlay:GetWidth(), -y*OmegaMapOverlay:GetHeight())
 			icon:Show()
 		else
-			Astrolabe:PlaceIconOnWorldMap(OmegaMapOverlay, icon, mapID2, level2 or level, x, y)
+			HBDPins:AddWorldMapIconMF("HandyNotes" .. pluginName, icon, mapID2, level2 or level, x, y)
 		end
 		t:ClearAllPoints()
 		t:SetAllPoints(icon) -- Not sure why this is necessary, but people are reporting weirdly sized textures
