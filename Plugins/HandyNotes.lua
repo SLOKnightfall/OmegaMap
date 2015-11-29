@@ -1,7 +1,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 -- Code for HandyNotes Integration 
--- Code is a modified version of HandyNotes.lua from HandyNotes (v1.3.0)
+-- Code is a modified version of HandyNotes.lua from HandyNotes (v1.4.5)
 -- HandyNotes is written by Xinhuan	@ http://www.curse.com/addons/wow/handynotes
 
 --	///////////////////////////////////////////////////////////////////////////////////////////

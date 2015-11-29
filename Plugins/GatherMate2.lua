@@ -1,7 +1,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 -- This code allows the integration of the GatherMate2 addon into Omegamap 
--- Code is a modified version of Display.lua from GatherMate2 (v1.32.1)
+-- Code is a modified version of Display.lua from GatherMate2 (v1.35.4)
 -- GatherMate2 is written by the kagaro, Nevcairiel, & Xinhuan @ http://www.wowace.com/addons/gathermate2/
 
 --	///////////////////////////////////////////////////////////////////////////////////////////

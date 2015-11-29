@@ -1,7 +1,7 @@
-## Interface: 60100
+## Interface: 60200
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 6.1
+## Game Version: 6.2.3
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
