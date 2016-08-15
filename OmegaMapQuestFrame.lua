@@ -14,6 +14,9 @@ function OmegaMapQuestFrame_OnLoad(self)
 	self:RegisterEvent("QUEST_WATCH_UPDATE");
 	self:RegisterEvent("QUEST_ACCEPTED");
 	self:RegisterEvent("UNIT_QUEST_LOG_CHANGED");
+	self:RegisterEvent("AJ_QUEST_LOG_OPEN");
+	self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	self:RegisterEvent("WORLD_MAP_UPDATE");
 
 	QuestPOI_Initialize(OM_QuestScrollFrame.Contents);
 	OmegaMapQuestOptionsDropDown.questID = 0;		-- for OmegaMapQuestOptionsDropDown_Initialize
@@ -91,6 +94,25 @@ function OmegaMapQuestFrame_OnEvent(self, event, ...)
 		end	
 	elseif ( event == "QUEST_ACCEPTED" ) then
 		TUTORIAL_QUEST_ACCEPTED = arg2;
+	elseif ( event == "AJ_QUEST_LOG_OPEN" ) then
+		ShowQuestLog();
+		local questIndex = GetQuestLogIndexByID(arg1)
+		local mapID, floorNumber = GetQuestWorldMapAreaID(arg1);
+		if ( questIndex > 0 ) then
+			QuestMapFrame_OpenToQuestDetails(arg1);
+		elseif ( mapID ~= 0 ) then
+			SetMapByID(mapID);
+			if ( floorNumber ~= 0 ) then
+				SetDungeonMapLevel(floorNumber);
+			end
+		elseif ( arg2 and arg2 > 0) then
+			SetMapByID(arg2);
+		end
+	elseif ( event == "PLAYER_ENTERING_WORLD" or event == "WORLD_MAP_UPDATE" ) then
+		SortQuestSortTypes();
+		SortQuests();
+		OmegaMapQuestMapFrame_ResetFilters();
+		OmegaMapQuestFrame_UpdateAll();
 	end
 end
 
@@ -147,6 +169,10 @@ function OmegaMapQuestFrame_Hide()
 	end
 end
 
+function OmegaMapQuestMapFrame_IsQuestWorldQuest(questID)
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questID);
+	return worldQuestType ~= nil;
+end
 
 function OmegaMapQuestFrame_UpdateAll()
 	local numPOIs = QuestMapUpdateAllQuests();
@@ -155,12 +181,7 @@ function OmegaMapQuestFrame_UpdateAll()
 	if ( OmegaMapFrame:IsShown() ) then	
 		local poiTable = { };
 		if ( numPOIs > 0 and GetCVarBool("questPOI") ) then
-			OmegaMapBlobFrame:Show();
-			OmegaMapPOIFrame:Show();
 			GetQuestPOIs(poiTable);
-		else
-			OmegaMapBlobFrame:Hide();
-			OmegaMapPOIFrame:Hide();
 		end
 		local questDetailID = OmegaMapQuestFrame.DetailsFrame.questID;
 		if ( questDetailID ) then
@@ -171,13 +192,30 @@ function OmegaMapQuestFrame_UpdateAll()
 			OM_QuestLogQuests_Update(poiTable);
 		end
 		OmegaMapPOIFrame_Update(poiTable);
-		OmegaMapQuestFrameViewAllButton_Update();
 	end
+end
+
+function OmegaMapQuestMapFrame_ResetFilters()
+	local numEntries, numQuests = GetNumQuestLogEntries();
+	OmegaMapQuestFrame.ignoreQuestLogUpdate = true;
+	for questLogIndex = 1, numEntries do
+		local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex);	
+		local difficultyColor = GetQuestDifficultyColor(level);
+		if ( isHeader ) then
+			if (isOnMap) then
+				ExpandQuestHeader(questLogIndex, true);
+			else
+				CollapseQuestHeader(questLogIndex, true);
+			end
+		end
+	end
+	OmegaMapQuestFrame.ignoreQuestLogUpdate = nil;
 end
 
 function OmegaMapQuestFrame_ShowQuestDetails(questID)
 	local questLogIndex = GetQuestLogIndexByID(questID);
 	SelectQuestLogEntry(questLogIndex);
+	OmegaMapQuestFrame.DetailsFrame.questID = questID;
 	QuestInfo_Display(QUEST_TEMPLATE_MAP_DETAILS, OmegaMapQuestFrame.DetailsFrame.ScrollFrame.Contents);
 	QuestInfo_Display(QUEST_TEMPLATE_MAP_REWARDS, OmegaMapQuestFrame.DetailsFrame.RewardsFrame, nil, nil, true);
 	OmegaMapQuestFrame.DetailsFrame.ScrollFrame.ScrollBar:SetValue(0);
@@ -195,14 +233,18 @@ function OmegaMapQuestFrame_ShowQuestDetails(questID)
 	end
 		
 	-- height
-	local height = MapQuestInfoRewardsFrame:GetHeight() + 49;
+	local height;
+	if ( MapQuestInfoRewardsFrame:IsShown() ) then
+		height = MapQuestInfoRewardsFrame:GetHeight() + 49;
+	else
+		height = 59;
+	end
 	height = min(height, 275);
 	OmegaMapQuestFrame.DetailsFrame.RewardsFrame:SetHeight(height);
 	OmegaMapQuestFrame.DetailsFrame.RewardsFrame.Background:SetTexCoord(0, 1, 0, height / 275);
 
 	OmegaMapQuestFrame.QuestsFrame:Hide();
 	OmegaMapQuestFrame.DetailsFrame:Show();
-	OmegaMapQuestFrame.DetailsFrame.questID = questID;
 	
 	-- save current view
 	OmegaMapQuestFrame.DetailsFrame.continent = GetCurrentMapContinent();
@@ -333,17 +375,19 @@ function OmegaMapQuestOptionsDropDown_Initialize(self)
 	end
 	UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
 	
-	info.text = ABANDON_QUEST;
-	info.func = function(_, questID) OmegaMapQuestQuestOptions_AbandonQuest(questID) end;
-	info.arg1 = self.questID;
-	info.disabled = nil;
-	UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+	if CanAbandonQuest(self.questID) then
+		info.text = ABANDON_QUEST;
+		info.func = function(_, questID) QuestMapQuestOptions_AbandonQuest(questID) end;
+		info.arg1 = self.questID;
+		info.disabled = nil;
+		UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+	end
 end
 
 function OmegaMapQuestQuestOptions_TrackQuest(questID)
 	local questLogIndex = GetQuestLogIndexByID(questID);
 	if ( IsQuestWatched(questLogIndex) ) then
-		QuestObjectiveTracker_UntrackQuest(nil, questLogIndex);
+		QuestObjectiveTracker_UntrackQuest(nil, questID);
 	else
 		AddQuestWatch(questLogIndex, true);
 		QuestSuperTracking_OnQuestTracked(questID);
@@ -408,9 +452,7 @@ function OM_QuestLogQuests_Update(poiTable)
 	local showPOIs = GetCVarBool("questPOI");
 
 	local mapID, isContinent = GetCurrentMapAreaID();
-	local showQuestObjectives = (not isContinent) and (mapID > 0);
-	
-	local mapHeaderIndex = GetCurrentMapHeaderIndex();
+
 	local button, prevButton;
 	
 	QuestPOI_ResetUsage(OM_QuestScrollFrame.Contents);
@@ -429,56 +471,50 @@ function OM_QuestLogQuests_Update(poiTable)
 				completedCriteria = completedCriteria + 1;
 			end
 		end
+		local numPoints = select(3, GetAchievementInfo(storyID));
+		OM_QuestScrollFrame.Contents.StoryHeader.Points:SetText(numPoints);
 		OM_QuestScrollFrame.Contents.StoryHeader.Progress:SetFormattedText(QUEST_STORY_STATUS, completedCriteria, numCriteria);
-		if ( mapHeaderIndex > 0 ) then
-			-- always expand header for story zone
-			local _, _, _, _, isCollapsed = GetQuestLogTitle(mapHeaderIndex);
-			if ( isCollapsed ) then
-				-- ExpandQuestHeader will signal QUEST_LOG_UPDATE which would otherwise trigger another OM_QuestLogQuests_Update
-				OmegaMapQuestFrame.ignoreQuestLogUpdate = true;
-				ExpandQuestHeader(mapHeaderIndex);
-				OmegaMapQuestFrame.ignoreQuestLogUpdate = nil;
-			end
-		end
 		prevButton = OM_QuestScrollFrame.Contents.StoryHeader;
 	else
 		OM_QuestScrollFrame.Contents.StoryHeader:Hide();
 	end
 
-	local localQuestsGroup;
-	local firstLocalQuestButton;
-	local nextQuestsGroup;
-	local firstNextQuestButton;
-
 	local headerIndex = 0;
 	local titleIndex = 0;
 	local objectiveIndex = 0;
+	local headerCollapsed = false;
 	local headerTitle, headerOnMap, headerShown, headerLogIndex, mapHeaderButtonIndex, firstMapHeaderQuestButtonIndex;
+	local noHeaders = true;
 	for questLogIndex = 1, numEntries do
-		local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isStory = GetQuestLogTitle(questLogIndex);
+		local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex);
+
 		local difficultyColor = GetQuestDifficultyColor(level);
 		if ( isHeader ) then
 			headerTitle = title;
 			headerOnMap = isOnMap;
 			headerShown = false;
 			headerLogIndex = questLogIndex;
+			headerCollapsed = isCollapsed;
 			difficultyColor = QuestDifficultyColors["header"];
-			if ( questLogIndex == mapHeaderIndex ) then
-				localQuestsGroup = true;
-			elseif ( localQuestsGroup ) then
-				localQuestsGroup = false;
-				nextQuestsGroup = true;
-			end
-		elseif ( headerOnMap and isOnMap and not isTask ) then
+		elseif ( not isTask and (not isBounty or IsQuestComplete(questID))) then
 			-- we have at least one valid entry, show the header for it
-			if ( not headerShown and not showQuestObjectives ) then
+			if ( not headerShown ) then
 				headerShown = true;
+				noHeaders = false
 				headerIndex = headerIndex + 1;
 				button = OM_QuestLogQuests_GetHeaderButton(headerIndex);
+				if (headerCollapsed) then
+					button:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-Up");
+				else
+					button:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-Up");
+				end
+				button:SetHighlightTexture("Interface\\Buttons\\UI-PlusButton-Hilight");
 				if ( headerTitle ) then
 					button:SetText(headerTitle);
+					button:SetHitRectInsets(0, -button.ButtonText:GetWidth(), 0, 0);
 				else
 					button:SetText("");
+					button:SetHitRectInsets(0, 0, 0, 0);
 				end
 				button:ClearAllPoints();
 				if ( prevButton ) then
@@ -487,107 +523,90 @@ function OM_QuestLogQuests_Update(poiTable)
 					button:SetPoint("TOPLEFT", 1, -6);
 				end
 				button:Show();				
-				if ( mapHeaderIndex == headerLogIndex ) then
-					mapHeaderButtonIndex = headerIndex;
-				end
 				button.questLogIndex = headerLogIndex;
 				prevButton = button;
 			end
-			local totalHeight = 8;
-			titleIndex = titleIndex + 1;
-			button = OM_QuestLogQuests_GetTitleButton(titleIndex);
-			button.questID = questID;
 
-			if ( localQuestsGroup and not firstLocalQuestButton ) then
-				if ( titleIndex > 1 ) then
-					firstLocalQuestButton = button;
+			if (not headerCollapsed) then
+				local totalHeight = 8;
+				titleIndex = titleIndex + 1;
+				button = QuestLogQuests_GetTitleButton(titleIndex);
+				button.questID = questID;
+
+				if ( displayQuestID ) then
+					title = questID.." - "..title;
+				end
+				if ( ENABLE_COLORBLIND_MODE == "1" ) then
+					title = "["..level.."] " .. title;
+				end
+				
+				-- If not a header see if any nearby group mates are on this quest
+				local partyMembersOnQuest = 0;
+				for j=1, GetNumSubgroupMembers() do
+					if ( IsUnitOnQuestByQuestID(questID, "party"..j) ) then
+						partyMembersOnQuest = partyMembersOnQuest + 1;
+					end
+				end
+				
+				if ( partyMembersOnQuest > 0 ) then
+					title = "["..partyMembersOnQuest.."] "..title;
+				end
+
+				button.Text:SetText(title);
+				button.Text:SetTextColor( difficultyColor.r, difficultyColor.g, difficultyColor.b );
+				
+				totalHeight = totalHeight + button.Text:GetHeight();
+				if ( IsQuestHardWatched(questLogIndex) ) then
+					button.Check:Show();
+					button.Check:SetPoint("LEFT", button.Text, button.Text:GetWrappedWidth() + 2, 0);
 				else
-					-- no need to move this group of quests, it's already at the top
-					localQuestsGroup = nil;
+					button.Check:Hide();
 				end
-			end
-			if ( nextQuestsGroup and not firstNextQuestButton ) then
-				firstNextQuestButton = button;
-			end
-
-			if ( displayQuestID ) then
-				title = questID.." - "..title;
-			end
-			if ( ENABLE_COLORBLIND_MODE == "1" ) then
-				title = "["..level.."] " .. title;
-			end
-			
-			-- If not a header see if any nearby group mates are on this quest
-			local partyMembersOnQuest = 0;
-			for j=1, GetNumSubgroupMembers() do
-				if ( IsUnitOnQuestByQuestID(questID, "party"..j) ) then
-					partyMembersOnQuest = partyMembersOnQuest + 1;
+				
+				-- tag. daily icon can be alone or before other icons except for COMPLETED or FAILED
+				local tagID;
+				local questTagID, tagName = GetQuestTagInfo(questID);
+				if ( isComplete and isComplete < 0 ) then
+					tagID = "FAILED";
+				elseif ( isComplete and isComplete > 0 ) then
+					tagID = "COMPLETED";
+				elseif( questTagID and questTagID == QUEST_TAG_ACCOUNT ) then
+					local factionGroup = GetQuestFactionGroup(questID);
+					if( factionGroup ) then
+						tagID = "ALLIANCE";
+						if ( factionGroup == LE_QUEST_FACTION_HORDE ) then
+							tagID = "HORDE";
+						end
+					else
+						tagID = QUEST_TAG_ACCOUNT;
+					end
+				elseif( frequency == LE_QUEST_FREQUENCY_DAILY and (not isComplete or isComplete == 0) ) then
+					tagID = "DAILY";
+				elseif( frequency == LE_QUEST_FREQUENCY_WEEKLY and (not isComplete or isComplete == 0) )then
+					tagID = "WEEKLY";
+				elseif( questTagID ) then
+					tagID = questTagID;
 				end
-			end
-			
-			if ( partyMembersOnQuest > 0 ) then
-				title = "["..partyMembersOnQuest.."] "..title;
-			end
 
-			button.Text:SetText(title);
-			button.Text:SetTextColor( difficultyColor.r, difficultyColor.g, difficultyColor.b );
-			
-			totalHeight = totalHeight + button.Text:GetHeight();
-			if ( IsQuestHardWatched(questLogIndex) ) then
-				button.Check:Show();
-				button.Check:SetPoint("LEFT", button.Text, button.Text:GetWrappedWidth() + 2, 0);
-			else
-				button.Check:Hide();
-			end
-			
-			-- tag. daily icon can be alone or before other icons except for COMPLETED or FAILED
-			local tagID;
-			local questTagID, tagName = GetQuestTagInfo(questID);
-			if ( isComplete and isComplete < 0 ) then
-				tagID = "FAILED";
-			elseif ( isComplete and isComplete > 0 ) then
-				tagID = "COMPLETED";
-			elseif( questTagID and questTagID == QUEST_TAG_ACCOUNT ) then
-				local factionGroup = GetQuestFactionGroup(questID);
-				if( factionGroup ) then
-					tagID = "ALLIANCE";
-					if ( factionGroup == LE_QUEST_FACTION_HORDE ) then
-						tagID = "HORDE";
+				if ( tagID ) then
+					local tagCoords = QUEST_TAG_TCOORDS[tagID];
+					if( tagCoords ) then
+						button.TagTexture:SetTexCoord( unpack(tagCoords) );
+						button.TagTexture:Show();
 					end
 				else
-					tagID = QUEST_TAG_ACCOUNT;
+					button.TagTexture:Hide();
 				end
-			elseif( frequency == LE_QUEST_FREQUENCY_DAILY and (not isComplete or isComplete == 0) ) then
-				tagID = "DAILY";
-			elseif( frequency == LE_QUEST_FREQUENCY_WEEKLY and (not isComplete or isComplete == 0) )then
-				tagID = "WEEKLY";
-			elseif( questTagID ) then
-				tagID = questTagID;
-			end
-
-			if ( tagID ) then
-				local tagCoords = QUEST_TAG_TCOORDS[tagID];
-				if( tagCoords ) then
-					button.TagTexture:SetTexCoord( unpack(tagCoords) );
-					button.TagTexture:Show();
-				end
-			else
-				button.TagTexture:Hide();
-			end
+				
 			
 			-- POI/objectives
-			if ( showQuestObjectives ) then
 				local requiredMoney = GetQuestLogRequiredMoney(questLogIndex);
 				local numObjectives = GetNumQuestLeaderBoards(questLogIndex);
 				-- complete?
-				local isBreadcrumb = false;
 				if ( isComplete and isComplete < 0 ) then
 					isComplete = false;
 				elseif ( numObjectives == 0 and playerMoney >= requiredMoney and not startEvent) then
 					isComplete = true;
-					if ( requiredMoney == 0 ) then
-						isBreadcrumb = true;
-					end
 				end
 				-- objectives
 				if ( isComplete ) then
@@ -595,11 +614,8 @@ function OM_QuestLogQuests_Update(poiTable)
 					local objectiveFrame = OM_QuestLog_GetObjectiveFrame(objectiveIndex);
 					objectiveFrame.questID = questID;
 					objectiveFrame:Show();
-					if ( isBreadcrumb ) then
-						objectiveFrame.Text:SetText(GetQuestLogCompletionText(questLogIndex));
-					else
-						objectiveFrame.Text:SetText(QUEST_WATCH_QUEST_READY);
-					end
+					local completionText = GetQuestLogCompletionText(questLogIndex) or QUEST_WATCH_QUEST_READY;
+					objectiveFrame.Text:SetText(completionText);
 					local height = objectiveFrame.Text:GetStringHeight();
 					objectiveFrame:SetHeight(height);
 					objectiveFrame:SetPoint("TOPLEFT", button.Text, "BOTTOMLEFT", 0, -3);
@@ -669,47 +685,26 @@ function OM_QuestLogQuests_Update(poiTable)
 				else
 					button.Text:SetPoint("TOPLEFT", 31, -4);
 				end
-			else
-				button.Text:SetPoint("TOPLEFT", 31, -4);
+
+				button:SetHeight(totalHeight);
+				button.questLogIndex = questLogIndex;
+				button:ClearAllPoints();
+				if ( prevButton ) then
+					button:SetPoint("TOPLEFT", prevButton, "BOTTOMLEFT", 0, 0);
+				else
+					button:SetPoint("TOPLEFT", 1, -6);
+				end
+				button:Show();
+				prevButton = button;
 			end
-			button:SetHeight(totalHeight);
-			button.questLogIndex = questLogIndex;
-			button:ClearAllPoints();
-			if ( prevButton ) then
-				button:SetPoint("TOPLEFT", prevButton, "BOTTOMLEFT", 0, 0);
-			else
-				button:SetPoint("TOPLEFT", 1, -6);
-			end
-			button:Show();			
-			prevButton = button;
 		end
 	end
-	-- if we have quests for this map, move them up
-	if ( firstLocalQuestButton ) then
-		local _, origAnchor = firstLocalQuestButton:GetPoint();
-		-- if it's the last header, it will be the last quest button
-		local lastQuestButton;		
-		if ( firstNextQuestButton ) then
-			_, lastQuestButton = firstNextQuestButton:GetPoint();		
-		else
-			lastQuestButton = OM_QuestLogQuests_GetTitleButton(titleIndex);
-		end
-		-- now rearrange
-		if ( storyID ) then
-			firstLocalQuestButton:SetPoint("TOPLEFT", QuestScrollFrame.Contents.StoryHeader, "BOTTOMLEFT", 0, 0);
-		else
-			firstLocalQuestButton:SetPoint("TOPLEFT", 1, -6);
-		end
-		OM_QuestLogQuests_GetTitleButton(1):SetPoint("TOPLEFT", lastQuestButton, "BOTTOMLEFT", 0, 0);
-		if ( firstNextQuestButton ) then
-			firstNextQuestButton:SetPoint("TOPLEFT", origAnchor, "BOTTOMLEFT", 0, 0);
-		end	
-	end
+
 	-- background
-	if ( titleIndex > 0 ) then
-		OM_QuestScrollFrame.Background:SetAtlas("QuestLogBackground", true);
-	else
+	if ( titleIndex == 0 and noHeaders ) then
 		OM_QuestScrollFrame.Background:SetAtlas("NoQuestsBackground", true);
+	else
+		OM_QuestScrollFrame.Background:SetAtlas("QuestLogBackground", true);
 	end
 	
 	QuestPOI_SelectButtonByQuestID(OM_QuestScrollFrame.Contents, GetSuperTrackedQuestID());
@@ -747,21 +742,12 @@ end
 function OmegaMapQuestLogHeaderButton_OnClick(self, button)
 	PlaySound("igMainMenuOptionCheckBoxOn");
 	if ( button == "LeftButton" ) then
-		-- open to the map for the first quest under the header
-		local questLogIndex = self.questLogIndex;
-		local numEntries = GetNumQuestLogEntries();
-		local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask;
-		repeat
-			questLogIndex = questLogIndex + 1;
-			title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask = GetQuestLogTitle(questLogIndex);
-			if ( isOnMap and not isTask ) then
-				local mapID, floorNumber = GetQuestWorldMapAreaID(questID);
-				if ( mapID ~= 0 ) then
-					SetMapByID(mapID);
-					return;
-				end
-			end
-		until ( isHeader or questLogIndex >= numEntries )
+		local _, _, _, _, isCollapsed = GetQuestLogTitle(self.questLogIndex);	
+		if (isCollapsed) then
+			ExpandQuestHeader(self.questLogIndex);
+		else
+			CollapseQuestHeader(self.questLogIndex);
+		end
 	else
 		OmegaMapZoomOutButton_OnClick();
 	end
@@ -839,8 +825,8 @@ function OmegaMapQuestLogTitleButton_OnEnter(self)
 
 	-- description
 	if ( isComplete and isComplete > 0 ) then
-		GameTooltip:AddLine(GetQuestLogCompletionText(self.questLogIndex), 1, 1, 1, true);
-		GameTooltip:AddLine(" ");
+		local completionText = GetQuestLogCompletionText(self.questLogIndex) or QUEST_WATCH_QUEST_READY;
+		GameTooltip:AddLine(completionText, 1, 1, 1, true);
 	else
 		local needsSeparator = false;
 		local _, objectiveText = GetQuestLogQuestText(self.questLogIndex);

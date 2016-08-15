@@ -60,7 +60,7 @@
 	</Button>
 
 
-	<Frame name="OM_QuestLogPopupDetailFrame" toplevel="true" enableMouse="true" parent="UIParent" hidden="true" inherits="ButtonFrameTemplate">
+	<Frame name="OM_QuestLogPopupDetailFrame" toplevel="true" enableMouse="true" parent="UIParent" hidden="true" inherits="ButtonFrameTemplate, QuestFramePanelTemplate">
 		<Size x="338" y="496"/>
 		<Layers>
 			<Layer level="OVERLAY" textureSubLevel="-1">
@@ -70,14 +70,6 @@
 						<Anchor point="TOPLEFT" x="-6" y="7"/>
 					</Anchors>
 				</Texture>		
-			</Layer>
-			<Layer level="BACKGROUND">
-				<Texture name="$parentPageBg" file="Interface\QuestFrame\QuestBG">
-					<Size x="512" y="620"/>
-					<Anchors>
-						<Anchor point="TOPLEFT" x="6" y="-62"/>
-					</Anchors>
-				</Texture>
 			</Layer>
 		</Layers>
 		<Frames>
@@ -300,10 +292,10 @@
 												<Anchor point="TOP" x="-2" y="0"/>
 											</Anchors>											
 										</Texture>
-										<FontString inherits="GameFontHighlightSmall" parentKey="Points" text="25">
+										<FontString inherits="GameFontHighlightSmall" parentKey="Points" justifyH="CENTER" justifyV="MIDDLE">
 											<Size x="42" y="16"/>
 											<Anchors>
-												<Anchor point="TOP" relativeKey="$parent.AchIcon" x="0" y="-15"/>
+												<Anchor point="CENTER" relativeKey="$parent.AchIcon" x="0" y="0"/>
 											</Anchors>
 										</FontString>										
 									</Layer>
@@ -368,15 +360,6 @@
 							</Anchor>
 						</Anchors>
 					</Slider>				
-					<Button parentKey="ViewAll" inherits="UIPanelButtonTemplate" id="1">
-						<Size x="246" y="22"/>
-						<Anchors>
-							<Anchor point="TOPRIGHT" relativeTo="OmegaMapQuestFrame" x="-24" y="35"/>
-						</Anchors>
-						<Scripts>
-							<OnClick function="OmegaMapQuestFrameViewAllButton_OnClick"/>
-						</Scripts>
-					</Button>
 					<Frame parentKey="StoryTooltip" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true">
 						<Size x="10" y="10"/>
 						<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
@@ -420,14 +403,15 @@
 								</Texture>
 							</Layer>
 						</Layers>
-					</Frame>					
+					</Frame>
 				</Frames>
 				<Scripts>
-					<OnLoad>					
+					<OnLoad>
 						ScrollFrame_OnLoad(self);
 						self.Contents.StoryHeader.HighlightTexture:SetVertexColor(0.243, 0.570, 1);
 						self.StoryTooltip:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
-						self.StoryTooltip:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);						
+						self.StoryTooltip:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+
 					</OnLoad>
 				</Scripts>
 			</ScrollFrame>
@@ -449,6 +433,15 @@
 							<Anchors>
 								<Anchor point="TOPLEFT" x="0" y="45"/>
 							</Anchors>							
+						</Texture>
+					</Layer>
+					<Layer level="BORDER" textureSubLevel="-1">	
+						<Texture parentKey="SealMaterialBG" hidden="true">
+							<Size x="285" y="407"/>
+							<Anchors>
+								<Anchor point="TOPLEFT" x="0" y="6"/>
+							</Anchors>
+							<TexCoords left="0.0468" right="1" top="0" bottom="1"/>
 						</Texture>
 					</Layer>
 					<Layer level="ARTWORK">

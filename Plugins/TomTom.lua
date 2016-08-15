@@ -1,7 +1,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 -- Code for TomTom  Integration 
--- Code is a modified version of TomTom_Waypoints.lua from TomTom (v50400-1.0.0)
+-- Code is a modified version of TomTom_Waypoints.lua from TomTom (v60200-2.1.0)
 -- TomTom is written by Cladhaire @ http://wow.curseforge.com/addons/tomtom/
 
 --	///////////////////////////////////////////////////////////////////////////////////////////

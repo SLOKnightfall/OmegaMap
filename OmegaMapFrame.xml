@@ -7,6 +7,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 
+<Script file="OmegaMapBountyBoard.lua"/>
+<Script file="OmegaMapActionButton.lua"/>
+
 <Include file="OmegaMapFrameTemplates.xml"/>
 <Script file="OmegaMapFrame.lua"/>
 <Script file="OmegaMapHotSpot.lua"/>
@@ -130,7 +133,7 @@
 			</Scripts>
 			<Animations>
 				<AnimationGroup parentKey="AnimAlphaIn">
-					<Alpha parentKey="Alpha" change="0.65" startDelay="0.25" duration="0.55" order="1"/>
+					<Alpha parentKey="Alpha" fromAlpha="0" toAlpha="0.65" startDelay="0.25" duration="0.55" order="1"/>
 					<Scripts>
 						<OnFinished>
 							OmegaMapFrame:SetAlpha(WORLD_MAP_MAX_ALPHA); --CHECK
@@ -138,7 +141,7 @@
 					</Scripts>				
 				</AnimationGroup>
 				<AnimationGroup parentKey="AnimAlphaOut">
-					<Alpha parentKey="Alpha" change="-0.65" startDelay="0.25" duration="0.55" order="1"/>
+					<Alpha parentKey="Alpha" fromAlpha="0.65" toAlpha="0" startDelay="0.25" duration="0.55" order="1"/>
 					<Scripts>
 						<OnFinished>
 							OmegaMapFrame:SetAlpha(WORLD_MAP_MIN_ALPHA);  --CHECK
@@ -174,7 +177,7 @@
 									</Anchors>
 
 									<Frames>
-									<Frame name="OmegaMapDetailTilesFrame" setAllPoints="true" >
+									<Frame name="OmegaMapDetailTilesFrame" setAllPoints="true" frameLevel="100" >
 																	<Layers>
 										<Layer level="BACKGROUND">
 												<Texture name="OmegaMapDetailTile1">
@@ -249,6 +252,9 @@
 													<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailTile11" relativePoint="TOPRIGHT"/>
 												</Anchors>
 											</Texture>	
+										</Layer>
+										<Layer level="BACKGROUND" textureSubLevel="1">
+											<Texture name="OmegaMapInvasionOverlay" atlas="legioninvasion-map-cover" />
 										</Layer>
 										<Layer level="OVERLAY">
 											<Texture name="OmegaMapHighlight" alphaMode="ADD" hidden="true">
@@ -511,8 +517,8 @@
 										<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
 									</Anchors>
 									<Frames>
-										<Frame name="OmegaMapPlayerLower" inherits="OmegaMapPlayerTemplate" framestrata="MEDIUM" hidden="true"/>
-										<Frame name="OmegaMapPlayerUpper" inherits="OmegaMapPlayerTemplate" framestrata="FULLSCREEN" alpha="0.7" hidden="true"/>
+										<Frame name="OmegaMapPlayerLower" inherits="OmegaMapPlayerTemplate" frameStrata="HIGH" hidden="true" frameLevel="150"/>
+										<Frame name="OmegaMapPlayerUpper" inherits="OmegaMapPlayerTemplate" framestrata="FULLSCREEN" alpha="0.7" hidden="true" frameLevel="500"/>
 										<Frame name="OmegaMapPing" framestrata="FULLSCREEN" hidden="true">
 											<Size x="64" y="64"/>
 											<Anchors>
@@ -598,23 +604,33 @@
 										<Frame name="OmegaMapRaid40" inherits="OmegaMapRaidUnitTemplate" id="40"/>
 									</Frames>							
 								</Frame>
-								<Frame name="OmegaMapPOIFrame">
+
+									<Frame name="OmegaMapPOIFrame" frameLevel="300">
 									<Anchors>
 										<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
 										<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
 									</Anchors>
-								</Frame>
-									<Frame name="OmegaMapOtherPOIFrame">
-									<Anchors>
-										<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
-										<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
-									</Anchors>
+									<Frames>
+										<CinematicModel parentKey="WorldQuestCompletedBySpellModel" facingLeft="true">
+											<Size x="400" y="400"/>
+											<Scripts>
+												<OnLoad>
+													self:RegisterEvent("UI_SCALE_CHANGED");
+													self:RegisterEvent("DISPLAY_SIZE_CHANGED");
+													self:SetDisplayInfo(11686); <!-- 11686 is invisible stalker -->
+												</OnLoad>
+												<OnEvent>
+													self:RefreshCamera();
+												</OnEvent>
+											</Scripts>
+										</CinematicModel>
+									</Frames>
 								</Frame>
 							</Frames>
 						</Frame>
 					</ScrollChild>
 				</ScrollFrame>
-				<Frame parentKey="UIElementsFrame">
+				<Frame parentKey="UIElementsFrame" frameLevel="10">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="OmegaMapScrollFrame" x="0" y="0"/>
 						<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapScrollFrame" x="0" y="0"/>
@@ -627,12 +643,16 @@
 							</Anchors>
 							<Layers>
 								<Layer level="OVERLAY">
-									<FontString name="OmegaMapFrameAreaLabel" inherits="WorldMapTextFont" text="BLAH!" justifyV="TOP">
-										<Size x="900" y="0"/>
+									<FontString name="OmegaMapFrameAreaLabel" inherits="WorldMapTextFont">
 										<Anchors>
 											<Anchor point="TOP" x="0" y="-20"/>
 										</Anchors>
 									</FontString>
+									<Texture name="OmegaMapFrameAreaLabelTexture" hidden="true">
+									<Anchors>
+										<Anchor point="RIGHT" relativeTo="OmegaMapFrameAreaLabel" relativePoint="LEFT" x="0" y="0"/>
+									</Anchors>
+								</Texture>
 									<FontString name="OmegaMapFrameAreaDescription" inherits="SubZoneTextFont">
 										<Anchors>
 											<Anchor point="TOP" relativeTo="OmegaMapFrameAreaLabel" relativePoint="BOTTOM" x="0" y="-10"/>
@@ -814,6 +834,9 @@
 								</OnClick>
 							</Scripts>
 						</Button>
+						<Frame parentKey="BountyBoard" inherits="OmegaMapBountyBoardTemplate" />
+						<Frame parentKey="ActionButton" inherits="OmegaMapActionButtonTemplate" />
+		
 					</Frames>
 				</Frame>
 				<Frame name="OmegaMapFrameNavBar" inherits="OM_NavBarTemplate" parentKey="NavBar">
@@ -1239,12 +1262,54 @@
 		<GameTooltip name="OmegaMapCompareTooltip2" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="ShoppingTooltipTemplate"/>
 		<GameTooltip name="OmegaMapCompareTooltip3" clampedToScreen="true" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="ShoppingTooltipTemplate"/>		
 		<GameTooltip name="OmegaMapTooltip" frameStrata="TOOLTIP" hidden="true" parent="OmegaMapFrame" inherits="GameTooltipTemplate">
+			<Frames>
+				<Frame parentKey="ItemTooltip" inherits="EmbeddedItemTooltip" hidden="true">
+					<Size x="100" y="100"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" x="10" y="8"/>
+					</Anchors>
+					<KeyValues>
+						<KeyValue key="yspacing" value="13" type="number"/>
+					</KeyValues>
+					<Scripts>
+						<OnLoad inherit="prepend">
+							self.Tooltip.shoppingTooltips = { OmegaMapCompareTooltip1, OmegaMapCompareTooltip2 };
+						</OnLoad>
+					</Scripts>
+				</Frame>
+				<Frame parentKey="BackdropFrame" useParentLevel="true">
+					<Anchors>
+						<Anchor point="TOPLEFT"/>
+					</Anchors>
+				</Frame>
+			</Frames>
 			<Scripts>
 				<OnLoad>
-					self:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
-					self:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
-					self.shoppingTooltips = { OmegaMapCompareTooltip1, OmegaMapCompareTooltip2, OmegaMapCompareTooltip3 };
+					local backdrop = self:GetBackdrop();
+					self:SetBackdrop(nil);
+					self.BackdropFrame:SetBackdrop(backdrop);
+					self.BackdropFrame:SetBackdropBorderColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b);
+					self.BackdropFrame:SetBackdropColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b);
+					self.shoppingTooltips = { OmegaMapCompareTooltip1, OmegaMapCompareTooltip2 };
 				</OnLoad>
+				<OnUpdate>
+					self.updateTooltip = (self.updateTooltip or TOOLTIP_UPDATE_TIME) - elapsed;
+					if ( self.updateTooltip > 0 ) then
+						return;
+					end
+					self.updateTooltip = TOOLTIP_UPDATE_TIME;
+
+					local owner = self:GetOwner();
+					if ( owner and owner.UpdateTooltip ) then
+						owner:UpdateTooltip();
+					end
+				</OnUpdate>
+				<OnHide inherit="prepend">
+					OmegaMapTooltip.ItemTooltip:Hide();
+				</OnHide>
+				<OnSizeChanged inherit="prepend">
+					OmegaMapTooltip_OnSizeChanged(self);
+				</OnSizeChanged>
 			</Scripts>
 		</GameTooltip>
 		<Frame name="OmegaMapScreenAnchor" hidden="true" movable="true">
