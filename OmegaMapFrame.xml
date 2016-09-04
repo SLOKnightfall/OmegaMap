@@ -170,7 +170,7 @@
 								<Anchor point="TOPLEFT" x="0" y="0"/>
 							</Anchors>
 							<Frames>
-								<Frame name="OmegaMapDetailFrame" hidden="false">
+								<Frame name="OmegaMapDetailFrame" hidden="false" frameLevel="100">
 									<Size x="1002" y="668"/>
 									<Anchors>
 										<Anchor point="TOPLEFT" x="0" y="0"/>
@@ -511,7 +511,7 @@
 										<Anchor point="TOPRIGHT" x="0" y="-40"/>
 									</Anchors>
 								</Button>
-								<Frame name="OmegaMapPlayersFrame">
+								<Frame name="OmegaMapPlayersFrame" frameLevel="200">
 									<Anchors>
 										<Anchor point="TOPLEFT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
 										<Anchor point="BOTTOMRIGHT" relativeTo="OmegaMapDetailFrame" x="0" y="0"/>
