@@ -9,7 +9,7 @@
 if IsAddOnLoaded("HandyNotes") then
 
 if not HandyNotesOmegaMapOverlay then
-	local overlay = CreateFrame("Frame", "HandyNotesOmegaMapOverlay", OmegaMapNoteFrame)
+	local overlay = CreateFrame("Frame", "HandyNotesOmegaMapOverlay", OmegaMapPOIFrame)
 	overlay:SetAllPoints(true)
 end 
 
