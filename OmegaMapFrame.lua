@@ -859,7 +859,7 @@ function OmegaMap_UpdateQuestBonusObjectives()
 	end
 	
 	-- Hide unused icons in the pool
-	for i = taskIconIndex, NUM_WORLDMAP_TASK_POIS do
+	for i = taskIconIndex, NUM_OMEGAMAP_TASK_POIS do
 		_G["OmegaMapFrameTaskPOI"..i]:Hide();
 	end
 
