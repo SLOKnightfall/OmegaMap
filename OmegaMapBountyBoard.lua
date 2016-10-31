@@ -2,8 +2,8 @@ OmegaMapBountyBoardMixin = {};
 
 function OmegaMapBountyBoardMixin:OnLoad()
 	self:RegisterEvent("QUEST_LOG_UPDATE");
-	self.bountyObjectivePool = CreateFramePool("FRAME", self, "WorldMapBountyBoardObjectiveTemplate");
-	self.bountyTabPool = CreateFramePool("BUTTON", self, "WorldMapBountyBoardTabTemplate");
+	self.bountyObjectivePool = CreateFramePool("FRAME", self, "OmegaMapBountyBoardObjectiveTemplate");
+	self.bountyTabPool = CreateFramePool("BUTTON", self, "OmegaMapBountyBoardTabTemplate");
 
 	self.BountyName:SetFontObjectsToTry(Game13Font_o1, Game12Font_o1, Game11Font_o1);
 
@@ -296,6 +296,7 @@ function OmegaMapBountyBoardMixin:ShowBountyTooltip(bountyIndex)
 
 	local questIndex = GetQuestLogIndexByID(bountyData.questID);
 	local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isStory = GetQuestLogTitle(questIndex);
+	
 	if title then
 		OmegaMapTooltip:SetText(title, HIGHLIGHT_FONT_COLOR:GetRGB());
 
@@ -386,6 +387,46 @@ end
 function OmegaMapBountyBoardMixin:OnTabClick(tab)
 	if not tab.isEmpty then
 		self:SetSelectedBountyIndex(tab.bountyIndex);
+		self:FindBestMapForSelectedBounty();
+	end
+end
+
+function OmegaMapBountyBoardMixin:FindBestMapForSelectedBounty()
+	local continentIndex, continentID = GetCurrentMapContinent();
+	local continentMaps =  { GetMapZones(continentIndex) };
+
+	-- move current map to 1st position
+	for i = 1, #continentMaps, 2 do
+		if continentMaps[i] == self.mapAreaID then
+			continentMaps[1], continentMaps[i] = continentMaps[i], continentMaps[1];
+			break;
+		end
+	end
+
+	local candidateMapID;
+	local candidateNumBounties = 0;
+	local currentMapID = GetCurrentMapAreaID();
+	for i = 1, #continentMaps, 2 do
+		local numBounties = 0;
+		local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(continentMaps[i], continentID);
+		for _, info  in ipairs(taskInfo) do
+			if QuestUtils_IsQuestWorldQuest(info.questId) then
+				if self:IsWorldQuestCriteriaForSelectedBounty(info.questId) then
+					if ( currentMapID == continentMaps[i] ) then
+						-- no need to switch
+						return;
+					end
+					numBounties = numBounties + 1;
+				end
+			end
+		end
+		if ( numBounties > candidateNumBounties ) then
+			candidateMapID = continentMaps[i];
+			candidateNumBounties = numBounties;
+		end
+	end
+	if ( candidateMapID ) then
+		SetMapByID(candidateMapID);
 	end
 end
 
@@ -449,4 +490,8 @@ function OmegaMapBountyBoardMixin:TryShowingCompletionTutorial()
 			self.TutorialBox:Show();
 		end
 	end
+end
+
+function OmegaMapBountyBoardMixin:AreBountiesAvailable()
+	return self:IsShown() and (self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE or self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES);
 end

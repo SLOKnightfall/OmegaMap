@@ -230,7 +230,9 @@ function OmegaMap_LoadAltMapNotes()
 		OmegaMapQuestFrame_Hide()
 		QuestNPCModel:Hide()
 		OmegaMapBlobFrame:DrawNone();
-		OmegaMapArchaeologyDigSites:DrawNone();
+
+		OmegaMapUnitPositionFrame:SetPoint("TOPLEFT", OmegaMapAltMapFrame, "TOPLEFT", 0, 0)
+		OmegaMapUnitPositionFrame:SetPoint("BOTTOMRIGHT", OmegaMapAltMapFrame, "BOTTOMRIGHT", 0, 0)
 end
 
 --Hides the custom map & notes, while restoring the normal map
@@ -255,6 +257,9 @@ function OmegaMap_HideAltMap()
 		OmegaMapNoteFrame:Show()
 	end
 	OmegaMapFrameAreaFrame:Show()
+
+	OmegaMapUnitPositionFrame:SetPoint("TOPLEFT", OmegaMapDetailFrame, "TOPLEFT", 0, 0)
+	OmegaMapUnitPositionFrame:SetPoint("BOTTOMRIGHT", OmegaMapDetailFrame, "BOTTOMRIGHT", 0, 0)
 end
 
 --Code to retrieve & display BG POI Landmarks
