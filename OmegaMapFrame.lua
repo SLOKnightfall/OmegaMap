@@ -1,11 +1,11 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 --
---	OmegaMap	V1.3
+--	OmegaMap	V
 --	Author: Gathirer
 
 --	OmegaMap: A worldmap frame that is transparent and allows character manipulation
 --
---	Contributions: Part of the code for this is adapted from the WorldMapFrame.lua(v5.0.4 r16016)
+--	Contributions: Part of the code for this is adapted from the WorldMapFrame.lua(v)
 --		of the original Blizzard(tm) Entertainment distribution.  OmegaMap is bassed off of the AlphaMap addon
 --		which I used from Vanilla WOW untill it stoped being maintined/updated during Cataclysm.
 --
@@ -70,7 +70,9 @@ local PLAYER_ARROW_SIZE_WINDOW = 40;
 local PLAYER_ARROW_SIZE_FULL_WITH_QUESTS = 38;
 local PLAYER_ARROW_SIZE_FULL_NO_QUESTS = 28;
 local GROUP_MEMBER_SIZE_WINDOW = 16;
+local RAID_MEMBER_SIZE_WINDOW = GROUP_MEMBER_SIZE_WINDOW * 0.75;
 local GROUP_MEMBER_SIZE_FULL = 10;
+local RAID_MEMBER_SIZE_FULL = GROUP_MEMBER_SIZE_FULL * 0.75;
 
 local BATTLEFIELD_ICON_SIZE_FULL = 36;
 local BATTLEFIELD_ICON_SIZE_WINDOW = 30;
@@ -194,6 +196,7 @@ function ToggleOmegaMap()
 			OmegaMapQuestFrame_Hide()
 			OmegaMapFrame.UIElementsFrame.OpenQuestPanelButton:Show();
 		end
+		OmegaMap_ToggleSizeDown()
 	end
 end
 
@@ -259,13 +262,20 @@ function OmegaMapFrame_OnLoad(self)
 	--OmegaMapPlayerUpper:EnableMouse(false);
 
 	OmegaMapFrame.UIElementsFrame.BountyBoard:SetSelectedBountyChangedCallback(OmegaMapFrame_SetBonusObjectivesDirty);
-	OmegaMapFrame.UIElementsFrame.ActionButton:SetOnCastChangedCallback(OmegaMapFrame_SetBonusObjectivesDirty);
+	--OmegaMapFrame.UIElementsFrame.ActionButton:SetOnCastChangedCallback(OmegaMapFrame_SetBonusObjectivesDirty);
 
 	OmegaMapUnitPositionFrame:SetPlayerPingTexture(1, "Interface\\minimap\\UI-Minimap-Ping-Center", 32, 32);
 	OmegaMapUnitPositionFrame:SetPlayerPingTexture(2, "Interface\\minimap\\UI-Minimap-Ping-Expand", 32, 32);
 	OmegaMapUnitPositionFrame:SetPlayerPingTexture(3, "Interface\\minimap\\UI-Minimap-Ping-Rotate", 70, 70);
 
 	OmegaMapUnitPositionFrame:SetMouseOverUnitExcluded("player", true);
+	OmegaMapUnitPositionFrame:SetPinTexture("player", "Interface\\WorldMap\\WorldMapArrow");
+
+	local WORLD_QUEST_NUM_CELLS_HIGH = 75;
+	local WORLD_QUEST_NUM_CELLS_WIDE = math.ceil(WORLD_QUEST_NUM_CELLS_HIGH * 1002/668);
+
+	self.poiQuantizer = CreateFromMixins(WorldMapPOIQuantizerMixin);
+	self.poiQuantizer:OnLoad(WORLD_QUEST_NUM_CELLS_WIDE, WORLD_QUEST_NUM_CELLS_HIGH);
 
 	print(OMEGAMAP_LOADED_MESSAGE)
 	--Registers OmegaMap with Astrolabe if present
@@ -398,6 +408,7 @@ function OmegaMapFrame_OnHide(self)
 	end
 	CancelEmote();
 	self.mapID = nil;
+	self.dungeonLevel = nil;
 
 	self.AnimAlphaOut:Stop();
 	self.AnimAlphaIn:Stop();
@@ -407,8 +418,9 @@ function OmegaMapFrame_OnHide(self)
 
 	OmegaMapOverlayHighlights = {};
 
-	self.UIElementsFrame.ActionButton:SetMapAreaID(nil);
-	self.UIElementsFrame.ActionButton:SetHasWorldQuests(false);
+	--self.UIElementsFrame.ActionButton:SetMapAreaID(nil);
+	--self.UIElementsFrame.ActionButton:SetHasWorldQuests(false);
+	OmegaMapPOIFrame.POIPing:Stop();
 
 end
 
@@ -419,6 +431,8 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 		end
 		
 	elseif ( event == "WORLD_MAP_UPDATE" or event == "REQUEST_CEMETERY_LIST_RESPONSE" or event == "QUESTLINE_UPDATE" or event == "MINIMAP_UPDATE_TRACKING" ) then
+		local mapID = GetCurrentMapAreaID();
+		local dungeonLevel = GetCurrentMapDungeonLevel();
 		if ( not self.blockOmegaMapUpdate and self:IsShown() ) then
 			-- if we are exiting a micro dungeon we should update the world map
 			if (event == "REQUEST_CEMETERY_LIST_RESPONSE") then
@@ -427,14 +441,16 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 					SetMapToCurrentZone();
 				end
 			end
-			OmegaMapFrame_UpdateMap();
+			OmegaMapFrame_UpdateMap(mapID == self.mapID and dungeonLevel == self.dungeonLevel);
 		end
 		--New
 		if ( event == "WORLD_MAP_UPDATE" ) then
-			local mapID = GetCurrentMapAreaID();
-			if ( mapID ~= self.mapID and self:IsShown()) then
-				self.mapID = mapID;
-				OmegaMapUnitPositionFrame:StartPlayerPing(2, .25);
+			if ( self:IsShown() ) then
+				if ( mapID ~= self.mapID) then
+					self.mapID = mapID;
+					OmegaMapUnitPositionFrame:StartPlayerPing(2, .25);
+				end
+				self.dungeonLevel = dungeonLevel;
 			end
 			--New 6.0 Revisit
 			if ( OmegaMapQuestFrame.DetailsFrame.questMapID and OmegaMapQuestFrame.DetailsFrame.questMapID ~= GetCurrentMapAreaID() ) then
@@ -481,6 +497,7 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 			end
 		end
 		OmegaMapFrame_SetBonusObjectivesDirty();
+		QuestMapFrame_CloseQuestDetails();
 		OmegaMapPOIFrame_SelectPOI(questID);
 	elseif ( event == "PLAYER_STARTED_MOVING" ) then
 		if ( GetCVarBool("mapFade") ) then
@@ -641,10 +658,12 @@ local function ApplyStandardTexturesToPOI(button, selected)
 	button:GetHighlightTexture():SetTexCoord(0.625, 0.750, 0.875, 1);
 end
 
+function OmegaMap_IsWorldQuestEffectivelyTracked(questID)
+	return IsWorldQuestHardWatched(questID) or (IsWorldQuestWatched(questID) and GetSuperTrackedQuestID() == questID);
+end
 
-function OmegaMap_SetupWorldQuestButton(button, worldQuestType, rarity, isElite, tradeskillLineIndex, inProgress, selected, isCriteria, isSpellTarget)
+function OmegaMap_SetupWorldQuestButton(button, worldQuestType, rarity, isElite, tradeskillLineIndex, inProgress, selected, isCriteria, isSpellTarget, isEffectivelyTracked)
 	button.Glow:SetShown(selected);
-
 	if rarity == LE_WORLD_QUEST_QUALITY_COMMON then
 		ApplyStandardTexturesToPOI(button, selected);
 	elseif rarity == LE_WORLD_QUEST_QUALITY_RARE then
@@ -693,6 +712,20 @@ function OmegaMap_SetupWorldQuestButton(button, worldQuestType, rarity, isElite,
 		else
 			button.Texture:SetAtlas("worldquest-icon-dungeon", true);
 		end
+	elseif ( worldQuestType == LE_QUEST_TAG_TYPE_RAID ) then
+		if ( inProgress ) then
+			button.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			button.Texture:SetSize(10, 15);
+		else
+			button.Texture:SetAtlas("worldquest-icon-raid", true);
+		end
+	elseif ( worldQuestType == LE_QUEST_TAG_TYPE_INVASION ) then
+		if ( inProgress ) then
+			button.Texture:SetAtlas("worldquest-questmarker-questionmark");
+			button.Texture:SetSize(10, 15);
+		else
+			button.Texture:SetAtlas("worldquest-icon-burninglegion", true);
+		end
 	else
 		if ( inProgress ) then
 			button.Texture:SetAtlas("worldquest-questmarker-questionmark");
@@ -704,26 +737,15 @@ function OmegaMap_SetupWorldQuestButton(button, worldQuestType, rarity, isElite,
 	end
 
 	if ( button.TimeLowFrame ) then
-		if ( timeLeftMinutes and timeLeftMinutes <= WORLD_QUESTS_TIME_LOW_MINUTES ) then
-			button.TimeLowFrame:Show();
-		else
-			button.TimeLowFrame:Hide();
-		end
+		button.TimeLowFrame:Hide();
 	end
 
-	if ( button.CriteriaMatchGlow ) then
-		if ( isCriteria ) then
-			if ( isElite ) then
-				button.CriteriaMatchGlow:SetAtlas("worldquest-questmarker-dragon-glow", true);
-				button.CriteriaMatchGlow:SetPoint("CENTER", 0, -1);
-			else
-				button.CriteriaMatchGlow:SetAtlas("worldquest-questmarker-glow", true);
-				button.CriteriaMatchGlow:SetPoint("CENTER", 0, 0);
-			end
-			button.CriteriaMatchGlow:Show();
-		else
-			button.CriteriaMatchGlow:Hide();
-		end
+	if ( button.CriteriaMatchRing ) then
+		button.CriteriaMatchRing:SetShown(isCriteria);
+	end
+
+	if ( button.TrackedCheck ) then
+		button.TrackedCheck:SetShown(isEffectivelyTracked);
 	end
 
 	if ( button.SpellTargetGlow ) then
@@ -731,10 +753,10 @@ function OmegaMap_SetupWorldQuestButton(button, worldQuestType, rarity, isElite,
 	end
 end
 
-function OmegaMap_DoesWorldQuestInfoPassFilters(info, ignoreTypeFilters, ignoreTimeRequirement)
-	if ( not ignoreTypeFilters ) then
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(info.questId);
+function OmegaMap_DoesWorldQuestInfoPassFilters(info, ignoreTypeFilters)
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(info.questId);
 
+	if ( not ignoreTypeFilters ) then
 		if ( worldQuestType == LE_QUEST_TAG_TYPE_PROFESSION ) then
 			local prof1, prof2, arch, fish, cook, firstAid = GetProfessions();
 
@@ -780,33 +802,28 @@ function OmegaMap_DoesWorldQuestInfoPassFilters(info, ignoreTypeFilters, ignoreT
 		end
 	end
 
-	if ( not ignoreTimeRequirement ) then
-		local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(info.questId);
-		if ( timeLeftMinutes and timeLeftMinutes <= WORLD_QUESTS_TIME_CRITICAL_MINUTES and not info.inProgress ) then
-			return false;
-		end
-	end
-
 	return true;
 end
 
 function OmegaMap_TryCreatingWorldQuestPOI(info, taskIconIndex)
 	if ( OmegaMap_IsWorldQuestSuppressed(info.questId) or not OmegaMap_DoesWorldQuestInfoPassFilters(info) ) then
 		return nil;
+
 	end
 
-	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(info.questId);
+	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(info.questId);
 
 	local taskPOI = OmegaMap_GetOrCreateTaskPOI(taskIconIndex);
 	local selected = info.questId == GetSuperTrackedQuestID();
 
 	local isCriteria = OmegaMapFrame.UIElementsFrame.BountyBoard:IsWorldQuestCriteriaForSelectedBounty(info.questId);
 	local isSpellTarget = SpellCanTargetQuest() and IsQuestIDValidSpellTarget(info.questId);
+	local isEffectivelyTracked = OmegaMap_IsWorldQuestEffectivelyTracked(info.questId);
 
 	taskPOI.worldQuest = true;
 	taskPOI.Texture:SetDrawLayer("OVERLAY");
 
-	OmegaMap_SetupWorldQuestButton(taskPOI, worldQuestType, rarity, isElite, tradeskillLineIndex, info.inProgress, selected, isCriteria, isSpellTarget);
+	OmegaMap_SetupWorldQuestButton(taskPOI, worldQuestType, rarity, isElite, tradeskillLineIndex, info.inProgress, selected, isCriteria, isSpellTarget, isEffectivelyTracked);
 
 	C_TaskQuest.RequestPreloadRewardData(info.questId);
 
@@ -824,7 +841,8 @@ function OmegaMap_TryCreatingBonusObjectivePOI(info, taskIconIndex)
 	taskPOI.Texture:SetSize(24, 24);
 	taskPOI.Texture:SetDrawLayer("BACKGROUND");
 	taskPOI.TimeLowFrame:Hide();
-	taskPOI.CriteriaMatchGlow:Hide();
+	taskPOI.CriteriaMatchRing:Hide();
+	taskPOI.TrackedCheck:Hide();
 	taskPOI.SpellTargetGlow:Hide();
 	taskPOI.Glow:Hide();
 	taskPOI.SelectedGlow:Hide();
@@ -834,9 +852,30 @@ function OmegaMap_TryCreatingBonusObjectivePOI(info, taskIconIndex)
 end
 
 ----
-
+function OmegaMap_GetActiveTaskPOIForQuestID(questID)
+	for i = 1, NUM_OMEGAMAP_TASK_POIS do
+		local taskPOI = _G["OmegaMapFrameTaskPOI"..i];
+		if taskPOI and taskPOI.questID == questID and taskPOI:IsShown() then
+			return taskPOI;
+		end
+	end
+end
 
 function OmegaMap_UpdateQuestBonusObjectives()
+	local showOnlyInvasionWorldQuests = false;
+	if ( QuestMapFrame.DetailsFrame.questID ) then
+		-- Hide all task POIs while the player looks at quest details.
+		-- but for invasion quests we're gonna show all the invasion world quests
+		if ( IsQuestInvasion(QuestMapFrame.DetailsFrame.questID) ) then
+			showOnlyInvasionWorldQuests = true;
+		else
+			for i = 1, NUM_OMEGAMAP_TASK_POIS do
+				_G["OmegaMapFrameTaskPOI"..i]:Hide();
+			end
+			return;
+		end
+	end
+
 	local mapAreaID = GetCurrentMapAreaID();
 	local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(mapAreaID);
 	local numTaskPOIs = 0;
@@ -852,21 +891,34 @@ function OmegaMap_UpdateQuestBonusObjectives()
 		NUM_OMEGAMAP_TASK_POIS = numTaskPOIs;
 	end
 
-	local hasWorldQuests = false;
 	local taskIconIndex = 1;
+	local worldQuestPOIs = {};
+
 	if ( numTaskPOIs > 0 ) then
 		for i, info  in ipairs(taskInfo) do
 			if ( HaveQuestData(info.questId) ) then
 				local taskPOI;
 				local isWorldQuest = QuestUtils_IsQuestWorldQuest(info.questId);
 				if ( isWorldQuest ) then
-					taskPOI = OmegaMap_TryCreatingWorldQuestPOI(info, taskIconIndex);
-				else
+					local showThisWorldQuest = true;
+					if ( showOnlyInvasionWorldQuests ) then
+						local _, _, worldQuestType = GetQuestTagInfo(info.questId);
+						if ( worldQuestType ~= LE_QUEST_TAG_TYPE_INVASION ) then
+							showThisWorldQuest = false;
+						end
+					end
+					if ( showThisWorldQuest ) then
+						taskPOI = OmegaMap_TryCreatingWorldQuestPOI(info, taskIconIndex);
+					end
+				elseif ( not showOnlyInvasionWorldQuests ) then
 					taskPOI = OmegaMap_TryCreatingBonusObjectivePOI(info, taskIconIndex);
 				end
 
 				if ( taskPOI ) then
-					OmegaMapPOIFrame_AnchorPOI(taskPOI, info.x, info.y, isWorldQuest and WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.WORLD_QUEST or WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.BONUS_OBJECTIVE);
+					taskPOI.x = info.x;
+					taskPOI.y = info.y;
+					taskPOI.quantizedX = nil;
+					taskPOI.quantizedY = nil;
 					taskPOI.questID = info.questId;
 					taskPOI.numObjectives = info.numObjectives;
 					taskPOI:Show();
@@ -874,8 +926,12 @@ function OmegaMap_UpdateQuestBonusObjectives()
 					taskIconIndex = taskIconIndex + 1;
 
 					if ( isWorldQuest ) then
-						hasWorldQuests = true;
+						worldQuestPOIs[#worldQuestPOIs + 1] = taskPOI;
+					else
+						WorldMapPOIFrame_AnchorPOI(taskPOI, info.x, info.y, WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.BONUS_OBJECTIVE);
 					end
+
+					WorldMapPing_UpdatePing(taskPOI, info.questId);
 				end
 			end
 		end
@@ -886,8 +942,19 @@ function OmegaMap_UpdateQuestBonusObjectives()
 		_G["OmegaMapFrameTaskPOI"..i]:Hide();
 	end
 
-	OmegaMapFrame.UIElementsFrame.ActionButton:SetHasWorldQuests(hasWorldQuests);
+	--OmegaMapFrame.UIElementsFrame.ActionButton:SetHasWorldQuests(#worldQuestPOIs > 0);
+	OmegaMap_QuantizeWorldQuestPOIs(worldQuestPOIs);
 end
+
+function OmegaMap_QuantizeWorldQuestPOIs(worldQuestPOIs)
+	OmegaMapFrame.poiQuantizer:Clear();
+	OmegaMapFrame.poiQuantizer:Quantize(worldQuestPOIs);
+
+	for i, worldQuestPOI in ipairs(worldQuestPOIs) do
+		OmegaMapPOIFrame_AnchorPOI(worldQuestPOI, worldQuestPOI.quantizedX or worldQuestPOI.x, worldQuestPOI.quantizedY or worldQuestPOI.y, WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.WORLD_QUEST);
+	end
+end
+
 
 
 
@@ -999,6 +1066,10 @@ function OmegaMap_ShouldShowLandmark(landmarkType)
 	return true;
 end
 
+function OmegaMapPOI_ShouldShowAreaLabel(poi)
+	return poi.landmarkType ~= LE_MAP_LANDMARK_TYPE_CONTRIBUTION;
+end
+
 function OmegaMap_GetFrameLevelForLandmark(landmarkType)
 	if landmarkType == LE_MAP_LANDMARK_TYPE_INVASION then
 		return WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.INVASION;
@@ -1009,6 +1080,7 @@ function OmegaMap_GetFrameLevelForLandmark(landmarkType)
 end
 
 local NUM_WORLDMAP_POIS = 0; 
+local areaPOIBannerLabelTextureInfo = {};
 
 function OmegaMap_UpdateLandmarks()
 	local numPOIs = GetNumMapLandmarks();
@@ -1020,13 +1092,17 @@ function OmegaMap_UpdateLandmarks()
 	end
 	local numGraveyards = 0;
 	local currentGraveyard = GetCemeteryPreference();
-    local mapID = GetCurrentMapAreaID();
+	local mapID = GetCurrentMapAreaID();
+	OmegaMapFrame_ClearAreaLabel(WORLDMAP_AREA_LABEL_TYPE.AREA_POI_BANNER);
+	OmegaMapAreaPOIBannerOverlay:Hide();
+
 	for i=1, NUM_WORLDMAP_POIS do
 		local omegaMapPOIName = "OmegaMapFramePOI"..i;
 		local omegaMapPOI = _G[omegaMapPOIName];
 		if ( i <= numPOIs ) then
-			local landmarkType, name, description, textureIndex, x, y, mapLinkID, inBattleMap, graveyardID, areaID, poiID, isObjectIcon, atlasIcon = GetMapLandmarkInfo(i);
-			if( not OmegaMap_ShouldShowLandmark(landmarkType) or (mapID ~= WORLDMAP_WINTERGRASP_ID and areaID == WORLDMAP_WINTERGRASP_POI_AREAID) ) then
+			local landmarkType, name, description, textureIndex, x, y, mapLinkID, inBattleMap, graveyardID, areaID, poiID, isObjectIcon, atlasIcon, displayAsBanner = C_WorldMap.GetMapLandmarkInfo(i);
+			if( not OmegaMap_ShouldShowLandmark(landmarkType) or (mapID ~= WORLDMAP_WINTERGRASP_ID and areaID == WORLDMAP_WINTERGRASP_POI_AREAID) or displayAsBanner ) then
+
 				omegaMapPOI:Hide();
 			else
 				OmegaMapPOIFrame_AnchorPOI(omegaMapPOI, x, y, OmegaMap_GetFrameLevelForLandmark(landmarkType));
@@ -1066,12 +1142,44 @@ function OmegaMap_UpdateLandmarks()
 						else
 							graveyard.texture:SetTexture("Interface\\WorldMap\\GravePicker-Unselected");
 						end
-						omegaMapPOI:Hide();		-- lame way to force tooltip redraw
+
 					else
 						omegaMapPOI.graveyard = nil;
 					end
-					omegaMapPOI:Show();	
+					omegaMapPOI:Hide();		-- lame way to force tooltip redraw
+					omegaMapPOI:Show();
 				end
+			end
+			if (displayAsBanner) then
+				local timeLeftMinutes = C_WorldMap.GetAreaPOITimeLeft(poiID);
+				local descriptionLabel = nil;
+				if (timeLeftMinutes) then
+					local hoursLeft = math.floor(timeLeftMinutes / 60);
+					local minutesLeft = timeLeftMinutes % 60;
+					descriptionLabel = INVASION_TIME_FORMAT:format(hoursLeft, minutesLeft)
+				end
+
+				local x1, x2, y1, y2;
+				if (not atlasIcon) then
+					if (isObjectIcon) then
+						x1, x2, y1, y2 = GetObjectIconTextureCoords(textureIndex);
+					else
+						x1, x2, y1, y2 = GetPOITextureCoords(textureIndex);
+					end
+				else
+					x1, x2, y1, y2 = 0, 1, 0, 1;
+				end
+
+				areaPOIBannerLabelTextureInfo.x1 = x1;
+				areaPOIBannerLabelTextureInfo.x2 = x2;
+				areaPOIBannerLabelTextureInfo.y1 = y1;
+				areaPOIBannerLabelTextureInfo.y2 = y2;
+				areaPOIBannerLabelTextureInfo.texture = OmegaMapFrameAreaLabelTexture;
+				areaPOIBannerLabelTextureInfo.atlasIcon = atlasIcon;
+				areaPOIBannerLabelTextureInfo.isObjectIcon = isObjectIcon;
+
+				OmegaMapFrame_SetAreaLabel(WORLDMAP_AREA_LABEL_TYPE.AREA_POI_BANNER, name, descriptionLabel, INVASION_FONT_COLOR, INVASION_DESCRIPTION_FONT_COLOR, OmegaMapFrame_OnAreaPOIBannerVisibilityChanged);
+				OmegaMapAreaPOIBannerOverlay:Show();
 			end
 		else
 			omegaMapPOI:Hide();
@@ -1170,7 +1278,7 @@ function OmegaMapFrame_Update()
 	OmegaMap_UpdateLandmarks();
 	OmegaMap_DrawWorldEffects();
 	OmegaMapFrame.UIElementsFrame.BountyBoard:SetMapAreaID(mapID);
-	OmegaMapFrame.UIElementsFrame.ActionButton:SetMapAreaID(mapID);
+	--OmegaMapFrame.UIElementsFrame.ActionButton:SetMapAreaID(mapID);
 	OmegaMapFrame_UpdateOverlayLocations();
 	OmegaMap_UpdateQuestBonusObjectives();
 
@@ -1422,11 +1530,20 @@ function OmegaMapFrame_UpdateOverlayLocations()
 		OmegaMapFrame_SetOverlayLocation(bountyBoard, bountyBoardLocation);
 	end
 
-	local actionButton = OmegaMapFrame.UIElementsFrame.ActionButton;
+	--local actionButton = OmegaMapFrame.UIElementsFrame.ActionButton;
 	local useAlternateLocation = bountyBoardLocation == LE_MAP_OVERLAY_DISPLAY_LOCATION_BOTTOM_RIGHT;
-	local actionButtonLocation = actionButton:GetDisplayLocation(useAlternateLocation);
-	if actionButtonLocation then
-		OmegaMapFrame_SetOverlayLocation(actionButton, actionButtonLocation);
+	--local actionButtonLocation = actionButton:GetDisplayLocation(useAlternateLocation);
+	--if actionButtonLocation then
+		--OmegaMapFrame_SetOverlayLocation(actionButton, actionButtonLocation);
+	--end
+end
+
+function OmegaMapFrame_OnAreaPOIBannerVisibilityChanged(visible)
+	if (visible) then
+		OmegaMap_SetupAreaPOIBannerTexture(areaPOIBannerLabelTextureInfo.texture, areaPOIBannerLabelTextureInfo.isObjectIcon, areaPOIBannerLabelTextureInfo.atlasIcon);
+		areaPOIBannerLabelTextureInfo.texture:Show();
+	else
+		areaPOIBannerLabelTextureInfo.texture:Hide();
 	end
 end
 
@@ -1545,7 +1662,35 @@ function OmegaMap_DoesLandMarkTypeShowHighlights(landmarkType)
 		or landmarkType == LE_MAP_LANDMARK_TYPE_GOSSIP
 		or landmarkType == LE_MAP_LANDMARK_TYPE_TAXINODE
 		or landmarkType == LE_MAP_LANDMARK_TYPE_VIGNETTE
-		or landmarkType == LE_MAP_LANDMARK_TYPE_INVASION;
+		or landmarkType == LE_MAP_LANDMARK_TYPE_INVASION
+		or landmarkType == LE_MAP_LANDMARK_TYPE_CONTRIBUTION;
+end
+
+function OmegaMapPOI_AddContributionsToTooltip(tooltip, ...)
+	for i = 1, select("#", ...) do
+		local contributionID = select(i, ...);
+		local contributionName = C_ContributionCollector.GetName(contributionID);
+		local state, stateAmount, timeOfNextStateChange = C_ContributionCollector.GetState(contributionID);
+		local appearanceData = CONTRIBUTION_APPEARANCE_DATA[state];
+
+		if i ~= 1 then
+			tooltip:AddLine(" ");
+		end
+
+		tooltip:AddLine(contributionName, HIGHLIGHT_FONT_COLOR:GetRGB());
+
+		local tooltipLine = appearanceData.tooltipLine;
+		if tooltipLine then
+			if timeOfNextStateChange and appearanceData.tooltipUseTimeRemaining then
+				local time = math.max(timeOfNextStateChange - GetServerTime(), 60); -- Never display times below one minute
+				tooltipLine = tooltipLine:format(SecondsToTime(time, true, true, 1));
+			else
+				tooltipLine = tooltipLine:format(FormatPercentage(stateAmount));
+			end
+
+			tooltip:AddLine(tooltipLine, appearanceData.stateColor:GetRGB());
+		end
+	end
 end
 
 function OmegaMapPOI_OnEnter(self)
@@ -1553,29 +1698,25 @@ function OmegaMapPOI_OnEnter(self)
 	if ( self.specialPOIInfo and self.specialPOIInfo.onEnter ) then
 		self.specialPOIInfo.onEnter(self, self.specialPOIInfo);
 	else
-		if ( self.description and strlen(self.description) > 0 ) then
-			OmegaMapFrameAreaLabel:SetText(self.name);
-			OmegaMapFrameAreaDescription:SetText(self.description);
-		else
-			self.HighlightTexture:SetShown(OmegaMap_DoesLandMarkTypeShowHighlights(self.landmarkType));
-			if ( self.description and #self.description > 0 ) then
-				OmegaMapFrame_SetAreaLabel(WORLDMAP_AREA_LABEL_TYPE.POI, self.name, self.description);
+		self.HighlightTexture:SetShown(OmegaMap_DoesLandMarkTypeShowHighlights(self.landmarkType));
+
+		if ( OmegaMapPOI_ShouldShowAreaLabel(self) ) then
+			OmegaMapFrame_SetAreaLabel(WORLDMAP_AREA_LABEL_TYPE.POI, self.name, self.description);
+		end
+
+		if ( self.graveyard ) then
+			OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+			local r, g, b = HIGHLIGHT_FONT_COLOR:GetRGB();
+
+			if ( self.graveyard == GetCemeteryPreference() ) then
+				OmegaMapTooltip:SetText(GRAVEYARD_SELECTED);
+				OmegaMapTooltip:AddLine(GRAVEYARD_SELECTED_TOOLTIP, r, g, b, true);
 			else
-				OmegaMapFrame_SetAreaLabel(WORLDMAP_AREA_LABEL_TYPE.POI, self.name);
+				OmegaMapTooltip:SetText(GRAVEYARD_ELIGIBLE);
+				OmegaMapTooltip:AddLine(GRAVEYARD_ELIGIBLE_TOOLTIP, r, g, b, true);
 			end
-			-- need localization
-			if ( self.graveyard ) then
-				OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-				if ( self.graveyard == GetCemeteryPreference() ) then
-					OmegaMapTooltip:SetText(GRAVEYARD_SELECTED);
-					OmegaMapTooltip:AddLine(GRAVEYARD_SELECTED_TOOLTIP, 1, 1, 1, true);
-					OmegaMapTooltip:Show();
-				else
-					OmegaMapTooltip:SetText(GRAVEYARD_ELIGIBLE);
-					OmegaMapTooltip:AddLine(GRAVEYARD_ELIGIBLE_TOOLTIP, 1, 1, 1, true);
-					OmegaMapTooltip:Show();
-				end
-			end
+
+			OmegaMapTooltip:Show();
 		end
 
 		if self.landmarkType == LE_MAP_LANDMARK_TYPE_INVASION then
@@ -1593,11 +1734,31 @@ function OmegaMapPOI_OnEnter(self)
 				if not HaveQuestData(rewardQuestID) then
 					OmegaMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR:GetRGB());
 				else
-					OmegaMap_AddQuestRewardsToTooltip(rewardQuestID);
+					GameTooltip_AddQuestRewardsToTooltip(OmegadMapTooltip, rewardQuestID);
+
 				end
 			end
 
 			OmegaMapTooltip:Show();
+		elseif self.landmarkType == LE_MAP_LANDMARK_TYPE_CONTRIBUTION then
+			OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+			OmegaMapTooltip:SetText(self.name, HIGHLIGHT_FONT_COLOR:GetRGB());
+			OmegaMapTooltip:AddLine(" ");
+
+			WorldMapPOI_AddContributionsToTooltip(OmegaMapTooltip, C_ContributionCollector.GetManagedContributionsForCreatureID(self.mapLinkID));
+
+			OmegaMapTooltip:Show();
+		else
+			if (self.description and #self.description > 0) then
+				local timeLeftMinutes = C_WorldMap.GetAreaPOITimeLeft(self.poiID);
+				if (timeLeftMinutes) then
+					OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+					OmegaMapTooltip:SetText(HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(self.description));
+					local timeString = SecondsToTime(timeLeftMinutes * 60);
+					OmegaMapTooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), NORMAL_FONT_COLOR:GetRGB());
+					OmegaMapTooltip:Show();
+				end
+			end
 		end
 	end
 end
@@ -1747,81 +1908,22 @@ function OmegaMap_AddQuestTimeToTooltip(questID)
 	local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(questID);
 	if ( timeLeftMinutes ) then
 		local color = NORMAL_FONT_COLOR;
-		local timeString;
 		if ( timeLeftMinutes <= WORLD_QUESTS_TIME_CRITICAL_MINUTES ) then
-			-- Grace period, show the actual time left
 			color = RED_FONT_COLOR;
+		end
+
+		local timeString;
+		if timeLeftMinutes <= 60 then
 			timeString = SecondsToTime(timeLeftMinutes * 60);
-		elseif timeLeftMinutes <= 60 + WORLD_QUESTS_TIME_CRITICAL_MINUTES then
-			timeString = SecondsToTime((timeLeftMinutes - WORLD_QUESTS_TIME_CRITICAL_MINUTES) * 60);
-		elseif timeLeftMinutes < 24 * 60 + WORLD_QUESTS_TIME_CRITICAL_MINUTES then
-			timeString = D_HOURS:format(math.floor(timeLeftMinutes - WORLD_QUESTS_TIME_CRITICAL_MINUTES) / 60);
+		elseif timeLeftMinutes < 24 * 60  then
+			timeString = D_HOURS:format(math.floor(timeLeftMinutes) / 60);
 		else
-			timeString = D_DAYS:format(math.floor(timeLeftMinutes - WORLD_QUESTS_TIME_CRITICAL_MINUTES) / 1440);
+			timeString = D_DAYS:format(math.floor(timeLeftMinutes) / 1440);
 		end
 
 		OmegaMapTooltip:AddLine(BONUS_OBJECTIVE_TIME_LEFT:format(timeString), color.r, color.g, color.b);
 	end
 end
-
-function OmegaMap_AddQuestRewardsToTooltip(questID)
-	if ( GetQuestLogRewardXP(questID) > 0 or GetNumQuestLogRewardCurrencies(questID) > 0 or GetNumQuestLogRewards(questID) > 0 or GetQuestLogRewardMoney(questID) > 0 or GetQuestLogRewardArtifactXP(questID) > 0 or GetQuestLogRewardHonor(questID) ) then
-		OmegaMapTooltip:AddLine(" ");
-		OmegaMapTooltip:AddLine(QUEST_REWARDS, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
-		local hasAnySingleLineRewards = false;
-		-- xp
-		local xp = GetQuestLogRewardXP(questID);
-		if ( xp > 0 ) then
-			OmegaMapTooltip:AddLine(BONUS_OBJECTIVE_EXPERIENCE_FORMAT:format(xp), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			hasAnySingleLineRewards = true;
-		end
-		-- money
-		local money = GetQuestLogRewardMoney(questID);
-		if ( money > 0 ) then
-			SetTooltipMoney(OmegaMapTooltip, money, nil);
-			hasAnySingleLineRewards = true;
-		end	
-		local artifactXP = GetQuestLogRewardArtifactXP(questID);
-		if ( artifactXP > 0 ) then
-			OmegaMapTooltip:AddLine(BONUS_OBJECTIVE_ARTIFACT_XP_FORMAT:format(artifactXP), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			hasAnySingleLineRewards = true;
-		end
-		-- currency		
-		local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID);
-		for i = 1, numQuestCurrencies do
-			local name, texture, numItems = GetQuestLogRewardCurrencyInfo(i, questID);
-			local text = BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT:format(texture, numItems, name);
-			OmegaMapTooltip:AddLine(text, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			hasAnySingleLineRewards = true;
-		end
-		-- honor
-		local honorAmount = GetQuestLogRewardHonor(questID);
-		if ( honorAmount > 0 ) then
-			OmegaMapTooltip:AddLine(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT:format("Interface\\ICONS\\Achievement_LegionPVPTier4", honorAmount, HONOR), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			hasAnySingleLineRewards = true;
-		end
-		-- items
-		local numQuestRewards = GetNumQuestLogRewards(questID);
-		if numQuestRewards > 0 then
-			if ( hasAnySingleLineRewards ) then
-				OmegaMapTooltip:AddLine(" ");
-			end
-
-			if not EmbeddedItemTooltip_SetItemByQuestReward(OmegaMapTooltip.ItemTooltip, 1, questID) then  -- Only support one currently
-				OmegaMapTooltip:AddLine(RETRIEVING_DATA, RED_FONT_COLOR:GetRGB());
-			end
-
-			if IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems") then
-				GameTooltip_ShowCompareItem(OmegaMapTooltip.ItemTooltip.Tooltip, OmegaMapTooltip.BackdropFrame);
-			else
-				for i, tooltip in ipairs(OmegaMapTooltip.ItemTooltip.Tooltip.shoppingTooltips) do
-					tooltip:Hide();
-				end
-			end
-		end
-	end
-end
-
 
 function OmegaMapTaskPOI_OnEnter(self)
 	OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -1834,7 +1936,8 @@ function OmegaMapTaskPOI_OnEnter(self)
 
 	local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(self.questID);
 	if ( self.worldQuest ) then
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(self.questID);
+		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(self.questID);
+
 		local color = WORLD_QUEST_QUALITY_COLORS[rarity];
 		OmegaMapTooltip:SetText(title, color.r, color.g, color.b);
 		QuestUtils_AddQuestTypeToTooltip(OmegaMapTooltip, self.questID, NORMAL_FONT_COLOR);
@@ -1850,7 +1953,9 @@ function OmegaMapTaskPOI_OnEnter(self)
 			end
 		end
 
-		OmegaMap_AddQuestTimeToTooltip(self.questID);
+		if displayTimeLeft then
+			OmegaMap_AddQuestTimeToTooltip(self.questID);
+		end
 	else
 		OmegaMapTooltip:SetText(title);
 	end
@@ -1870,7 +1975,7 @@ function OmegaMapTaskPOI_OnEnter(self)
 		OmegaMapTaskTooltipStatusBar.Bar.Label:SetFormattedText(PERCENTAGE_STRING, percent);
 	end
 
-	OmegaMap_AddQuestRewardsToTooltip(self.questID);
+	GameTooltip_AddQuestRewardsToTooltip(OmegaMapTooltip, self.questID);
 
 	if ( self.worldQuest and OmegaMapTooltip.AddDebugWorldQuestInfo ) then
 		OmegaMapTooltip:AddDebugWorldQuestInfo(self.questID);
@@ -1888,13 +1993,14 @@ end
 function OmegaMapTaskPOI_OnClick(self, button)
 	if self.worldQuest then
 		if SpellCanTargetQuest() then
-			if IsQuestIDValidSpellTarget(self.questID) then
-				UseWorldMapActionButtonSpellOnQuest(self.questID);
+		print("???????")
+			--if IsQuestIDValidSpellTarget(self.questID) then
+				--UseWorldMapActionButtonSpellOnQuest(self.questID);
 				-- Assume success for responsiveness
-				OmegaMap_OnWorldQuestCompletedBySpell(self.questID);
-			else
-				UIErrorsFrame:AddMessage(WORLD_QUEST_CANT_COMPLETE_BY_SPELL, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-			end
+				--OmegaMap_OnWorldQuestCompletedBySpell(self.questID);
+			--else
+				--UIErrorsFrame:AddMessage(WORLD_QUEST_CANT_COMPLETE_BY_SPELL, RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+			--end
 		else
 			if ( not ChatEdit_TryInsertQuestLinkForQuestID(self.questID) ) then
 				PlaySound("igMainMenuOptionCheckBoxOn");
@@ -1917,22 +2023,8 @@ function OmegaMapTaskPOI_OnClick(self, button)
 	end
 end
 
-function OmegaMapTooltip_CalculatePadding()
-	local tooltip = OmegaMapTooltip;
-	if tooltip.ItemTooltip:IsShown() then
-		local oldPaddingWidth, oldPaddingHeight = tooltip:GetPadding();
-		local tooltipWidth = tooltip:GetWidth() - oldPaddingWidth;
-		local itemTooltipWidth = tooltip.ItemTooltip:GetWidth();
-		if tooltipWidth > itemTooltipWidth + 6 then
-			paddingWidth = 0;
-		else
-			paddingWidth = itemTooltipWidth - tooltipWidth + 9;
-		end
-		paddingHeight = tooltip.ItemTooltip:GetHeight() + 5;
-		if(math.abs(paddingWidth - oldPaddingWidth) > 0.5 or math.abs(paddingHeight - oldPaddingHeight) > 0.5) then
-			tooltip:SetPadding(paddingWidth, paddingHeight);
-		end
-	end
+function TaskPOI_OnHide(self)
+	WorldMapPing_StopPing(self);
 end
 
 function OmegaMapScenarioPOI_OnEnter(self)
@@ -1948,7 +2040,7 @@ function OmegaMapScenarioPOI_OnLeave()
 end
 
 function OmegaMapPOI_OnClick(self, button)
-	if ( self.mapLinkID ) then
+	if ( self.mapLinkID and self.landmarkType ~= LE_MAP_LANDMARK_TYPE_CONTRIBUTION ) then
 		if self.landmarkType == LE_MAP_LANDMARK_TYPE_DUNGEON_ENTRANCE then
 			if not EncounterJournal or not EncounterJournal:IsShown() then
 				ToggleEncounterJournal();
@@ -1986,6 +2078,17 @@ function OmegaMap_CreatePOI(index, isObjectIcon, atlasIcon)
 	button.HighlightTexture:SetAllPoints(button.Texture);
 
 	OmegaMap_ResetPOI(button, isObjectIcon, atlasIcon);
+end
+
+function OmegaMap_SetupAreaPOIBannerTexture(texture, isObjectIcon, atlasIcon)
+	if (atlasIcon) then
+		texture:SetAtlas(atlasIcon);
+	elseif (isObjectIcon == true) then
+		texture:SetTexture("Interface\\Minimap\\ObjectIconsAtlas");
+	else
+		texture:SetTexture("Interface\\Minimap\\POIIcons");
+	end
+	texture:SetSize(77, 81);
 end
 
 function OmegaMap_ResetPOI(button, isObjectIcon, atlasIcon)
@@ -2048,25 +2151,27 @@ function OmegaMap_GetOrCreateTaskPOI(index)
 	button:SetScript("OnEnter", OmegaMapTaskPOI_OnEnter);
 	button:SetScript("OnLeave", OmegaMapTaskPOI_OnLeave);
 	button:SetScript("OnClick", OmegaMapTaskPOI_OnClick);
+	button:SetScript("OnHide", TaskPOI_OnHide)
 
 	button.UpdateTooltip = OmegaMapTaskPOI_OnEnter;
 	
-	button.Texture = button:CreateTexture(button:GetName().."Texture", "BACKGROUND");
-	
-	button.Glow = button:CreateTexture(button:GetName().."Glow", "BACKGROUND", -2);
+	button.Texture = button:CreateTexture(button:GetName().."Texture", "OVERLAY");
+
+	button.Glow = button:CreateTexture(button:GetName().."Glow", "BACKGROUND", nil, -2);
+
 	button.Glow:SetSize(50, 50);
 	button.Glow:SetPoint("CENTER");
 	button.Glow:SetTexture("Interface/WorldMap/UI-QuestPoi-IconGlow.tga");
 	button.Glow:SetBlendMode("ADD");
 
-	button.SelectedGlow = button:CreateTexture(button:GetName().."SelectedGlow", "OVERLAY", 2);
+	button.SelectedGlow = button:CreateTexture(button:GetName().."SelectedGlow", "OVERLAY", nil, 2);
 	button.SelectedGlow:SetBlendMode("ADD");
 
-	button.CriteriaMatchGlow = button:CreateTexture(button:GetName().."CriteriaMatchGlow", "BACKGROUND", -1);
-	button.CriteriaMatchGlow:SetAlpha(.6);
-	button.CriteriaMatchGlow:SetBlendMode("ADD");
+	button.CriteriaMatchRing = button:CreateTexture(button:GetName().."CriteriaMatchRing", "BACKGROUND", nil, 2);
+	button.CriteriaMatchRing:SetAtlas("worldquest-emissary-ring", true)
+	button.CriteriaMatchRing:SetPoint("CENTER", 0, 0)
 	
-	button.SpellTargetGlow = button:CreateTexture(button:GetName().."SpellTargetGlow", "OVERLAY", 1);
+	button.SpellTargetGlow = button:CreateTexture(button:GetName().."SpellTargetGlow", "OVERLAY", nil, 1);
 	button.SpellTargetGlow:SetAtlas("worldquest-questmarker-abilityhighlight", true);
 	button.SpellTargetGlow:SetAlpha(.6);
 	button.SpellTargetGlow:SetBlendMode("ADD");
@@ -2083,6 +2188,10 @@ function OmegaMap_GetOrCreateTaskPOI(index)
 	button.TimeLowFrame.Texture = button.TimeLowFrame:CreateTexture(nil, "OVERLAY");
 	button.TimeLowFrame.Texture:SetAllPoints(button.TimeLowFrame);
 	button.TimeLowFrame.Texture:SetAtlas("worldquest-icon-clock");
+
+	button.TrackedCheck = button:CreateTexture(button:GetName().."TrackedCheck", "OVERLAY", nil, 1);
+	button.TrackedCheck:SetAtlas("worldquest-emissary-tracker-checkmark", true);
+	button.TrackedCheck:SetPoint("BOTTOM", button, "BOTTOMRIGHT", 0, -2);
 
 	OmegaMap_ResetPOI(button, true, false);
 
@@ -2250,42 +2359,6 @@ function OmegaMapFakeButton_OnClick(button, mouseButton)
 	end
 end
 
-local function UpdatePlayerPositions()
-	local timeNow = GetTime();
-
-	OmegaMapUnitPositionFrame:ClearUnits();
-
-	local r, g, b = CheckColorOverrideForPVPInactive("player", timeNow, 1, 1, 1);
-	local playerArrowSize = OmegaMapUnitPositionFrame:GetPlayerArrowSize();
-	OmegaMapUnitPositionFrame:AddUnit("player", "Interface\\WorldMap\\WorldMapArrow", playerArrowSize, playerArrowSize, r, g, b, 1, 7, true);
-
-	local isInRaid = IsInRaid();
-	local memberCount = 0;
-	local unitBase;
-
-	if isInRaid then
-		memberCount = MAX_RAID_MEMBERS;
-		unitBase = "raid";
-	elseif IsInGroup() then
-		memberCount = MAX_PARTY_MEMBERS;
-		unitBase = "party";
-	end
-
-	local groupMemberSize = OmegaMapUnitPositionFrame:GetGroupMemberSize();
-
-	for i = 1, memberCount do
-		local unit = unitBase..i;
-		if UnitExists(unit) and not UnitIsUnit(unit, "player") then
-			local atlas = UnitInSubgroup(unit) and "WhiteCircle-RaidBlips" or "WhiteDotCircle-RaidBlips";
-			local class = select(2, UnitClass(unit));
-			local r, g, b = CheckColorOverrideForPVPInactive(unit, timeNow, GetClassColor(class));
-			OmegaMapUnitPositionFrame:AddUnitAtlas(unit, atlas, groupMemberSize, groupMemberSize, r, g, b, 1);
-		end
-	end
-
-	OmegaMapUnitPositionFrame:FinalizeUnits();
-end
-
 function OmegaMapButton_OnUpdate(self, elapsed)
 	local x, y = GetCursorPosition();
 	if ( OmegaMapScrollFrame.panning ) then
@@ -2403,9 +2476,9 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 		OmegaMapHighlight:Hide();
 	end
 
-	UpdatePlayerPositions();
+	OmegaMapUnitPositionFrame:UpdatePlayerPins();
 
-	local activeFrame = OmegaMapDetailFrame
+	local activeFrame = OmegaMapPOIFrame
 
 	-- Position flags
 	local numFlags = GetNumBattlefieldFlagPositions();
@@ -2438,7 +2511,7 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 		corpseY = -corpseY * activeFrame:GetHeight();
 		
 		OmegaMapCorpse:SetPoint("CENTER", activeFrame, "TOPLEFT", corpseX, corpseY);
-		OmegaMapCorpse:SetFrameStrata("DIALOG");
+		--OmegaMapCorpse:SetFrameStrata("DIALOG");
 		OmegaMapCorpse:Show();
 	end
 
@@ -2451,7 +2524,7 @@ function OmegaMapButton_OnUpdate(self, elapsed)
 		deathReleaseY = -deathReleaseY * activeFrame:GetHeight();
 		
 		OmegaMapDeathRelease:SetPoint("CENTER", activeFrame, "TOPLEFT", deathReleaseX, deathReleaseY);
-		OmegaMapDeathRelease:SetFrameStrata("DIALOG");
+		--OmegaMapDeathRelease:SetFrameStrata("DIALOG");
 		OmegaMapDeathRelease:Show();
 	end
 	
@@ -2584,13 +2657,13 @@ end
 
 function OmegaMap_HandleUnitClick(mouseOverUnits, mouseButton)
 	BAD_BOY_COUNT = 0;
-	local timeNowSeconds = GetTime();
 
-	if ( GetCVar("enablePVPNotifyAFK") ~= "0" and mouseButton == "RightButton" ) then
+	if ( GetCVarBool("enablePVPNotifyAFK") and mouseButton == "RightButton" ) then
 		local _, instanceType = IsInInstance();
 		if ( instanceType == "pvp" or  IsInActiveWorldPVP() ) then
+			local timeNowSeconds = GetTime();
 			for unit in pairs(mouseOverUnits) do
-				if ( GetIsPVPInactive(unit, timeNowSeconds) ) then
+				if ( not GetIsPVPInactive(unit, timeNowSeconds) ) then
 					BAD_BOY_COUNT = BAD_BOY_COUNT + 1;
 					BAD_BOY_UNITS[BAD_BOY_COUNT] = unit;
 				end
@@ -2702,12 +2775,70 @@ end
 
 ]]--
 
-function OmegaMapFrame_UpdateMap()
-	OmegaMapFrame_Update();
-	OmegaMapLevelDropDown_Update();
-	OmegaMapNavBar_Update();
+function OmegaMap_ToggleSizeDown()
+	--OmegaMapFrame.UIElementsFrame.OpenQuestPanelButton:Show();
+	--OmegaMapFrame.MainHelpButton:Show();
+	--OMEGAMAP_SETTINGS.size = OmegaMapConfig.scale;
+	-- adjust main frame
+	--OmegaMapFrame:SetParent(UIParent);
+	OmegaMapFrame:SetFrameStrata("HIGH");
+	OmegaMapTooltip:SetFrameStrata("TOOLTIP");
+	OmegaMapCompareTooltip1:SetFrameStrata("TOOLTIP");
+	OmegaMapCompareTooltip2:SetFrameStrata("TOOLTIP");
+	--OmegaMapFrame:EnableKeyboard(false);
+	-- adjust map frames
+	--OmegaMapDetailFrame:SetScale(OmegaMapConfig.scale);
+	--OmegaMapFrameAreaFrame:SetScale(OmegaMapConfig.scale);
+	--OmegaMapUnitPositionFrame:SetScale(OmegaMapConfig.scale);
+	--OmegaMapFrame_ResetPOIHitTranslations();
+	--QUEST_POI_FRAME_WIDTH = OmegaMapDetailFrame:GetWidth() * OmegaMapConfig.scale;
+	--QUEST_POI_FRAME_HEIGHT = OmegaMapDetailFrame:GetHeight() * OmegaMapConfig.scale;
+	-- hide big window elements
+	--BlackoutWorld:Hide();
+	--OmegaMapFrameSizeDownButton:Hide();
+	--ToggleMapFramerate();
+	-- show small window elements
+	--OmegaMapTitleButton:Show();
+	--OmegaMapFrameSizeUpButton:Show();
+	-- floor dropdown
+	--WorldMapLevelDropDown:SetPoint("TOPLEFT", WorldMapDetailFrame, "TOPLEFT", -18, 2);
+
+	-- tiny adjustments
+	-- pet battle level size adjustment
+	OmegaMapFrameAreaPetLevels:SetFontObject("SubZoneTextFont");
+	-- user-movable
+	--OmegaMapFrame:ClearAllPoints();
+	--SetUIPanelAttribute(OmegaMapFrame, "area", "center");
+	--SetUIPanelAttribute(OmegaMapFrame, "allowOtherPanels", true);
+	--OmegaMapFrame:SetMovable(true);
+	--OmegaMapFrame:SetSize(702, 534);
+	--OmegaMapFrame.BorderFrame:SetSize(702, 534);
+
+	--OmegaMapFrame.BorderFrame.Inset:SetPoint("TOPLEFT", 0, -63);
+	--OmegaMapFrame.BorderFrame.Inset:SetPoint("BOTTOMRIGHT", -2, 1);
+	--ButtonFrameTemplate_ShowPortrait(OmegaMapFrame.BorderFrame);
+	--OmegaMapFrame.NavBar:SetPoint("TOPLEFT", OmegaMapFrame.BorderFrame, 64, -23);
+	--OmegaMapFrame.NavBar:SetWidth(628);
+
+	--OmegaMapFrame:SetPoint("TOPLEFT", OmegaMapScreenAnchor, 0, 0);
+	--OmegaMapScrollFrame:ClearAllPoints();
+	--OmegaMapScrollFrame:SetPoint("TOPLEFT", 3, -68);
+	--OmegaMapScrollFrame:SetSize(696, 464);
+	OmegaMapUnitPositionFrame:SetPinSize("player", PLAYER_ARROW_SIZE_WINDOW);
+	OmegaMapUnitPositionFrame:SetPinSize("party", GROUP_MEMBER_SIZE_WINDOW);
+	OmegaMapUnitPositionFrame:SetPinSize("raid", RAID_MEMBER_SIZE_WINDOW);
+	OmegaMap_UpdateBattlefieldFlagSizes(BATTLEFIELD_ICON_SIZE_WINDOW);
+	OmegaMap_UpdateBattlefieldFlagScales();
+	--OmegaMapBarFrame_UpdateLayout(OmegaMapBarFrame);
 end
 
+function OmegaMapFrame_UpdateMap(skipDropDownUpdate)
+	OmegaMapFrame_Update();
+	if (not skipDropDownUpdate) then
+		OmegaMapLevelDropDown_Update();
+		OmegaMapNavBar_Update();
+	end
+end
 function OmegaMapScenarioPOIFrame_OnUpdate(self)
 	if (not OmegaMapFrame:IsVisible()) then return end
 
@@ -2942,7 +3073,7 @@ function OmegaMapScrollFrame_OnMouseWheel(self, delta)
 
 	OmegaMapFrame_Update();
 	OmegaMapScrollFrame_ReanchorQuestPOIs();
-	OmegaMapBlobFrame_ResetPOIHitTranslations();
+	--OmegaMapBlobFrame_ResetPOIHitTranslations();
 	OmegaMapBlobFrame_DelayedUpdateBlobs();
 	OmegaMap_UpdateBattlefieldFlagScales();
 end
@@ -2957,7 +3088,7 @@ function OmegaMapScrollFrame_ResetZoom()
 	OmegaMapScrollFrame.zoomedIn = false;
 	OmegaMapFrame_Update();
 	OmegaMapScrollFrame_ReanchorQuestPOIs();
-	OmegaMapBlobFrame_ResetPOIHitTranslations();
+	--OmegaMapBlobFrame_ResetPOIHitTranslations();
 	OmegaMapBlobFrame_DelayedUpdateBlobs();
 
 end
@@ -2984,7 +3115,7 @@ function OmegaMapScrollFrame_OnPan(cursorX, cursorY)
 		local y = max(0, dy + OmegaMapScrollFrame.y);
 		y = min(y, OmegaMapScrollFrame.maxY);
 		OmegaMapScrollFrame:SetVerticalScroll(y);
-		OmegaMapBlobFrame_ResetPOIHitTranslations();
+		--OmegaMapBlobFrame_ResetPOIHitTranslations();
 		OmegaMapBlobFrame_DelayedUpdateBlobs();
 	end
 end
@@ -3047,8 +3178,23 @@ function OmegaMapPOIFrame_Update(poiTable)
 				if ( IsQuestComplete(questID) ) then
 					poiButton = QuestPOI_GetButton(OmegaMapPOIFrame, questID, "map", nil);
 				else
-					-- if a quest is being viewed there is only going to be one POI and it's going to have number 1
-					poiButton = QuestPOI_GetButton(OmegaMapPOIFrame, questID, "numeric", (detailQuestID and 1) or index);
+					local shownIndex = index;
+
+					-- if a quest is being viewed there is only going to be one POI and we need to match it to the ObjectiveTracker's index for that quest.
+					if ( detailQuestID ) then
+						shownIndex = 1;
+						for trackerIndex, poi in ipairs(ObjectiveTrackerFrame.BlocksFrame.poiTable["numeric"]) do
+							if ( poi:IsShown() ) then
+								if ( detailQuestID == poi.questID ) then
+									shownIndex = trackerIndex;
+									break;
+								else
+									shownIndex = shownIndex + 1;
+								end
+							end
+						end
+					end
+					poiButton = QuestPOI_GetButton(OmegaMapPOIFrame, questID, "numeric", shownIndex);
 				end
 				OmegaMapPOIFrame_AnchorPOI(poiButton, posX, posY, WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.TRACKED_QUEST);
 			end
@@ -3533,6 +3679,97 @@ function OmegaMapNavBar_Update()
 	end
 end
 
+OmegaMapPingMixin = {};
+
+function OmegaMapPingMixin:PlayOnFrame(frame, contextData)
+	if self.targetFrame ~= frame then
+		if frame and frame:IsVisible() then
+			self:ClearAllPoints();
+			self:SetPoint("CENTER", frame);
+
+			self:Stop();
+			self:SetTargetFrame(frame);
+			self:SetContextData(contextData);
+			self:Play();
+		else
+			self:Stop();
+		end
+	end
+end
+
+function OmegaMapPingMixin:SetTargetFrame(frame)
+	-- Stop this ping from playing on any previous target
+	if self.targetFrame then
+		self.targetFrame.worldMapPing = nil;
+	end
+
+	-- This ping is now targeting a new frame (or nothing)
+	self.targetFrame = frame;
+
+	-- Clear out context data, it's meaningless with a new frame
+	self:SetContextData(nil);
+
+	-- If that frame is a valid target, then let it know that a ping is attached
+	if frame then
+		frame.worldMapPing = self;
+
+		-- Layer this behind the frame that's targeted (could make this dynamic)
+		-- Might need to reparent, this currently works because it's only operating
+		-- on TaskPOI pins.
+		self:SetFrameLevel(frame:GetFrameLevel() + 1);
+	end
+end
+
+function OmegaMapPingMixin:SetContextData(contextData)
+	self.contextData = contextData;
+end
+
+function OmegaMapPingMixin:GetContextData()
+	return self.contextData;
+end
+
+function OmegaMapPingMixin:Play()
+	self.DriverAnimation:Play();
+end
+
+function OmegaMapPingMixin:Stop()
+	self.DriverAnimation:Stop();
+end
+
+OmegaMapPingAnimationMixin = {};
+
+function OmegaMapPingAnimationMixin:OnPlay()
+	local ping = self:GetParent();
+	ping.ScaleAnimation:Play();
+end
+
+function OmegaMapPingAnimationMixin:OnStop()
+	local ping = self:GetParent();
+	ping:SetTargetFrame(nil);
+	ping.ScaleAnimation:Stop();
+end
+
+function OmegaMapPing_StartPingQuest(questID)
+	if OmegaMapFrame:IsVisible() then
+		local ping = OmegaMapPOIFrame.POIPing;
+		local target = OmegaMap_GetActiveTaskPOIForQuestID(questID);
+		ping:PlayOnFrame(target, questID);
+	end
+end
+
+function OmegaMapPing_StopPing(frame)
+	if frame.worldMapPing then
+		frame.worldMapPing:Stop();
+	end
+end
+
+function OmegaMapPing_UpdatePing(frame, contextData)
+	if frame.worldMapPing and frame.worldMapPing:GetContextData() ~= contextData then
+		frame.worldMapPing:Stop();
+	end
+end
+
+
 ---  New Functions
 
 function OmegaMapFrame_ChangeOpacity()
@@ -3656,6 +3893,7 @@ function OmegaMapCoordsOnUpdate(self, elapsed)
 			self.timer = 0;
 			local cX, cY, cLoc = nil, nil, nil;
 			local pX, pY = GetPlayerMapPosition("player");
+			if pX == nil then return end
 			local fmtng = "%d, %d";
 
 			local pLoc = OM_GREEN..(format( fmtng, pX * 100.0, pY * 100.0)).."|r\n";

@@ -150,7 +150,7 @@
 			<OnClick function="OmegaMapFakeButton_OnClick"/>
 		</Scripts>
 	</Button>
-	<Button name="OmegaMapMaelstromButtonTemplate" inherits="WorldMapFakeButtonTemplate" hidden="true" virtual="true">
+	<Button name="OmegaMapMaelstromButtonTemplate" inherits="OmegaMapFakeButtonTemplate" hidden="true" virtual="true">
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
@@ -381,7 +381,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="OmegaMapActionButtonTemplate" mixin="WorldMapActionButtonMixin" virtual="true">
+	<Frame name="OmegaMapActionButtonTemplate" virtual="true">
 		<Size x="101" y="86" />
 		<Layers>
 			<Layer level="ARTWORK" textureSubLevel="1">
@@ -393,46 +393,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Button parentKey="SpellButton" useParentLevel="true" registerForClicks="LeftButtonDown" motionScriptsWhileDisabled="true" inherits="BasicFrameTemplate"> --SecureFrameTemplate">
-				<Size x="55" y="55" />
-				<Anchors>
-					<Anchor point="CENTER" y="8" />
-				</Anchors>
-				<Frames>
-					<Cooldown parentKey="Cooldown" inherits="CooldownFrameTemplate">
-						<Anchors>
-							<Anchor point="TOPLEFT" x="5" y="-6"/>
-							<Anchor point="BOTTOMRIGHT" x="-5" y="3"/>
-						</Anchors>
-					</Cooldown>
-				</Frames>
-				<Scripts>
-					<OnClick>
-						self:GetParent():OnClick();
-					</OnClick>
-					
-					<OnEnter>
-						self:GetParent():OnEnter();
-					</OnEnter>
-					
-					<OnLeave>
-						self:GetParent():OnLeave();
-					</OnLeave>
-				</Scripts>
-				<NormalTexture />
-				<PushedTexture>
-					<Anchors>
-						<Anchor point="TOPLEFT" x="1" y="-1" />
-						<Anchor point="BOTTOMRIGHT" x="1" y="-1" />
-					</Anchors>
-				</PushedTexture>
-				<HighlightTexture file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="-2" />
-						<Anchor point="BOTTOMRIGHT" x="0" y="-2" />
-					</Anchors>
-				</HighlightTexture>
-			</Button>
+
 		</Frames>
 		<Scripts>
 			<OnEvent method="OnEvent" />

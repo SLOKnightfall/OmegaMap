@@ -974,7 +974,7 @@ local x, y, level = GatherMate:DecodeLoc(coord)
 		pin.nodeType = nodeType
 		pin.omegamap = true
 		pin:SetParent(GatherMateOmegaMapOverlay)
-		pin:SetFrameStrata("HIGH")
+		pin:SetFrameStrata("FULLSCREEN")
 		pin:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL)
 		pin:SetHeight(12 * db.scale)
 		pin:SetWidth(12 * db.scale)

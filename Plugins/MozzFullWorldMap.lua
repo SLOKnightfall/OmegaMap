@@ -9270,7 +9270,7 @@ if not OmegaMapConfig.showCompactMode then return end
 
 			-- hide the panels that Blizz created -- we'll make our own
 			
-			for i=1,NUM_WORLDMAP_OVERLAYS do
+			for i=1,NUM_OMEGAMAP_OVERLAYS do
 			
 				local panel = _G[overlayName..i];
 				

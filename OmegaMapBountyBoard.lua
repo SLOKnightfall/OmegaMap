@@ -8,6 +8,8 @@ function OmegaMapBountyBoardMixin:OnLoad()
 	self.BountyName:SetFontObjectsToTry(Game13Font_o1, Game12Font_o1, Game11Font_o1);
 
 	self.minimumTabsToDisplay = 3;
+	self.maps = {};
+	self.highestMapInfo = {};
 end
 
 function OmegaMapBountyBoardMixin:OnEvent(event, ...)
@@ -54,9 +56,9 @@ function OmegaMapBountyBoardMixin:Clear()
 	self:Hide();
 end
 
-WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE = 1;
-WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST = 2;
-WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES = 3;
+OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE = 1;
+OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST = 2;
+OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES = 3;
 
 function OmegaMapBountyBoardMixin:Refresh()
 	assert(not self.isRefreshing);
@@ -83,15 +85,15 @@ function OmegaMapBountyBoardMixin:Refresh()
 	end
 
 	if self.lockedQuestID then
-		self:SetLockedType(WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST);
+		self:SetLockedType(OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST);
 	elseif #self.bounties == 0 then
-		self:SetLockedType(WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES);
+		self:SetLockedType(OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES);
 
 		self.selectedBountyIndex = nil;
 
 		self:RefreshBountyTabs();
 	else
-		self:SetLockedType(WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE);
+		self:SetLockedType(OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE);
 		self.selectedBountyIndex = self.bounties[self.selectedBountyIndex] and self.selectedBountyIndex or 1;
 
 		self:RefreshBountyTabs();
@@ -109,10 +111,10 @@ end
 function OmegaMapBountyBoardMixin:SetLockedType(lockedType)
 	self.lockedType = lockedType;
 
-	self.DesaturatedTrackerBackground:SetShown(self.lockedType ~= WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE);
-	self.Locked:SetShown(self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST);
+	self.DesaturatedTrackerBackground:SetShown(self.lockedType ~= OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE);
+	self.Locked:SetShown(self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST);
 
-	if self.lockedType ~= WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
+	if self.lockedType ~= OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
 		self.BountyName:SetText(BOUNTY_BOARD_LOCKED_TITLE);
 		self.BountyName:SetVertexColor(.5, .5, .5);
 
@@ -134,7 +136,7 @@ end
 function OmegaMapBountyBoardMixin:RefreshBountyTabs()
 	self.bountyTabPool:ReleaseAll();
 
-	if self.lockedType ~= WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE and self.lockedType ~= WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES then
+	if self.lockedType ~= OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE and self.lockedType ~= OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES then
 		return;
 	end
 
@@ -186,7 +188,7 @@ end
 function OmegaMapBountyBoardMixin:RefreshSelectedBounty()
 	self.bountyObjectivePool:ReleaseAll();
 
-	if self.lockedType ~= WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
+	if self.lockedType ~= OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
 		return;
 	end
 
@@ -208,7 +210,7 @@ function OmegaMapBountyBoardMixin:RefreshSelectedBounty()
 	self.BountyName:SetVertexColor(RED_FONT_COLOR:GetRGB());
 end
 
-MAX_BOUNTY_OBJECTIVES = 7;
+local OMEGA_MAP_MAX_BOUNTY_OBJECTIVES = 7;
 function OmegaMapBountyBoardMixin:RefreshSelectedBountyObjectives(bountyData)
 	local numCompleted, numTotal = self:CalculateBountySubObjectives(bountyData);
 
@@ -222,7 +224,7 @@ end
 function OmegaMapBountyBoardMixin:ShowQuestObjectiveMarkers(numCompleted, numTotal, alpha)
 	local SUB_OBJECTIVE_FRAME_WIDTH = 35;
 
-	local percentFull = (numTotal - 1) / (MAX_BOUNTY_OBJECTIVES - 1);
+	local percentFull = (numTotal - 1) / (OMEGA_MAP_MAX_BOUNTY_OBJECTIVES - 1);
 	local padding = Lerp(3, -9, percentFull);
 	local startingOffsetX = -((SUB_OBJECTIVE_FRAME_WIDTH + padding) * (numTotal - 1)) / 2;
 
@@ -254,7 +256,7 @@ function OmegaMapBountyBoardMixin:CalculateBountySubObjectives(bountyData)
 				end
 				numTotal = numTotal + 1;
 
-				if numTotal >= MAX_BOUNTY_OBJECTIVES then
+				if numTotal >= OMEGA_MAP_MAX_BOUNTY_OBJECTIVES then
 					return numCompleted, numTotal;
 				end
 			end
@@ -307,7 +309,8 @@ function OmegaMapBountyBoardMixin:ShowBountyTooltip(bountyIndex)
 
 		AddObjectives(bountyData.questID, bountyData.numObjectives);
 
-		OmegaMap_AddQuestRewardsToTooltip(bountyData.questID);
+		GameTooltip_AddQuestRewardsToTooltip(OmegaMapTooltip, bountyData.questID);
+		--OmegaMap_AddQuestRewardsToTooltip(bountyData.questID);
 		OmegaMapTooltip:Show();
 	else
 		OmegaMapTooltip:SetText(RETRIEVING_DATA, RED_FONT_COLOR:GetRGB());
@@ -357,13 +360,13 @@ function OmegaMapBountyBoardMixin:ShowLockedByNoBountiesTooltip(bountyIndex)
 end
 
 function OmegaMapBountyBoardMixin:OnEnter()
-	if self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
+	if self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
 		if self.selectedBountyIndex then
 			self:ShowBountyTooltip(self.selectedBountyIndex);
 		end
-	elseif self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST then
+	elseif self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_BY_QUEST then
 		self:ShowLockedByQuestTooltip();
-	elseif self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES then
+	elseif self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES then
 		self:ShowLockedByNoBountiesTooltip(nil);
 	end
 end
@@ -386,52 +389,94 @@ end
 
 function OmegaMapBountyBoardMixin:OnTabClick(tab)
 	if not tab.isEmpty then
+		if (self:GetSelectedBountyIndex() ~= tab.bountyIndex) then
+			self.currentCandidateIndex = nil;
+		end
 		self:SetSelectedBountyIndex(tab.bountyIndex);
 		self:FindBestMapForSelectedBounty();
 	end
 end
 
-function OmegaMapBountyBoardMixin:FindBestMapForSelectedBounty()
+function OmegaMapBountyBoardMixin:CacheWorldQuestDataForSelectedBounty()
 	local continentIndex, continentID = GetCurrentMapContinent();
 	local continentMaps =  { GetMapZones(continentIndex) };
 
-	-- move current map to 1st position
+	local maxQuests = 0;
 	for i = 1, #continentMaps, 2 do
-		if continentMaps[i] == self.mapAreaID then
-			continentMaps[1], continentMaps[i] = continentMaps[i], continentMaps[1];
-			break;
-		end
-	end
-
-	local candidateMapID;
-	local candidateNumBounties = 0;
-	local currentMapID = GetCurrentMapAreaID();
-	for i = 1, #continentMaps, 2 do
-		local numBounties = 0;
+		local numQuests = 0;
 		local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(continentMaps[i], continentID);
 		for _, info  in ipairs(taskInfo) do
 			if QuestUtils_IsQuestWorldQuest(info.questId) then
 				if self:IsWorldQuestCriteriaForSelectedBounty(info.questId) then
-					if ( currentMapID == continentMaps[i] ) then
-						-- no need to switch
-						return;
-					end
-					numBounties = numBounties + 1;
+					numQuests = numQuests + 1;
 				end
 			end
 		end
-		if ( numBounties > candidateNumBounties ) then
-			candidateMapID = continentMaps[i];
-			candidateNumBounties = numBounties;
+		-- The maps don't have a defined order, so we keep some semblance of order by reusing indexes.
+		local index = FindInTableIf(self.maps, function(v) return v.mapID == continentMaps[i] end);
+		if index then
+			self.maps[index].numQuests = numQuests;
+		else
+			tinsert(self.maps, { mapID = continentMaps[i], numQuests = numQuests });
+		end
+		if (numQuests > maxQuests) then
+			self.highestMapInfo.mapID = index and self.maps[index].mapID or continentMaps[i];
+			self.highestMapInfo.numQuests = numQuests;
+			maxQuests = numQuests;
 		end
 	end
-	if ( candidateMapID ) then
+	self.maps = tFilter(self.maps, function(v) return v.numQuests > 0 end, true);
+end
+
+function OmegaMapBountyBoardMixin:FindBestMapForSelectedBounty()
+	local currentMapID = GetCurrentMapAreaID();
+	self:CacheWorldQuestDataForSelectedBounty();
+
+	local candidateMapID;
+
+	local maxQuests = 0;
+	if (not self.currentCandidateIndex) then
+		local hierarchy = GetMapHierarchy();
+		for i, parentInfo in ipairs(hierarchy) do
+			if (not parentInfo.isContinent) then
+				ZoomOut();
+				local myParentMap = FindInTableIf(self.maps, function(v) return v.mapID == parentInfo.id end);
+				if (myParentMap) then
+					self.currentCandidateIndex = myParentMap;
+					break;
+				end
+			end
+		end
+
+		if (not self.currentCandidateIndex) then
+			local myMap = FindInTableIf(self.maps, function(v) return v.mapID == currentMapID end);
+			if (myMap) then
+				self.currentCandidateIndex = myMap;
+			end
+		end
+
+		if (not self.currentCandidateIndex) then
+			self.currentCandidateIndex = FindInTableIf(self.maps, function(v) return v.mapID == self.highestMapInfo.mapID end);
+		end
+		candidateMapID = self.maps[self.currentCandidateIndex].mapID;
+	elseif (#self.maps > 1) then
+		self.currentCandidateIndex = self.currentCandidateIndex + 1;
+		if (self.currentCandidateIndex > #self.maps) then
+			self.currentCandidateIndex = 1;
+		end
+		candidateMapID = self.maps[self.currentCandidateIndex].mapID;
+	else
+		self.currentCandidateIndex = 1;
+		candidateMapID = self.maps[1].mapID;
+	end
+
+	if ( candidateMapID and candidateMapID ~= currentMapID ) then
 		SetMapByID(candidateMapID);
 	end
 end
 
 function OmegaMapBountyBoardMixin:TryShowingIntroTutorial()
-	if self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
+	if self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE then
 		if not self.TutorialBox:IsShown() and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_BOUNTY_INTRO) then
 			self.TutorialBox.activeTutorial = LE_FRAME_TUTORIAL_BOUNTY_INTRO;
 
@@ -469,7 +514,7 @@ function OmegaMapBountyBoardMixin:TryShowingIntroTutorial()
 end
 
 function OmegaMapBountyBoardMixin:TryShowingCompletionTutorial()
-	if self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE and self.firstCompletedTab then
+	if self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE and self.firstCompletedTab then
 		if not self.TutorialBox:IsShown() and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_BOUNTY_FINISHED) then
 			self.TutorialBox.activeTutorial = LE_FRAME_TUTORIAL_BOUNTY_FINISHED;
 
@@ -493,5 +538,5 @@ function OmegaMapBountyBoardMixin:TryShowingCompletionTutorial()
 end
 
 function OmegaMapBountyBoardMixin:AreBountiesAvailable()
-	return self:IsShown() and (self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE or self.lockedType == WORLD_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES);
+	return self:IsShown() and (self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NONE or self.lockedType == OMEGA_MAP_BOUNTY_BOARD_LOCK_TYPE_NO_BOUNTIES);
 end

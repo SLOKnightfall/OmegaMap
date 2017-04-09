@@ -1,5 +1,5 @@
 OmegaMapActionButtonMixin = {};
-
+--[[
 function OmegaMapActionButtonMixin:OnEvent(event, ...)
 	if event == "SPELL_UPDATE_COOLDOWN" then
 		self:UpdateCooldown();
@@ -36,7 +36,7 @@ function OmegaMapActionButtonMixin:SetOnCastChangedCallback(onCastChangedCallbac
 end
 
 function OmegaMapActionButtonMixin:IsUsingAction()
-	return SpellCanTargetQuest();
+	--return SpellCanTargetQuest();
 end
 
 function OmegaMapActionButtonMixin:UpdateCastingState()
@@ -58,7 +58,8 @@ function OmegaMapActionButtonMixin:Clear()
 	self:Hide();
 
 	if self:IsUsingAction() then
-		SpellStopTargeting();
+		--SpellStopTargeting();
+		print("?WTF")
 	end
 end
 
@@ -80,31 +81,32 @@ function OmegaMapActionButtonMixin:Refresh()
 
 	self.spellID = spellID;
 
-	local _, _, spellIcon = GetSpellInfo(self.spellID);
-	self.SpellButton:SetNormalTexture(spellIcon);
-	self.SpellButton:SetPushedTexture(spellIcon);
+	--local _, _, spellIcon = GetSpellInfo(self.spellID);
+	--self.SpellButton:SetNormalTexture(spellIcon);
+	--self.SpellButton:SetPushedTexture(spellIcon);
 
-	self:UpdateCooldown();
+	--self:UpdateCooldown();
 
-	self:Show();
+	--self:Show();
 end
 
 function OmegaMapActionButtonMixin:UpdateCooldown()
 	local start, duration, enable = GetSpellCooldown(self.spellID);
-	CooldownFrame_Set(self.SpellButton.Cooldown, start, duration, enable);
+	--CooldownFrame_Set(self.SpellButton.Cooldown, start, duration, enable);
 
-	self.SpellButton:SetEnabled(duration == 0);
+	--self.SpellButton:SetEnabled(duration == 0);
 end
 
 function OmegaMapActionButtonMixin:OnClick()
-	ClickWorldMapActionButton();
+	--ClickWorldMapActionButton();
 end
 
 function OmegaMapActionButtonMixin:OnEnter()
-	OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, -60);
-	OmegaMapTooltip:SetSpellByID(self.spellID);
+	--OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, -60);
+	--OmegaMapTooltip:SetSpellByID(self.spellID);
 end
 
 function OmegaMapActionButtonMixin:OnLeave()
 	OmegaMapTooltip:Hide();
 end
+--]]

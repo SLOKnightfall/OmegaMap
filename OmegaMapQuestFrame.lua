@@ -248,7 +248,6 @@ function OmegaMapQuestFrame_ShowQuestDetails(questID)
 	
 	-- save current view
 	OmegaMapQuestFrame.DetailsFrame.continent = GetCurrentMapContinent();
-	OmegaMapQuestFrame.DetailsFrame.mapID = GetCurrentMapAreaID();
 	OmegaMapQuestFrame.DetailsFrame.OmegaMapQuestID = nil;	-- doing it now because GetQuestWorldMapAreaID will do a SetMap to current zone
 	OmegaMapQuestFrame.DetailsFrame.dungeonFloor = GetCurrentMapDungeonLevel();
 	
@@ -256,8 +255,9 @@ function OmegaMapQuestFrame_ShowQuestDetails(questID)
 	if ( mapID ~= 0 ) then
 		SetMapByID(mapID, floorNumber);
 		if ( floorNumber ~= 0 ) then
-			SetDungeonMapLevel(floorNumber);
+			OmegaMapQuestMapFrame.DetailsFrame.dungeonFloor = floorNumber;
 		end
+		OmegaMapQuestMapFrame.DetailsFrame.mapID = mapID;
 	end
 	
 	OmegaMapQuestFrame_UpdateQuestDetailsButtons();
@@ -330,8 +330,6 @@ end
 function OmegaMapQuestFrame_OpenToQuestDetails(questID)
 	OM_ShowQuestLog();
 	OmegaMapQuestFrame_ShowQuestDetails(questID);
-	-- back button should just close details
-	OmegaMapQuestFrame.DetailsFrame.mapID = nil;
 end
 
 function OmegaMapQuestFrame_GetDetailQuestID()
