@@ -1,7 +1,7 @@
 
 local MIN_STORY_TOOLTIP_WIDTH = 240;
 
-local tooltipButton;
+local OM_tooltipButton;
 
 function OmegaMapQuestFrame_OnLoad(self)
 	self:RegisterEvent("QUEST_LOG_UPDATE");
@@ -33,8 +33,8 @@ function OmegaMapQuestFrame_OnEvent(self, event, ...)
 			end
 		end
 
-		if ( tooltipButton ) then
-			OmegaMapQuestLogTitleButton_OnEnter(tooltipButton);
+		if ( OM_tooltipButton ) then
+			OmegaMapQuestLogTitleButton_OnEnter(OM_tooltipButton);
 		end
 
 		local updateButtons = false;
@@ -875,7 +875,7 @@ function OmegaMapQuestLogTitleButton_OnEnter(self)
 	end
 	
 	GameTooltip:Show();
-	tooltipButton = self;
+	OM_tooltipButton = self;
 end
 
 function OmegaMapQuestLogTitleButton_OnLeave(self)
@@ -896,7 +896,7 @@ function OmegaMapQuestLogTitleButton_OnLeave(self)
 		OmegaMapBlobFrame:DrawBlob(self.questID, false);
 	end
 	GameTooltip:Hide();
-	tooltipButton = nil;
+	OM_tooltipButton = nil;
 
 end
 

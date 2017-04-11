@@ -69,8 +69,6 @@ local OMEGAMAP_DEFAULT_SCALE = .75;
 local PLAYER_ARROW_SIZE_WINDOW = 40;
 local PLAYER_ARROW_SIZE_FULL_WITH_QUESTS = 38;
 local PLAYER_ARROW_SIZE_FULL_NO_QUESTS = 28;
-local GROUP_MEMBER_SIZE_WINDOW = 16;
-local RAID_MEMBER_SIZE_WINDOW = GROUP_MEMBER_SIZE_WINDOW * 0.75;
 local GROUP_MEMBER_SIZE_FULL = 10;
 local RAID_MEMBER_SIZE_FULL = GROUP_MEMBER_SIZE_FULL * 0.75;
 
@@ -79,11 +77,15 @@ local BATTLEFIELD_ICON_SIZE_WINDOW = 30;
 
 local STORYLINE_FRAMES = { };
 
+local INVASION_TIME_FORMAT = "%02d:%02d |cFFFF0000|r";
 local incombat = false
 --local playercombatclose = false
 
 OmegaMapPins = {}
 OMEGAMAP_VEHICLES = {};
+
+local BAD_BOY_UNITS = {};
+local BAD_BOY_COUNT = 0;
 
 OmegaMapConfig = {
 	size = OMEGAMAP_FULLMAP_SIZE,
@@ -497,7 +499,7 @@ function OmegaMapFrame_OnEvent(self, event, ...)
 			end
 		end
 		OmegaMapFrame_SetBonusObjectivesDirty();
-		QuestMapFrame_CloseQuestDetails();
+		OmegaMapQuestFrame_CloseQuestDetails();
 		OmegaMapPOIFrame_SelectPOI(questID);
 	elseif ( event == "PLAYER_STARTED_MOVING" ) then
 		if ( GetCVarBool("mapFade") ) then
@@ -863,10 +865,10 @@ end
 
 function OmegaMap_UpdateQuestBonusObjectives()
 	local showOnlyInvasionWorldQuests = false;
-	if ( QuestMapFrame.DetailsFrame.questID ) then
+	if ( OmegaMapQuestFrame.DetailsFrame.questID ) then
 		-- Hide all task POIs while the player looks at quest details.
 		-- but for invasion quests we're gonna show all the invasion world quests
-		if ( IsQuestInvasion(QuestMapFrame.DetailsFrame.questID) ) then
+		if ( IsQuestInvasion(OmegaQuestMapFrame.DetailsFrame.questID) ) then
 			showOnlyInvasionWorldQuests = true;
 		else
 			for i = 1, NUM_OMEGAMAP_TASK_POIS do
@@ -928,10 +930,10 @@ function OmegaMap_UpdateQuestBonusObjectives()
 					if ( isWorldQuest ) then
 						worldQuestPOIs[#worldQuestPOIs + 1] = taskPOI;
 					else
-						WorldMapPOIFrame_AnchorPOI(taskPOI, info.x, info.y, WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.BONUS_OBJECTIVE);
+						OmegaMapPOIFrame_AnchorPOI(taskPOI, info.x, info.y, WORLD_MAP_POI_FRAME_LEVEL_OFFSETS.BONUS_OBJECTIVE);
 					end
 
-					WorldMapPing_UpdatePing(taskPOI, info.questId);
+					OmegaMapPing_UpdatePing(taskPOI, info.questId);
 				end
 			end
 		end
@@ -1185,10 +1187,10 @@ function OmegaMap_UpdateLandmarks()
 			omegaMapPOI:Hide();
 		end
 	end
-	if ( numGraveyards > NUM_WORLDMAP_GRAVEYARDS ) then
-		NUM_WORLDMAP_GRAVEYARDS = numGraveyards;
+	if ( numGraveyards > NUM_OMEGAMAP_GRAVEYARDS ) then
+		NUM_OMEGAMAP_GRAVEYARDS = numGraveyards;
 	else
-		for i = numGraveyards + 1, NUM_WORLDMAP_GRAVEYARDS do
+		for i = numGraveyards + 1, NUM_OMEGAMAP_GRAVEYARDS do
 			_G["OmegaMapFrameGraveyard"..i]:Hide();
 		end
 	end
@@ -1993,7 +1995,7 @@ end
 function OmegaMapTaskPOI_OnClick(self, button)
 	if self.worldQuest then
 		if SpellCanTargetQuest() then
-		print("???????")
+		print("`?????")
 			--if IsQuestIDValidSpellTarget(self.questID) then
 				--UseWorldMapActionButtonSpellOnQuest(self.questID);
 				-- Assume success for responsiveness
@@ -2023,8 +2025,8 @@ function OmegaMapTaskPOI_OnClick(self, button)
 	end
 end
 
-function TaskPOI_OnHide(self)
-	WorldMapPing_StopPing(self);
+function OmegaMapTaskPOI_OnHide(self)
+	OmegaMapPing_StopPing(self);
 end
 
 function OmegaMapScenarioPOI_OnEnter(self)
@@ -2151,7 +2153,7 @@ function OmegaMap_GetOrCreateTaskPOI(index)
 	button:SetScript("OnEnter", OmegaMapTaskPOI_OnEnter);
 	button:SetScript("OnLeave", OmegaMapTaskPOI_OnLeave);
 	button:SetScript("OnClick", OmegaMapTaskPOI_OnClick);
-	button:SetScript("OnHide", TaskPOI_OnHide)
+	button:SetScript("OnHide", OmegaMapTaskPOI_OnHide)
 
 	button.UpdateTooltip = OmegaMapTaskPOI_OnEnter;
 	
