@@ -1,7 +1,7 @@
 ## Interface: 70200
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 7.2
+## Game Version: 7.2 
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
