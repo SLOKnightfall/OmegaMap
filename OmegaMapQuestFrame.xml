@@ -1,6 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	<Script file="OmegaMapQuestFrame.lua"/>
+
 	
 
 	<Button name="OM_QuestLogTitleTemplate" virtual="true">
@@ -461,7 +462,7 @@
 						</Anchors>
 						<Scripts>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								OmegaMapQuestFrame_ReturnFromQuestDetails();
 							</OnClick>
 						</Scripts>
@@ -647,7 +648,7 @@
 						</Anchors>
 						<Scripts>
 							<OnClick>
-								PlaySound("igMainMenuOptionCheckBoxOn");
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 								OmegaMapQuestQuestOptions_TrackQuest(OmegaMapQuestFrame_GetDetailQuestID())
 							</OnClick>
 							<OnEnter>

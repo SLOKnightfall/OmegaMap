@@ -44,13 +44,13 @@ function OmegaMapOptionsFrame.ButtonInit(Module, Frame)
 	Button:SetScript("OnClick", 
 	  function()
 		if (Button:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig[optionText] = true;
 			--if (Frame) then
 				--Frame:Show();
 			--end
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig[optionText] = false;
 			if (Frame) then
 				Frame:Hide();
@@ -122,11 +122,11 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.Coords:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.Coords:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showCoords = true;
 			OmegaMapCoordinates:Show()
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showCoords = false;
 			OmegaMapCoordinates:Hide()
 		end					
@@ -141,11 +141,11 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.AlphaSliderTog:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.AlphaSliderTog:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showAlpha = true;
 			OmegaMapSliderFrame:Show()
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showAlpha = false;
 			OmegaMapSliderFrame:Hide()
 		end
@@ -160,12 +160,12 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.ExteriorsTog:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.ExteriorsTog:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showExteriors = true;
 			OmegaMap_LoadAltMapNotes()
 
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showExteriors = false;
 			OmegaMap_HideAltMap()
 		end
@@ -180,11 +180,11 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.BG:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.BG:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showBattlegrounds = true;
 			OmegaMap_LoadAltMapNotes()
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showBattlegrounds = false;
 			OmegaMapFrame_UpdateMap()
 		end
@@ -199,10 +199,10 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.EscapeClose:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.EscapeClose:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.escapeClose = true;
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.escapeClose = false;
 
 		end
@@ -218,12 +218,12 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.MiniMapIcon:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.MiniMapIcon:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapMiniMap:Show("OmegaMapMini")
 			OmegaMapConfig.MMDB.hide = false;
 			OmegaMapConfig.showMiniMapIcon = true;
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapMiniMap:Hide("OmegaMapMini")
 			OmegaMapConfig.MMDB.hide = true;
 			OmegaMapConfig.showMiniMapIcon = false;
@@ -239,11 +239,11 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.showHotSpot:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.showHotSpot:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showHotSpot = true;
 			OmegaMapHotSpotFrame:Show()
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showHotSpot = false;
 			OmegaMapHotSpotFrame:Hide()
 
@@ -259,10 +259,10 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.showCompactMode:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.showCompactMode:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showCompactMode = true;
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showCompactMode = false;
 		end
 		OmegaMapFrame_Update()
@@ -277,10 +277,10 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.Interactive:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.Interactive:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.keepInteractive = true;
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.keepInteractive = false;
 		end
 	  end
@@ -326,11 +326,11 @@ function OmegaMapOptionsFrame_init()
 	OmegaMapOptionsFrame.ScaleSliderTog:SetScript("OnClick", 
 	  function()
 		if (OmegaMapOptionsFrame.ScaleSliderTog:GetChecked() ) then
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			OmegaMapConfig.showScale = true;
 			OmegaMapZoomSliderFrame:Show()
 		else
-			PlaySound("igMainMenuOptionCheckBoxOff");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 			OmegaMapConfig.showScale = false;
 			OmegaMapZoomSliderFrame:Hide()
 		end

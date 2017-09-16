@@ -119,9 +119,13 @@ local function recyclePin(pin)
 end
 
 local function clearAllPins(t)
-	for coord, pin in pairs(t) do
+if t == nill then print("esca")
+
+return
+end
+	for key, pin in pairs(t) do
 		recyclePin(pin)
-		t[coord] = nil
+		t[key] = nil
 	end
 end
 
@@ -246,6 +250,7 @@ local continentMapFile = {
 	["Vashjir"]               = {[0] = 613, 614, 615, 610}, -- Vashjir isn't an actual continent, but the map treats it like one, so hardcode its 3 zones (+ continent map)
 	["Pandaria"]              = HBD.continentZoneMap[6],
 	["Draenor"]               = HBD.continentZoneMap[7],
+	["BrokenIsles"]           = HBD.continentZoneMap[8],
 }
 --[[
 -- Public function to get a list of zones in a continent
@@ -298,6 +303,10 @@ end
 -- This function updates all the icons of one plugin on the world map
 local function UpdateOmegaMapPlugin(pluginName)
 	if not OmegaMapOverlay:IsVisible() then return end
+	if omegamapPins[pluginName] == nill then
+	--print("Missing"..pluginName)
+		omegamapPins[pluginName] = {}
+	end
 	--if not omegamapPins[pluginName] then return end
 	HBDPins:RemoveAllWorldMapIcons("HandyNotes" .. pluginName)
 	clearAllPins(omegamapPins[pluginName])
@@ -350,7 +359,8 @@ local function UpdateOmegaMapPlugin(pluginName)
 		end
 		t:ClearAllPoints()
 		t:SetAllPoints(icon) -- Not sure why this is necessary, but people are reporting weirdly sized textures
-		omegamapPins[pluginName][(mapID2 or 0)*1e8 + coord] = icon
+		omegamapPins[pluginName][icon] = icon
+		--omegamapPins[pluginName][(mapID2 or 0)*1e8 + coord] = icon
 		icon.pluginName = pluginName
 		icon.coord = coord
 		icon.mapFile = mapFile2 or mapFile
@@ -436,7 +446,7 @@ local function RegisterPluginDB(self, pluginName, pluginHandler, optionsTable)
 end
 hooksecurefunc(HandyNotes,"RegisterPluginDB", RegisterPluginDB);
 
-RegisterPluginDB("HandyNotes","HandyNotes", HNHandler, options)
+--RegisterPluginDB("HandyNotes","HandyNotes", HNHandler, options)
 
 
 print(OMEGAMAP_HANDYNOTES_LOADED_MESSAGE)

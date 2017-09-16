@@ -1,11 +1,11 @@
-## Interface: 70200
+## Interface: 70300
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 7.2 
+## Game Version: 7.3 
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
-## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo, HereBeDragons-1.0
+## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo, HereBeDragons-1.0, AngryWorldQuests
 
 #Libraries
 Libs\LibStub\LibStub.lua
@@ -18,9 +18,11 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #Core Files
 localization.en.lua
 OmegaMapOptions.lua
+OmegaMapFrameCosmicButtons
 OmegaMapFrame.xml
 OmegaMapQuestFrame.xml
 OmegaMapBar.xml
+
 
 #Addon Plugins
 Plugins\HereBeDragons-Pins.lua
@@ -39,3 +41,4 @@ Plugins\PetTracker.lua
 Plugins\Explorer.lua
 Plugins\Explorer.lua
 Plugins\Vuhdo.lua
+Plugins\AngryWorldQuests.lua

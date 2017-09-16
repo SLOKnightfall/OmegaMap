@@ -5,6 +5,7 @@ local OM_tooltipButton;
 
 function OmegaMapQuestFrame_OnLoad(self)
 	self:RegisterEvent("QUEST_LOG_UPDATE");
+	self:RegisterEvent("QUEST_LOG_CRITERIA_UPDATE");
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED");
 	self:RegisterEvent("SUPER_TRACKED_QUEST_CHANGED");
 	self:RegisterEvent("GROUP_ROSTER_UPDATE");
@@ -18,6 +19,7 @@ function OmegaMapQuestFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	self:RegisterEvent("WORLD_MAP_UPDATE");
 
+	self.completedCriteria = {};
 	QuestPOI_Initialize(OM_QuestScrollFrame.Contents);
 	OmegaMapQuestOptionsDropDown.questID = 0;		-- for OmegaMapQuestOptionsDropDown_Initialize
 	UIDropDownMenu_Initialize(OmegaMapQuestOptionsDropDown, OmegaMapQuestOptionsDropDown_Initialize, "MENU");
@@ -60,6 +62,16 @@ function OmegaMapQuestFrame_OnEvent(self, event, ...)
 			OmegaMapQuestFrame_UpdateQuestDetailsButtons();
 		end
 		OmegaMapQuestFrame_UpdateAll();
+		OmegaMapQuestFrame_UpdateAllQuestCriteria();
+		if ( tooltipButton ) then
+			OmegaMapQuestLogTitleButton_OnEnter(tooltipButton);
+		end
+	elseif ( event == "QUEST_LOG_CRITERIA_UPDATE" ) then
+		local questID, criteriaID, description, fulfilled, required = ...;
+
+		if (OmegaMapQuestFrame_CheckQuestCriteria(questID, criteriaID, description, fulfilled, required)) then
+			UIErrorsFrame:AddMessage(ERR_QUEST_ADD_FOUND_SII:format(description, fulfilled, required), YELLOW_FONT_COLOR:GetRGB());
+		end
 	elseif ( event == "QUEST_WATCH_UPDATE" ) then
 		if (not IsTutorialFlagged(11) and TUTORIAL_QUEST_TO_WATCH) then
 			local questID = select(8, GetQuestLogTitle(arg1));
@@ -95,7 +107,7 @@ function OmegaMapQuestFrame_OnEvent(self, event, ...)
 	elseif ( event == "QUEST_ACCEPTED" ) then
 		TUTORIAL_QUEST_ACCEPTED = arg2;
 	elseif ( event == "AJ_QUEST_LOG_OPEN" ) then
-		ShowQuestLog();
+		OM_ShowQuestLog();
 		local questIndex = GetQuestLogIndexByID(arg1)
 		local mapID, floorNumber = GetQuestWorldMapAreaID(arg1);
 		if ( questIndex > 0 ) then
@@ -111,7 +123,7 @@ function OmegaMapQuestFrame_OnEvent(self, event, ...)
 	elseif ( event == "PLAYER_ENTERING_WORLD" or event == "WORLD_MAP_UPDATE" ) then
 		SortQuestSortTypes();
 		SortQuests();
-		OmegaMapQuestMapFrame_ResetFilters();
+		OmegaMapQuestFrame_ResetFilters();
 		OmegaMapQuestFrame_UpdateAll();
 	end
 end
@@ -169,14 +181,14 @@ function OmegaMapQuestFrame_Hide()
 	end
 end
 
-function OmegaMapQuestMapFrame_IsQuestWorldQuest(questID)
+function OmegaMapQuestFrame_IsQuestWorldQuest(questID)
 	local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(questID);
 	return worldQuestType ~= nil;
 end
 
 function OmegaMapQuestFrame_UpdateAll()
 	local numPOIs = QuestMapUpdateAllQuests();
-	QuestPOIUpdateIcons();
+	--QuestPOIUpdateIcons();
 	--QuestObjectiveTracker_UpdatePOIs();
 	if ( OmegaMapFrame:IsShown() ) then	
 		local poiTable = { };
@@ -195,7 +207,7 @@ function OmegaMapQuestFrame_UpdateAll()
 	end
 end
 
-function OmegaMapQuestMapFrame_ResetFilters()
+function OmegaMapQuestFrame_ResetFilters()
 	local numEntries, numQuests = GetNumQuestLogEntries();
 	OmegaMapQuestFrame.ignoreQuestLogUpdate = true;
 	for questLogIndex = 1, numEntries do
@@ -255,9 +267,9 @@ function OmegaMapQuestFrame_ShowQuestDetails(questID)
 	if ( mapID ~= 0 ) then
 		SetMapByID(mapID, floorNumber);
 		if ( floorNumber ~= 0 ) then
-			OmegaMapQuestMapFrame.DetailsFrame.dungeonFloor = floorNumber;
+			OmegaMapQuestFrame.DetailsFrame.dungeonFloor = floorNumber;
 		end
-		OmegaMapQuestMapFrame.DetailsFrame.mapID = mapID;
+		OmegaMapQuestFrame.DetailsFrame.mapID = mapID;
 	end
 	
 	OmegaMapQuestFrame_UpdateQuestDetailsButtons();
@@ -275,13 +287,13 @@ function OmegaMapQuestFrame_ShowQuestDetails(questID)
 	StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS");
 end
 
-function OmegaMapQuestFrame_CloseQuestDetails()
+function OmegaMapQuestFrame_CloseQuestDetails(optPortraitOwnerCheckFrame)
 	OmegaMapQuestFrame.QuestsFrame:Show();
 	OmegaMapQuestFrame.DetailsFrame:Hide();
 	OmegaMapQuestFrame.DetailsFrame.questID = nil;
 	OmegaMapQuestFrame.DetailsFrame.OmegaMapQuestID = nil;
 	OmegaMapQuestFrame_UpdateAll();
-	QuestFrame_HideQuestPortrait();
+	QuestFrame_HideQuestPortrait(optPortraitOwnerCheckFrame);
 
 	StaticPopup_Hide("ABANDON_QUEST");
 	StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS");	
@@ -343,8 +355,31 @@ function OmegaMapQuestFrameViewAllButton_Update()
 end
 
 function OmegaMapQuestFrameViewAllButton_OnClick(self)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	SetMapZoom(WORLDMAP_COSMIC_ID);
+end
+
+
+function OmegaMapQuestFrame_UpdateAllQuestCriteria()
+	for questID, _ in pairs(OmegaMapQuestFrame.completedCriteria) do
+		if (not IsQuestTask(questID) and GetQuestLogIndexByID(questID) == 0) then
+			OmegaMapQuestFrame.completedCriteria[questID] = nil;
+		end
+	end
+end
+
+function OmegaMapQuestFrame_CheckQuestCriteria(questID, criteriaID, description, fulfilled, required)
+	if (fulfilled == required) then
+		if (OmegaMapQuestFrame.completedCriteria[questID] and OmegaMapQuestFrame.completedCriteria[questID][criteriaID]) then
+			return false;
+		end
+		if (not OmegaMapQuestFrame.completedCriteria[questID]) then
+			OmegaMapQuestFrame.completedCriteria[questID] = {};
+		end
+		OmegaMapQuestFrame.completedCriteria[questID][criteriaID] = true;
+	end
+
+	return true;
 end
 
 -- *****************************************************************************************************
@@ -395,7 +430,7 @@ end
 function OmegaMapQuestQuestOptions_ShareQuest(questID)
 	local questLogIndex = GetQuestLogIndexByID(questID);
 	QuestLogPushQuest(questLogIndex);
-	PlaySound("igQuestLogOpen");
+	PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
 end
 
 function OmegaMapQuestQuestOptions_AbandonQuest(questID)
@@ -485,7 +520,6 @@ function OM_QuestLogQuests_Update(poiTable)
 	local noHeaders = true;
 	for questLogIndex = 1, numEntries do
 		local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex);
-
 		local difficultyColor = GetQuestDifficultyColor(level);
 		if ( isHeader ) then
 			headerTitle = title;
@@ -528,7 +562,7 @@ function OM_QuestLogQuests_Update(poiTable)
 			if (not headerCollapsed) then
 				local totalHeight = 8;
 				titleIndex = titleIndex + 1;
-				button = QuestLogQuests_GetTitleButton(titleIndex);
+				button = OM_QuestLogQuests_GetTitleButton(titleIndex);
 				button.questID = questID;
 
 				if ( displayQuestID ) then
@@ -738,7 +772,7 @@ function OM_ShowQuestLog()
 end
 
 function OmegaMapQuestLogHeaderButton_OnClick(self, button)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if ( button == "LeftButton" ) then
 		local _, _, _, _, isCollapsed = GetQuestLogTitle(self.questLogIndex);	
 		if (isCollapsed) then
@@ -901,7 +935,7 @@ function OmegaMapQuestLogTitleButton_OnLeave(self)
 end
 
 function OmegaMapQuestLogTitleButton_OnClick(self, button)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if ( IsModifiedClick("CHATLINK") and ChatEdit_GetActiveWindow() ) then
 		local questLink = GetQuestLink(GetQuestLogIndexByID(self.questID));
 		if ( questLink ) then
@@ -1016,7 +1050,7 @@ end
 
 function OM_QuestLogPopupDetailFrame_OnHide(self)
 	self.questID = nil;
-	PlaySound("igQuestLogClose");
+	PlaySound(SOUNDKIT.IG_QUEST_LOG_CLOSE);
 end
 
 function OM_QuestLogPopupDetailFrame_Show(questLogIndex)
@@ -1041,7 +1075,7 @@ function OM_QuestLogPopupDetailFrame_Show(questLogIndex)
 
 	OM_QuestLogPopupDetailFrame_Update(true);
 	ShowUIPanel(OM_QuestLogPopupDetailFrame);
-	PlaySound("igQuestLogOpen");
+	PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
 	
 	-- portrait
 	local questPortrait, questPortraitText, questPortraitName = GetQuestLogPortraitGiver();
