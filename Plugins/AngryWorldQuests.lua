@@ -191,7 +191,6 @@ local function TitleButton_OnEnter(self)
 		end
 	end
 	for i = 1, AWQ_POI_COUNT do
-	print(i)
 		local mapButton = _G["OmegaMapFrameTaskPOIAWQ"..i]
 		if mapButton and mapButton.wasShown and mapButton.worldQuest and mapButton.questID == self.questID then
 			if Config.hideUntrackedPOI then
@@ -211,7 +210,7 @@ local function TitleButton_OnEnter(self)
 	if Config.showComparisonRight then
 		OmegaMapTooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide = "right"
 	end
-	TaskPOI_OnEnter(self)
+	OmegaMapTaskPOI_OnEnter(self)
 end
 
 local function TitleButton_OnLeave(self)
@@ -442,7 +441,7 @@ local function FilterButton_OnClick(self, button)
 	if (button == 'RightButton' and (self.index == FILTER_EMISSARY or self.index == FILTER_LOOT or self.index == FILTER_FACTION or self.index == FILTER_ZONE  or self.index == FILTER_TIME))
 			or (self.index == FILTER_SORT)
 			or (self.index == FILTER_FACTION and not Config:GetFilter(FILTER_FACTION) and Config.filterFaction == 0) then
-		local MY_UIDROPDOWNMENU_OPEN_MENU = Lib_UIDropDownMenu_Initialize and LIB_UIDROPDOWNMENU_OPEN_MENU or UIDROPDOWNMENU_OPEN_MENU
+		local MY_UIDROPDOWNMENU_OPEN_MENU = Lib_UIDropDownMenu_Initialize and LIB_UIDROPDOWNMENU_OPEN_MENU or Lib_UIDROPDOWNMENU_OPEN_MENU
 		if filterMenu and MY_UIDROPDOWNMENU_OPEN_MENU == filterMenu and My_DropDownList1:IsShown() and filterMenu.index == self.index then
 			My_HideDropDownMenu(1)
 		else

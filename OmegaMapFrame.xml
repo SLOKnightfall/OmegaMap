@@ -155,7 +155,7 @@
 				</AnimationGroup>
 			</Animations>
 			<Frames>
-				<Frame name="OmegaMapTitleDropDown" inherits="UIDropDownMenuTemplate" hidden="true">
+				<Frame name="OmegaMapTitleDropDown" inherits="Lib_UIDropDownMenuTemplate" hidden="true">
 					<Anchors>
 						<Anchor point="TOP" x="-80" y="-35"/>
 					</Anchors>
@@ -314,7 +314,7 @@
 											</Layer>
 										</Layers>
 										<Frames>
-											<Frame name="OmegaMapUnitDropDown" inherits="UIDropDownMenuTemplate" clampedToScreen="true" id="1" hidden="true"/>
+											<Frame name="OmegaMapUnitDropDown" inherits="Lib_UIDropDownMenuTemplate" clampedToScreen="true" id="1" hidden="true"/>
 											<Frame name="OmegaMapCorpse" inherits="OmegaMapCorpseTemplate"/>
 											<Frame name="OmegaMapDeathRelease" inherits="OmegaMapCorpseTemplate">
 												<Scripts>
@@ -645,7 +645,7 @@
 								</Layer>
 							</Layers>
 						</Frame>				
-						<Frame name="OmegaMapLevelDropDown" inherits="UIDropDownMenuTemplate" id="2">
+						<Frame name="OmegaMapLevelDropDown" inherits="Lib_UIDropDownMenuTemplate" id="2">
 							<Anchors>
 								<Anchor point="TOPLEFT" x="-17" y="2"/>
 							</Anchors>
@@ -692,10 +692,10 @@
 								</Layer>
 							</Layers>
 							<Frames>
-								<Frame name="$parentDropDown" parentKey="DropDown" inherits="UIDropDownMenuTemplate" clampedToScreen="true" hidden="true">
+								<Frame name="$parentDropDown" parentKey="DropDown" inherits="Lib_UIDropDownMenuTemplate" clampedToScreen="true" hidden="true">
 									<Scripts>
 										<OnLoad>
-											UIDropDownMenu_Initialize(self, OmegaMapTrackingOptionsDropDown_Initialize, "MENU");
+											Lib_UIDropDownMenu_Initialize(self, OmegaMapTrackingOptionsDropDown_Initialize, "MENU");
 										</OnLoad>
 									</Scripts>
 								</Frame>

@@ -22,10 +22,13 @@ function OmegaMapQuestFrame_OnLoad(self)
 	self.completedCriteria = {};
 	QuestPOI_Initialize(OM_QuestScrollFrame.Contents);
 	OmegaMapQuestOptionsDropDown.questID = 0;		-- for OmegaMapQuestOptionsDropDown_Initialize
-	UIDropDownMenu_Initialize(OmegaMapQuestOptionsDropDown, OmegaMapQuestOptionsDropDown_Initialize, "MENU");
+	Lib_UIDropDownMenu_Initialize(OmegaMapQuestOptionsDropDown, OmegaMapQuestOptionsDropDown_Initialize, "MENU");
 end
 
 function OmegaMapQuestFrame_OnEvent(self, event, ...)
+	if not ( OmegaMapQuestFrame:IsShown() and OmegaMapQuestFrame:IsVisible() ) then
+		return
+	end
 	local arg1 = ...;
 	if ( (event == "QUEST_LOG_UPDATE" or (event == "UNIT_QUEST_LOG_CHANGED" and arg1 == "player")) and not self.ignoreQuestLogUpdate ) then
 		if (not IsTutorialFlagged(55) and TUTORIAL_QUEST_TO_WATCH) then
@@ -388,7 +391,7 @@ end
 
 function OmegaMapQuestOptionsDropDown_Initialize(self)
 	local questLogIndex = GetQuestLogIndexByID(self.questID);
-	local info = UIDropDownMenu_CreateInfo();
+	local info = Lib_UIDropDownMenu_CreateInfo();
 	info.isNotRadio = true;
 	info.notCheckable = true;
 
@@ -398,7 +401,7 @@ function OmegaMapQuestOptionsDropDown_Initialize(self)
 	end
 	info.func =function(_, questID) OmegaMapQuestQuestOptions_TrackQuest(questID) end;
 	info.arg1 = self.questID;
-	UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+	Lib_UIDropDownMenu_AddButton(info, Lib_UIDROPDOWNMENU_MENU_LEVEL);
 	
 	info.text = SHARE_QUEST;
 	info.func = function(_, questID) OmegaMapQuestQuestOptions_ShareQuest(questID) end;
@@ -406,14 +409,14 @@ function OmegaMapQuestOptionsDropDown_Initialize(self)
 	if ( not GetQuestLogPushable(questLogIndex) or not IsInGroup() ) then
 		info.disabled = 1;
 	end
-	UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+	Lib_UIDropDownMenu_AddButton(info, Lib_UIDROPDOWNMENU_MENU_LEVEL);
 	
 	if CanAbandonQuest(self.questID) then
 		info.text = ABANDON_QUEST;
 		info.func = function(_, questID) QuestMapQuestOptions_AbandonQuest(questID) end;
 		info.arg1 = self.questID;
 		info.disabled = nil;
-		UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+		Lib_UIDropDownMenu_AddButton(info, Lib_UIDROPDOWNMENU_MENU_LEVEL);
 	end
 end
 

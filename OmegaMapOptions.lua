@@ -306,7 +306,7 @@ function OmegaMapOptionsFrame_init()
 	    { text = "Alt", func = function() OmegaMapConfig.interactiveHotKey = "Alt"; setHotKeyText(); end },
 	    }
 
-	OmegaMapOptionsFrame.HotKey = CreateFrame("Frame", "HotKey", OmegaMapOptionsFrame.Frame, "UIDropDownMenuTemplate")
+	OmegaMapOptionsFrame.HotKey = CreateFrame("Frame", "HotKey", OmegaMapOptionsFrame.Frame, "Lib_UIDropDownMenuTemplate")
 	--getglobal(OmegaMapOptionsFrame.HotKey:GetName() .. 'Text'):SetText(OmegaMapConfig.interactiveHotKey);
 	setHotKeyText()
 	OmegaMapOptionsFrame.HotKeyButton = HotKeyButton

@@ -361,7 +361,7 @@ function buttonOnLeave(self)
 end
 
 --Dropdown menus for note buttons
-local menuFrame = CreateFrame("Frame", "OmegaMapClickMenuFrame", UIParent, "UIDropDownMenuTemplate")
+local menuFrame = CreateFrame("Frame", "OmegaMapClickMenuFrame", UIParent, "Lib_UIDropDownMenuTemplate")
 
 --Menu for Defense BG Announcements
 function LeftClickMenu(self)

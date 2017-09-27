@@ -137,13 +137,13 @@ local function getNewPin()
 	end
 	-- create a new pin
 	pinCount = pinCount + 1
-	pin = CreateFrame("Button", "HandyNotesPin"..pinCount, OmegaMapOverlay)
+	pin = CreateFrame("Button", "HandyNotesPin"..pinCount, HandyNotesOmegaMapOverlay)
 	
 	pin:SetFrameLevel(5)
 	pin:EnableMouse(true)
 	pin:SetWidth(12)
 	pin:SetHeight(12)
-	pin:SetPoint("CENTER", OmegaMapOverlay, "CENTER")
+	pin:SetPoint("CENTER", HandyNotesOmegaMapOverlay, "CENTER")
 	local texture = pin:CreateTexture(nil, "OVERLAY")
 	pin.texture = texture
 	texture:SetAllPoints(pin)
@@ -184,8 +184,8 @@ function pinsHandler:OnClick(button, down)
 			self:StopMovingOrSizing()
 			-- Get the new coordinate
 			local x, y = self:GetCenter()
-			x = (x - OmegaMapOverlay:GetLeft()) / OmegaMapOverlay:GetWidth()
-			y = (OmegaMapOverlay:GetTop() - y) / OmegaMapOverlay:GetHeight()
+			x = (x - HandyNotesOmegaMapOverlay:GetLeft()) / HandyNotesOmegaMapOverlay:GetWidth()
+			y = (HandyNotesOmegaMapOverlay:GetTop() - y) / HandyNotesOmegaMapOverlay:GetHeight()
 			-- Move the button back into the map if it was dragged outside
 			if x < 0.001 then x = 0.001 end
 			if x > 0.999 then x = 0.999 end
@@ -302,7 +302,7 @@ end
 
 -- This function updates all the icons of one plugin on the world map
 local function UpdateOmegaMapPlugin(pluginName)
-	if not OmegaMapOverlay:IsVisible() then return end
+	if not HandyNotesOmegaMapOverlay:IsVisible() then return end
 	if omegamapPins[pluginName] == nill then
 	--print("Missing"..pluginName)
 		omegamapPins[pluginName] = {}
@@ -314,13 +314,13 @@ local function UpdateOmegaMapPlugin(pluginName)
 	local ourScale, ourAlpha = 12 * db.icon_scale, db.icon_alpha
 	local mapFile, mapID, level = HandyNotes:WhereAmI()
 	local pluginHandler = HandyNotes.plugins[pluginName]
-	local frameLevel = OmegaMapOverlay:GetFrameLevel() + 5
-	local frameStrata = OmegaMapOverlay:GetFrameStrata()
+	local frameLevel = HandyNotesOmegaMapOverlay:GetFrameLevel() + 5
+	local frameStrata = HandyNotesOmegaMapOverlay:GetFrameStrata()
 	for coord, mapFile2, iconpath, scale, alpha, level2 in pluginHandler:GetNodes(mapFile, false, level) do
 		-- Scarlet Enclave check, only do stuff if we're on that map, since we have no zone translation for it yet in Astrolabe
 		if mapFile2 ~= "ScarletEnclave" or mapFile2 == mapFile then
 		local icon = getNewPin()
-		icon:SetParent(OmegaMapOverlay)
+		icon:SetParent(HandyNotesOmegaMapOverlay)
 		icon:SetFrameStrata(frameStrata)
 		icon:SetFrameLevel(frameLevel)
 		scale = ourScale * scale
@@ -352,7 +352,7 @@ local function UpdateOmegaMapPlugin(pluginName)
 		local mapID2 = HandyNotes:GetMapFiletoMapID(mapFile2 or mapFile)
 		if not mapID2 then
 			icon:ClearAllPoints()
-			icon:SetPoint("CENTER", OmegaMapOverlay, "TOPLEFT", x*OmegaMapOverlay:GetWidth(), -y*OmegaMapOverlay:GetHeight())
+			icon:SetPoint("CENTER", HandyNotesOmegaMapOverlay, "TOPLEFT", x*HandyNotesOmegaMapOverlay:GetWidth(), -y*HandyNotesOmegaMapOverlay:GetHeight())
 			icon:Show()
 		else
 			HBDPins:AddWorldMapIconMF("HandyNotes" .. pluginName, icon, mapID2, level2 or level, x, y)
@@ -371,7 +371,7 @@ end
 --Hooking HandyNotes:UpdateWorldMap()
 -- This function updates all the icons on the world map for every plugin
 function HandyNotes:UpdateOmegaMap()
-	if not OmegaMapOverlay:IsVisible() then return end
+	if not HandyNotesOmegaMapOverlay:IsVisible() then return end
 	for pluginName, pluginHandler in pairs(HandyNotes.plugins) do
 		UpdateOmegaMapPlugin(pluginName)
 --safecall(UpdateOmegaMapPlugin, HandyNotes, pluginName)

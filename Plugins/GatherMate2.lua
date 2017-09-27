@@ -210,7 +210,7 @@ local function generatePinMenu(self,level)
 		info.isTitle      = 1
 		info.text         = L["GatherMate Pin Options"]
 		info.notCheckable = 1
-		UIDropDownMenu_AddButton(info, level)
+		Lib_UIDropDownMenu_AddButton(info, level)
 
 		-- Generate a menu item for each pin the mouse is on
 		info.disabled     = nil
@@ -222,7 +222,7 @@ local function generatePinMenu(self,level)
 				info.icon = nodeTextures[pin.nodeType][GatherMate:GetIDForNode(pin.nodeType, pin.title)]
 				info.func = deletePin
 				info.arg1 = pin
-				UIDropDownMenu_AddButton(info, level);
+				Lib_UIDropDownMenu_AddButton(info, level);
 			end
 		end
 
@@ -233,7 +233,7 @@ local function generatePinMenu(self,level)
 				info.icon = nodeTextures[pin.nodeType][GatherMate:GetIDForNode(pin.nodeType, pin.title)]
 				info.func = deletePin
 				info.arg1 = pin
-				UIDropDownMenu_AddButton(info, level);
+				Lib_UIDropDownMenu_AddButton(info, level);
 			end
 		end
 
@@ -242,7 +242,7 @@ local function generatePinMenu(self,level)
 			info.icon = nil
 			info.func = addTomTomWaypoint
 			info.arg1 = pinClickedOn
-			UIDropDownMenu_AddButton(info, level)
+			Lib_UIDropDownMenu_AddButton(info, level)
 		end
 
 		-- Close menu item
@@ -251,7 +251,7 @@ local function generatePinMenu(self,level)
 		info.func         = function() CloseDropDownMenus() end
 		info.arg1         = nil
 		info.notCheckable = 1
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 	end
 end
 
@@ -974,8 +974,8 @@ local x, y, level = GatherMate:DecodeLoc(coord)
 		pin.nodeType = nodeType
 		pin.omegamap = true
 		pin:SetParent(GatherMateOmegaMapOverlay)
-		pin:SetFrameStrata("FULLSCREEN")
-		pin:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL)
+		pin:SetFrameStrata("HIGH")
+		pin:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL-5)
 		pin:SetHeight(12 * db.scale)
 		pin:SetWidth(12 * db.scale)
 		pin:SetAlpha(db.alpha)

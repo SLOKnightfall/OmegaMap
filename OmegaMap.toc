@@ -14,6 +14,7 @@ Libs\LibBabble-SubZone-3.0\lib.xml
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
 Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+Libs\DropDownMenu\UIDropDownMenuTemplates.xml
 
 #Core Files
 localization.en.lua

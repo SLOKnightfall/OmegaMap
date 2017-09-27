@@ -224,7 +224,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="OmegaMapQuestOptionsDropDown" inherits="UIDropDownMenuTemplate" hidden="true"/>
+			<Frame name="OmegaMapQuestOptionsDropDown" inherits="Lib_UIDropDownMenuTemplate" hidden="true"/>
 			<ScrollFrame parentKey="QuestsFrame" name="OM_QuestScrollFrame" inherits="UIPanelScrollFrameCodeTemplate">
 				<Size x="259" y="462"/>
 				<Anchors>

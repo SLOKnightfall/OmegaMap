@@ -2307,12 +2307,12 @@ function OmegaMap_GetGraveyardButton(index)
 end
 
 function OmegaMapLevelDropDown_Update()
-	UIDropDownMenu_Initialize(OmegaMapLevelDropDown, OmegaMapLevelDropDown_Initialize);
-	UIDropDownMenu_SetWidth(OmegaMapLevelDropDown, 130);
+	Lib_UIDropDownMenu_Initialize(OmegaMapLevelDropDown, OmegaMapLevelDropDown_Initialize);
+	Lib_UIDropDownMenu_SetWidth(OmegaMapLevelDropDown, 130);
 
 	local dungeonLevels = { GetNumDungeonMapLevels() };
 	if ( #dungeonLevels <= 1 ) then
-		UIDropDownMenu_ClearAll(OmegaMapLevelDropDown);
+		Lib_UIDropDownMenu_ClearAll(OmegaMapLevelDropDown);
 		OmegaMapLevelDropDown:Hide();
 	else
 		local level = GetCurrentMapDungeonLevel();
@@ -2328,13 +2328,13 @@ function OmegaMapLevelDropDown_Update()
 			end
 		end
 
-		UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, GetCurrentMapDungeonLevel());
+		Lib_UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, GetCurrentMapDungeonLevel());
 		OmegaMapLevelDropDown:Show();
 	end
 end
 
 function OmegaMapLevelDropDown_Initialize()
-	local info = UIDropDownMenu_CreateInfo();
+	local info = Lib_UIDropDownMenu_CreateInfo();
 	local level = GetCurrentMapDungeonLevel();
 
 	if (DungeonUsesTerrainMap()) then
@@ -2350,13 +2350,13 @@ function OmegaMapLevelDropDown_Initialize()
 		info.text = floorname or string.format(FLOOR_NUMBER, i);
 		info.func = OmegaMapLevelButton_OnClick;
 		info.checked = (floorNum == level);
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 end
 
 function OmegaMapLevelButton_OnClick(self)
 	local dropDownID = self:GetID();
-	UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, dropDownID);
+	Lib_UIDropDownMenu_SetSelectedID(OmegaMapLevelDropDown, dropDownID);
 
 	local dungeonLevels = { GetNumDungeonMapLevels() };
 	if (dropDownID <= #dungeonLevels) then
@@ -2734,7 +2734,7 @@ function OmegaMap_HandleUnitClick(mouseOverUnits, mouseButton)
 		end
 
 		if ( BAD_BOY_COUNT > 0 ) then
-			UIDropDownMenu_Initialize( OmegaMapUnitDropDown, OmegaMapUnitDropDown_Initialize, "MENU");
+			Lib_UIDropDownMenu_Initialize( OmegaMapUnitDropDown, OmegaMapUnitDropDown_Initialize, "MENU");
 			ToggleDropDownMenu(1, nil, OmegaMapUnitDropDown, "cursor", 0, -5);
 			return true;
 		end
@@ -2744,36 +2744,36 @@ function OmegaMap_HandleUnitClick(mouseOverUnits, mouseButton)
 end
 
 function OmegaMapUnitDropDown_Initialize()
-	local info = UIDropDownMenu_CreateInfo();
+	local info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = PVP_REPORT_AFK;
 	info.notClickable = 1;
 	info.isTitle = 1;
 	info.notCheckable = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	if ( BAD_BOY_COUNT > 0 ) then
 		for i=1, BAD_BOY_COUNT do
-			info = UIDropDownMenu_CreateInfo();
+			info = Lib_UIDropDownMenu_CreateInfo();
 			info.func = OmegaMapUnitDropDown_OnClick;
 			info.arg1 = BAD_BOY_UNITS[i];
 			info.text = UnitName( BAD_BOY_UNITS[i] );
 			info.notCheckable = true;
-			UIDropDownMenu_AddButton(info);
+			Lib_UIDropDownMenu_AddButton(info);
 		end
 		
 		if ( BAD_BOY_COUNT > 1 ) then
-			info = UIDropDownMenu_CreateInfo();
+			info = Lib_UIDropDownMenu_CreateInfo();
 			info.func = OmegaMapUnitDropDown_ReportAll_OnClick;
 			info.text = PVP_REPORT_AFK_ALL;
 			info.notCheckable = true;
-			UIDropDownMenu_AddButton(info);
+			Lib_UIDropDownMenu_AddButton(info);
 		end
 	end
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = CANCEL;
 	info.notCheckable = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 end
 
 function OmegaMapUnitDropDown_OnClick(self, unit)
@@ -3374,16 +3374,16 @@ function OmegaMapJournal_AddMapButtons()
 
 		local x, y, instanceID, name, description, encounterID = EJ_GetMapEncounter(index, OmegaMapFrame.fromJournal);
 		while name do
-			local bossButton = _G["EJMapButton"..index];
+			local bossButton = _G["EJOmegaMapButton"..index];
 			if not bossButton then
-				bossButton = CreateFrame("Button", "EJMapButton"..index, OemegaMapBossButtonFrame, "EncounterMapButtonTemplate");
+				bossButton = CreateFrame("Button", "EJOmegaMapButton"..index, OmegaMapBossButtonFrame, "OmegaMapEncounterButtonTemplate");
 			end
 
 			bossButton.instanceID = instanceID;
 			bossButton.encounterID = encounterID;
 			bossButton.tooltipTitle = name;
 			bossButton.tooltipText = description;
-			bossButton:SetPoint("CENTER", OemegaMapBossButtonFrame, "BOTTOMLEFT", x*width, y*height);
+			bossButton:SetPoint("CENTER", OmegaMapBossButtonFrame, "BOTTOMLEFT", x*width, y*height);
 			local _, _, _, displayInfo = EJ_GetCreatureInfo(1, encounterID);
 			bossButton.displayInfo = displayInfo;
 			if ( displayInfo ) then
@@ -3465,12 +3465,12 @@ end
 -- *****************************************************************************************************
 
 function OmegaMapTrackingOptionsDropDown_Initialize()
-	local info = UIDropDownMenu_CreateInfo();
+	local info = Lib_UIDropDownMenu_CreateInfo();
 
 	info.isTitle = true;
 	info.notCheckable = true;
 	info.text = WORLD_MAP_FILTER_TITLE;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 	info.isTitle = nil;
 	info.disabled = nil;
 	info.notCheckable = nil;
@@ -3481,21 +3481,21 @@ function OmegaMapTrackingOptionsDropDown_Initialize()
 	info.text = SHOW_QUEST_OBJECTIVES_ON_MAP_TEXT;
 	info.value = "quests";
 	info.checked = GetCVarBool("questPOI");
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	local prof1, prof2, arch, fish, cook, firstAid = GetProfessions();
 	if arch then
 		info.text = ARCHAEOLOGY_SHOW_DIG_SITES;
 		info.value = "digsites";
 		info.checked = GetCVarBool("digSites");
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 
 	if CanTrackBattlePets() then
 		info.text = SHOW_PET_BATTLES_ON_MAP_TEXT;
 		info.value = "tamers";
 		info.checked = GetCVarBool("showTamers");
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 
 	-- If we aren't on a map with world quests don't show the world quest reward filter options.
@@ -3507,24 +3507,24 @@ function OmegaMapTrackingOptionsDropDown_Initialize()
 		info.text = SHOW_PRIMARY_PROFESSION_ON_MAP_TEXT;
 		info.value = "primaryProfessionsFilter";
 		info.checked = GetCVarBool("primaryProfessionsFilter");
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 
 	if fish or cook or firstAid then
 		info.text = SHOW_SECONDARY_PROFESSION_ON_MAP_TEXT;
 		info.value = "secondaryProfessionsFilter";
 		info.checked = GetCVarBool("secondaryProfessionsFilter");
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 
-	UIDropDownMenu_AddSeparator(info);
+	Lib_UIDropDownMenu_AddSeparator(info);
 	-- Clear out the info from the separator wholesale.
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 
 	info.isTitle = true;
 	info.notCheckable = true;
 	info.text = WORLD_QUEST_REWARD_FILTERS_TITLE;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 	info.text = nil;
 
 	info.isTitle = nil;
@@ -3537,27 +3537,27 @@ function OmegaMapTrackingOptionsDropDown_Initialize()
 	info.text = WORLD_QUEST_REWARD_FILTERS_ORDER_RESOURCES;
 	info.value = "worldQuestFilterOrderResources";
 	info.checked = GetCVarBool("worldQuestFilterOrderResources");
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	info.text = WORLD_QUEST_REWARD_FILTERS_ARTIFACT_POWER;
 	info.value = "worldQuestFilterArtifactPower";
 	info.checked = GetCVarBool("worldQuestFilterArtifactPower");
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	info.text = WORLD_QUEST_REWARD_FILTERS_PROFESSION_MATERIALS;
 	info.value = "worldQuestFilterProfessionMaterials";
 	info.checked = GetCVarBool("worldQuestFilterProfessionMaterials");
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	info.text = WORLD_QUEST_REWARD_FILTERS_GOLD;
 	info.value = "worldQuestFilterGold";
 	info.checked = GetCVarBool("worldQuestFilterGold");
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	info.text = WORLD_QUEST_REWARD_FILTERS_EQUIPMENT;
 	info.value = "worldQuestFilterEquipment";
 	info.checked = GetCVarBool("worldQuestFilterEquipment");
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 end
 
 function OmegaMapTrackingOptionsDropDown_OnClick(self)

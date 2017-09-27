@@ -30,7 +30,7 @@
 			</Frame>
 		</Frames>
 	</EditBox>
-		<Button name="OMPetTrackerSuggestionButton" inherits="UIDropDownMenuButtonTemplate" virtual="true">
+		<Button name="OMPetTrackerSuggestionButton" inherits="Lib_UIDropDownMenuButtonTemplate" virtual="true">
 		<Scripts>
 			<OnClick>
 				OMPetTrackerMapFilter:SetText(self:GetText())

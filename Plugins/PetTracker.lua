@@ -113,7 +113,7 @@ function Map:Startup()
 	OmegaMapFrame:HookScript('OnShow', function() self:UpdateBlips() end)
 --[[
 	hooksecurefunc('OmegaMapShowDropDown_Initialize', function()
-		UIDropDownMenu_AddButton {
+		Lib_UIDropDownMenu_AddButton {
 			text = L.ShowPets,
 			func = function() self:Toggle('Species') end,
 			checked = self:Active('Species'),
@@ -121,7 +121,7 @@ function Map:Startup()
 			isNotRadio = true
 		}
 
-		UIDropDownMenu_AddButton {
+		Lib_UIDropDownMenu_AddButton {
 			text = L.ShowStables,
 			func = function() self:Toggle('Stables') end,
 			checked = self:Active('Stables'),

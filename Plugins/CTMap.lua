@@ -736,10 +736,10 @@ function CT_MapMod_NoteWindow_Accept()
 
 	icon = note.icon;
 
-	if ( UIDropDownMenu_GetSelectedName(CT_MapMod_NoteWindowGroupDropDown) ) then
+	if ( Lib_UIDropDownMenu_GetSelectedName(CT_MapMod_NoteWindowGroupDropDown) ) then
 		set = note.set;
 	else
-		set = UIDropDownMenu_GetSelectedID( CT_MapMod_NoteWindowGroupDropDown );
+		set = Lib_UIDropDownMenu_GetSelectedID( CT_MapMod_NoteWindowGroupDropDown );
 	end
 
 	-- Update the note
@@ -770,7 +770,7 @@ end
 
 function CT_MapMod_NoteWindow_GroupDropDown_OnClick(self)
 	-- User clicked on an item in the group menu.
-	UIDropDownMenu_SetSelectedID(CT_MapMod_NoteWindowGroupDropDown, self:GetID(), 1);
+	Lib_UIDropDownMenu_SetSelectedID(CT_MapMod_NoteWindowGroupDropDown, self:GetID(), 1);
 end
 
 function CT_MapMod_NoteWindow_GroupDropDown_OnShow()
@@ -781,11 +781,11 @@ function CT_MapMod_NoteWindow_GroupDropDown_OnShow()
 		local note = CT_UserMap_Notes[zoneKey][noteKey];
 		local set = note.set;
 		if ( tonumber(set) and tonumber(set) == set ) then
-			UIDropDownMenu_SetSelectedName(CT_MapMod_NoteWindowGroupDropDown, CT_MAPMOD_SETS[set], nil);
+			Lib_UIDropDownMenu_SetSelectedName(CT_MapMod_NoteWindowGroupDropDown, CT_MAPMOD_SETS[set], nil);
 		else
-			UIDropDownMenu_SetSelectedName(CT_MapMod_NoteWindowGroupDropDown, set, nil);
+			Lib_UIDropDownMenu_SetSelectedName(CT_MapMod_NoteWindowGroupDropDown, set, nil);
 		end
-		UIDropDownMenu_SetText(CT_MapMod_NoteWindowGroupDropDown, CT_MAPMOD_SETS[set]);
+		Lib_UIDropDownMenu_SetText(CT_MapMod_NoteWindowGroupDropDown, CT_MAPMOD_SETS[set]);
 	end
 end
 
@@ -797,14 +797,14 @@ function CT_MapMod_NoteWindow_GroupDropDown_Initialize(self)
 		info.value = val;
 		info.owner = self;
 		info.func = CT_MapMod_NoteWindow_GroupDropDown_OnClick;
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 end
 
 function CT_MapMod_NoteWindow_GroupDropDown_OnLoad(self)
 	-- The group menu is being loaded.
-	UIDropDownMenu_Initialize(self, CT_MapMod_NoteWindow_GroupDropDown_Initialize);
-	UIDropDownMenu_SetWidth(self, 130);
+	Lib_UIDropDownMenu_Initialize(self, CT_MapMod_NoteWindow_GroupDropDown_Initialize);
+	Lib_UIDropDownMenu_SetWidth(self, 130);
 end
 
 ---------------------------------------------
@@ -992,10 +992,10 @@ function CT_MapMod_SendNote()
 		return;
 	end
 
-	if ( UIDropDownMenu_GetSelectedName(CT_MapMod_NoteWindowGroupDropDown) ) then
+	if ( Lib_UIDropDownMenu_GetSelectedName(CT_MapMod_NoteWindowGroupDropDown) ) then
 		group = note.set;
 	else
-		group = UIDropDownMenu_GetSelectedID(CT_MapMod_NoteWindowGroupDropDown);
+		group = Lib_UIDropDownMenu_GetSelectedID(CT_MapMod_NoteWindowGroupDropDown);
 	end
 
 	x = note.x;
@@ -1681,9 +1681,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 	local characterKey = CT_MapMod_GetCharKey();
 	local optName;
 
-	if (level == 2 and UIDROPDOWNMENU_MENU_VALUE == "menu_button") then
+	if (level == 2 and Lib_UIDROPDOWNMENU_MENU_VALUE == "menu_button") then
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Reset position"
 		info.value = "resetposition";
 		info.notCheckable = 1;
@@ -1694,9 +1694,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		elseif (not CT_MapMod_Options[characterKey][optName]) then
 			info.disabled = true;
 		end
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Hide tooltip"
 		info.value = "hideMainTooltip";
 		if (CT_MapMod_Options[characterKey] and CT_MapMod_Options[characterKey].hideMainTooltip) then
@@ -1704,21 +1704,21 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		end
 		info.keepShownOnClick = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Change note count position"
 		info.value = "togglecountpos";
 		info.notCheckable = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
 		info.keepShownOnClick = 1;
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
 		return;
 
-	elseif (level == 2 and UIDROPDOWNMENU_MENU_VALUE == "menu_coord") then
+	elseif (level == 2 and Lib_UIDROPDOWNMENU_MENU_VALUE == "menu_coord") then
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		if (unlockCoord) then
 			info.text = "Lock"
 			info.value = "lockCoord";
@@ -1728,9 +1728,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		end
 		info.notCheckable = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Reset position"
 		info.value = "resetcoord";
 		info.notCheckable = 1;
@@ -1741,9 +1741,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		elseif (not CT_MapMod_Options[characterKey][optName]) then
 			info.disabled = true;
 		end
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Hide"
 		info.value = "hideCoord";
 		optName = CT_MapMod_Coord_GetHideOptionName();
@@ -1752,13 +1752,13 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		end
 		info.keepShownOnClick = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
 		return;
 
-	elseif (level == 2 and UIDROPDOWNMENU_MENU_VALUE == "auto_add") then
+	elseif (level == 2 and Lib_UIDROPDOWNMENU_MENU_VALUE == "auto_add") then
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Herbs"
 		info.value = "autoHerbs";
 		if (CT_MapMod_Options[characterKey] and CT_MapMod_Options[characterKey].autoHerbs) then
@@ -1766,9 +1766,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		end
 		info.keepShownOnClick = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = "Minerals"
 		info.value = "autoMinerals";
 		if (CT_MapMod_Options[characterKey] and CT_MapMod_Options[characterKey].autoMinerals) then
@@ -1776,20 +1776,20 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		end
 		info.keepShownOnClick = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-		UIDropDownMenu_AddButton(info, level);
+		Lib_UIDropDownMenu_AddButton(info, level);
 
 		return;
 
 	end
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "CT_MapMod";
 	info.notCheckable = 1;
 	info.justifyH = "CENTER";
 	info.isTitle = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Create note at player"
 	info.value = "playernote";
 	info.notCheckable = 1;
@@ -1797,9 +1797,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 	if (not CT_MapMod_CanCreateNoteOnPlayer()) then
 		info.disabled = true;
 	end
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Edit last note added to this map"
 	info.value = "editlast";
 	info.notCheckable = 1;
@@ -1819,11 +1819,11 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 			info.disabled = true;
 		end
 	end
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	local emptyFilter = ((CT_MapMod_Filter or "") == "");
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	if (emptyFilter) then
 		info.text = "Set filter text"
 	else
@@ -1832,9 +1832,9 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 	info.value = "setfilter";
 	info.notCheckable = 1;
 	info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Clear filter text"
 	info.value = "clearfilter";
 	info.notCheckable = 1;
@@ -1842,40 +1842,40 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 	if (emptyFilter) then
 		info.disabled = true;
 	end
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Options";
 	info.notCheckable = 1;
 	info.justifyH = "CENTER";
 	info.isTitle = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Notes button"
 	info.value = "menu_button";
 	info.keepShownOnClick = 1;
 	info.notCheckable = 1;
 	info.hasArrow = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Coordinates"
 	info.value = "menu_coord";
 	info.keepShownOnClick = 1;
 	info.notCheckable = 1;
 	info.hasArrow = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Create notes when gathering"
 	info.value = "auto_add";
 	info.keepShownOnClick = 1;
 	info.notCheckable = 1;
 	info.hasArrow = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Receive notes from players"
 	info.value = "receivenotes";
 	if (CT_MapMod_Options[characterKey] and CT_MapMod_Options[characterKey].receiveNotes) then
@@ -1883,17 +1883,17 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 	end
 	info.keepShownOnClick = 1;
 	info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
-	info = UIDropDownMenu_CreateInfo();
+	info = Lib_UIDropDownMenu_CreateInfo();
 	info.text = "Groups To Show";
 	info.notCheckable = 1;
 	info.justifyH = "CENTER";
 	info.isTitle = true;
-	UIDropDownMenu_AddButton(info);
+	Lib_UIDropDownMenu_AddButton(info);
 
 	for key, val in pairs(CT_MAPMOD_SETS) do
-		info = UIDropDownMenu_CreateInfo();
+		info = Lib_UIDropDownMenu_CreateInfo();
 		info.text = val;
 		info.value = val;
 		if ( CT_MapMod_Options[characterKey] and ( not CT_MapMod_Options[characterKey].hideGroups or not CT_MapMod_Options[characterKey].hideGroups[val] ) ) then
@@ -1901,13 +1901,13 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 		end
 		info.keepShownOnClick = 1;
 		info.func = CT_MapMod_MainMenu_DropDown_OnClick;
-		UIDropDownMenu_AddButton(info);
+		Lib_UIDropDownMenu_AddButton(info);
 	end
 end
 
 function CT_MapMod_MainMenu_DropDown_OnLoad(self)
-	UIDropDownMenu_Initialize(self, CT_MapMod_MainMenu_DropDown_Initialize, "MENU");
-	UIDropDownMenu_SetWidth(self, 130);
+	Lib_UIDropDownMenu_Initialize(self, CT_MapMod_MainMenu_DropDown_Initialize, "MENU");
+	Lib_UIDropDownMenu_SetWidth(self, 130);
 end
 
 ---------------------------------------------
