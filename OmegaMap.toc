@@ -1,10 +1,11 @@
-## Interface: 70300
+## Interface: 80000
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 7.3 
+## Game Version: 8.0
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
+## RequiredDep: Blizzard_MapCanvas, Blizzard_SharedMapDataProviders
 ## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo, HereBeDragons-1.0, AngryWorldQuests
 
 #Libraries
@@ -17,29 +18,15 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\DropDownMenu\UIDropDownMenuTemplates.xml
 
 #Core Files
+MapCanvas\MapCanvas.xml
+mixins.lua
 localization.en.lua
+OmegaMapFunctionality.lua
 OmegaMapOptions.lua
-OmegaMapFrameCosmicButtons
-OmegaMapFrame.xml
-OmegaMapQuestFrame.xml
-OmegaMapBar.xml
 
-
-#Addon Plugins
-Plugins\HereBeDragons-Pins.lua
-Plugins\HandyNotes.lua
-Plugins\Gatherer.lua
-Plugins\GatherMate2.lua
-Plugins\Routes.lua
-Plugins\TomTom.lua
-Plugins\CTMap.lua
-Plugins\MapNotes.lua
-Plugins\NPCScanOverlay.lua
-Plugins\QuestHelperLite.lua
-Plugins\MozzFullWorldMap.lua
-Plugins\PetTracker.xml
-Plugins\PetTracker.lua
-Plugins\Explorer.lua
-Plugins\Explorer.lua
-Plugins\Vuhdo.lua
-Plugins\AngryWorldQuests.lua
+MapTexturePreloader.lua
+OM_WorldQuestDataProvider.xml
+OM_InvasionDataProvider.xml
+OmegaMapTemplates.xml
+OmegaMap.xml
+OmegaMapTooltip.xml
