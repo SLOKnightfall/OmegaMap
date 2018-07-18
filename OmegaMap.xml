@@ -97,27 +97,27 @@
 					</Anchors>
 					<Scripts>
 						<OnClick>
-							if (OmegaMapConfig.clearMap) then
+							if (OmegaMap_Config.clearMap) then
 								OmegaMapPOIToggle:SetNormalTexture("Interface\\Buttons\\UI-MicroButton-LFG-Up")
-								OmegaMapConfig.clearMap = false
+								OmegaMap_Config.clearMap = false
 								OmegaMapNoteFrame:Show()
 
 							else
-								OmegaMapConfig.clearMap = true
+								OmegaMap_Config.clearMap = true
 								OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
 								OmegaMapNoteFrame:Hide()
 							end
 						</OnClick>
 						<OnEnter>
 							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(OMEGAMAPPOITOGGLE_TOOLTIP, nil, nil, nil, nil, 1);
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPPOITOGGLE_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
 
 							OmegaMapTooltip:Hide();
 						</OnLeave>
 						<OnShow>
-						if (OmegaMapConfig.clearMap) then
+						if (OmegaMap_Config.clearMap) then
 							OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
 							OmegaMapNoteFrame:Hide()
 						end
@@ -134,7 +134,7 @@
 					</Anchors>
 					<Scripts>
 						<OnShow>
-							if (OmegaMapConfig.keepInteractive) and (OmegaMapConfig.solidify) then 
+							if (OmegaMap_Config.keepInteractive) and (OmegaMap_Config.solidify) then 
 								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Up")
 								OmegaMapSolidify("On")
 							else
@@ -143,19 +143,19 @@
 							end
 						</OnShow>
 						<OnClick>
-							if not(OmegaMapConfig.solidify) then
+							if not(OmegaMap_Config.solidify) then
 								OmegaMapSolidify("On")
-								OmegaMapConfig.solidify = true
+								OmegaMap_Config.solidify = true
 								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Up")
 							else
 								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Disabled")
 								OmegaMapSolidify("Off")
-								OmegaMapConfig.solidify = false
+								OmegaMap_Config.solidify = false
 							end
 						</OnClick>
 						<OnEnter>
 							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(OMEGAMAPLOCKBUTTON_TOOLTIP, nil, nil, nil, nil, 1);
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPLOCKBUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
 							OmegaMapTooltip:Hide();
@@ -172,11 +172,12 @@
 					</Anchors>
 					<Scripts>
 						<OnClick>
-							OmegaMapOptionsFrame.Toggle()
+							LibStub("AceConfigDialog-3.0"):Open("OmegaMap")
+
 						</OnClick>
 						<OnEnter>
 							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(OMEGAMAP_OPTION_BUTTON_TOOLTIP, nil, nil, nil, nil, 1);
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_OPTION_BUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
 							OmegaMapTooltip:Hide();
@@ -200,7 +201,7 @@
 						</OnClick>
 						<OnEnter>
 							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(OMEGAMAP_EJ_TOOLTIP, nil, nil, nil, nil, 1);
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_EJ_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
 							OmegaMapTooltip:Hide();
@@ -340,18 +341,18 @@
 					<Scripts>
 						<OnShow>
 							self:SetFrameLevel( OmegaMapFrame:GetFrameLevel() + 100 );
-							OmegaMapZoomSliderFrame:SetValue(OmegaMapConfig.scale);
+							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
 						</OnShow>
 						<OnLoad>
 							OmegaMapZoomSliderFrame:SetMinMaxValues(.50,1.25);
 							OmegaMapZoomSliderFrame:SetValueStep(0.01);
-							OmegaMapZoomSliderFrame:SetValue(OmegaMapConfig.scale);
+							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
 						</OnLoad>
 						<OnValueChanged>
-							OmegaMapConfig.scale = OmegaMapZoomSliderFrame:GetValue();
+							OmegaMap_Config.scale = OmegaMapZoomSliderFrame:GetValue();
 						</OnValueChanged>
 						<OnMouseUp>
-							OmegaMapFrame:SetScale( OmegaMapConfig.scale );
+							OmegaMapFrame:SetScale( OmegaMap_Config.scale );
 
 						</OnMouseUp>
 					</Scripts>
