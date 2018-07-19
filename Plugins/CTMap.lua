@@ -5,9 +5,9 @@
 -- CTMapMod is written and maintained by the CT_Mod crew @ http://www.ctmod.net/
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
-
 if IsAddOnLoaded("CT_MapMod") then
-
+return
+end
 --Creating a Frame to display Routes in Omega Map
 if not CTMapOmegaMapOverlay then
 	local overlay = CreateFrame("Frame", "CTMapOmegaMapOverlay", OmegaMapNoteFrame)
@@ -114,7 +114,7 @@ local function CT_MapMod_GetCharKey()
 	-- hideMainTooltip == Hide the Notes button tooltip.
 
 	if ( not CT_MapMod_Options[characterKey] ) then
-		CT_MapMod_Options[characterKey] = { 
+		CT_MapMod_Options[characterKey] = {
 			autoHerbs = true,
 			autoMinerals = true,
 			hideGroups = {},
@@ -134,38 +134,14 @@ local function CT_MapMod_GetCharKey()
 	return UnitName("player") .. "@" .. GetRealmName();
 end
 
-local function CT_MapMod_GetWorldMapZoneName()
-	local mapName, _, _, isMicroDungeon, microDungeonMapName = GetMapInfo()
-	local name = WORLD_MAP
-	if GetCurrentMapZone() > 0 then
-		name = GetMapNameByID(GetCurrentMapAreaID())
-		local floorNum = DungeonUsesTerrainMap() and GetCurrentMapDungeonLevel() - 1 or GetCurrentMapDungeonLevel()
-		if floorNum > 0 then
-			if not _G["DUNGEON_FLOOR_" .. strupper(mapName or "") .. floorNum] then
-				name = name .. ': ' .. strupper(mapName or "") .. floorNum
-			else
-				name = name .. ': ' .. _G["DUNGEON_FLOOR_" .. strupper(mapName or "") .. floorNum]
-			end
-		end
-	else
-		local currentContinent = GetCurrentMapContinent()
-		if currentContinent ~= WORLDMAP_WORLD_ID and currentContinent ~= WORLDMAP_COSMIC_ID then
-			name = select(currentContinent, GetMapContinents())
-		end
-	end
-	return name or (isMicroDungeon and microDungeonMapName or mapName)
-end
-
+-- Completely overhauled.  Returns the mapID of an outdoor zone; or mapID:dungeonLevel of multi-level zones.
 local function CT_MapMod_GetMapName()
-	-- Get the name of the current map.
-	-- This is for use when the player is looking at the map.
-	if (GetCurrentMapZone() == 0) then
-		-- Map does not have any zones.
-		-- This applies to universe maps, continent maps, instance maps.
-		return nil;
+	local mapID, isContinent = GetCurrentMapAreaID();
+	local dungeonLevel, y2, y3, y4, y5 = GetCurrentMapDungeonLevel();
+	if (isContinent or not mapID or mapID < 0) then
+		return false;
 	end
-	-- Return the name currently assigned to the zone drop down menu.
-	return CT_MapMod_GetWorldMapZoneName();
+	return mapID .. ":" .. dungeonLevel;
 end
 
 local function CT_MapMod_IsDialogShown()
@@ -392,7 +368,7 @@ local function CT_MapMod_HideNotes(first, last)
 	for i = first, last, 1 do
 		_G["OmegaCT_UserMap_Note" .. i]:Hide();
 	end
-	
+
 end
 -- Updated
 local function CT_MapMod_UpdateMap()
@@ -420,10 +396,11 @@ local function CT_MapMod_UpdateMap()
 	for i, var in pairs(notes) do
 		if (
 			-- If not hiding this set of notes, and
-			not CT_MapMod_Options[characterKey].hideGroups[(CT_MAPMOD_SETS[(var.set or 1)])] and 
+			not CT_MapMod_Options[characterKey].hideGroups[(CT_MAPMOD_SETS[(var.set or 1)])] and
+
 			(
 				-- not filtering the notes, or
-				not CT_MapMod_Filter or 
+				not CT_MapMod_Filter or
 
 				-- we are filtering the notes and the note's name matches the filter pattern, or
 				string.find(strlower(var.name), strlower(CT_MapMod_Filter)) or
@@ -444,7 +421,7 @@ local function CT_MapMod_UpdateMap()
 
 			OMnote = _G["OmegaCT_UserMap_Note".. count]
 			OMIconTexture = _G["OmegaCT_UserMap_Note" .. count .."Icon"]
-			
+
 			if ( var.set == 7 ) then
 				-- Herbalism notes.
 				-- If icon is 1 and the name is not what the default was, then try correcting the icon.
@@ -475,13 +452,13 @@ local function CT_MapMod_UpdateMap()
 				IconTexture:SetTexture("Interface\\AddOns\\CT_MapMod\\Skin\\" .. CT_UserMap_Icons[var.set]);
 				OMIconTexture:SetTexture("Interface\\AddOns\\CT_MapMod\\Skin\\" .. CT_UserMap_Icons[var.set]);
 			end
-			note:SetPoint("CENTER", "WorldMapDetailFrame", "TOPLEFT", var.x * WorldMapButton:GetWidth(), -var.y * WorldMapButton:GetHeight());			
+			note:SetPoint("CENTER", "WorldMapDetailFrame", "TOPLEFT", var.x * WorldMapButton:GetWidth(), -var.y * WorldMapButton:GetHeight());
 			note:Show();
 
-			OMnote:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", var.x * OmegaMapButton:GetWidth(), -var.y * OmegaMapButton:GetHeight());			
+			OMnote:SetPoint("CENTER", "OmegaMapDetailFrame", "TOPLEFT", var.x * OmegaMapButton:GetWidth(), -var.y * OmegaMapButton:GetHeight());
 			OMnote:Show();
 			OMnote:SetFrameLevel(OMEGAMAP_POI_FRAMELEVEL)
-			
+
 			if ( not var.name ) then
 				var.name = "";
 			end
@@ -491,7 +468,7 @@ local function CT_MapMod_UpdateMap()
 			if ( not var.descript ) then
 				var.descript = "";
 			end
-	
+
 			note.name = var.name;
 			note.set = CT_MAPMOD_SETS[var.set];
 			note.descript = var.descript;
@@ -590,6 +567,21 @@ local function CT_MapMod_EditNote(id)
 			CT_MapMod_NoteWindow_Show();
 		end
 	end
+end
+
+function CT_MapMod_CreateNote(x, y, note)
+	local mapName = CT_MapMod_GetMapName();
+	if (mapName and x and y and x > 0 and x < 100 and y > 0 and y < 100) then
+		if not note then
+			note = "New note"
+		end
+		local id = CT_MapMod_AddNote(x / 100, y / 100, mapName, note, "", 1, 1);
+		CT_MapMod_NoteWindow.note = id;
+		CT_MapMod_NoteWindow.zone = mapName;
+		CT_MapMod_NoteWindow_Show();
+		CT_MapMod_NoteWindow_Accept()
+	end
+
 end
 
 local function CT_MapMod_CreateNoteOnCursor()
@@ -708,7 +700,7 @@ function CT_MapMod_NoteWindow_OnShow(self)
 	CT_MapMod_NoteWindowSendEB.lastsend = "";
 	CT_MapMod_NoteWindowSendEB:SetText("");
 
-	PlaySound("UChatScrollButton");
+	PlaySound(1115);
 end
 
 function CT_MapMod_NoteWindow_OnHide(self)
@@ -716,7 +708,7 @@ function CT_MapMod_NoteWindow_OnHide(self)
 	CT_MapMod_MapButtonFrame:Show();
 	CT_MapMod_MainButton:Enable();
 
-	PlaySound("UChatScrollButton");
+	PlaySound(1115);
 end
 
 function CT_MapMod_NoteWindow_Accept()
@@ -747,7 +739,7 @@ function CT_MapMod_NoteWindow_Accept()
 	note.descript = descript;
 	note.set = set;
 	note.icon = icon;
-	
+
 	CT_MapMod_NoteWindow:Hide();
 	CT_MapMod_UpdateMap();
 end
@@ -828,7 +820,7 @@ function CT_MapMod_FilterWindow_OnShow(self)
 	eb:SetText(CT_MapMod_Filter or "");
 	eb:HighlightText();
 
-	PlaySound("UChatScrollButton");
+	PlaySound(1115);
 end
 
 function CT_MapMod_FilterWindow_OnHide(self)
@@ -836,7 +828,7 @@ function CT_MapMod_FilterWindow_OnHide(self)
 	CT_MapMod_MapButtonFrame:Show();
 	CT_MapMod_MainButton:Enable();
 
-	PlaySound("UChatScrollButton");
+	PlaySound(1115);
 end
 
 function CT_MapMod_FilterWindow_Accept()
@@ -869,20 +861,6 @@ local function CT_MapMod_EnableReceiveNotes(enable)
 	CT_MapMod_Options[characterKey].receiveNotes = enable;
 end
 
-local function CT_MapMod_GetZone(zoneid)
-	if ( not tonumber(zoneid) ) then
-		return "(Error: Please report zoneid " .. zoneid .. ")";
-	end
-
-	local zone = tonumber(zoneid);
-	for key, val in pairs(CT_UserMap_Zone) do
-		if ( val == zone ) then
-			return key;
-		end
-	end
-	return "(Error: Please report zone " .. zoneid .. ")";
-end
-
 local function CT_MapMod_ProcessWhisper(self, event, msg, user)
 	-- Process incoming whispers.
 	-- Return nil to allow the game to continue processing the message (should show up in chat window).
@@ -896,15 +874,13 @@ local function CT_MapMod_ProcessWhisper(self, event, msg, user)
 	if (strsub(msg, 1, 7) ~= "<CTMod>") then
 		return nil;
 	end
-	local pos1, pos2, xpos, ypos, zone, name, descript, group, icon = string.find(msg, "^<CTMod> New map note received: x=(.+) y=(.+) z=(.+) n=(.*) d=(.*) g=(.+) i=(.+)$");
+	local pos1, pos2, xpos, ypos, zone, name, descript, group, icon = string.find(msg, "^<CTMod> New map note received: x=(.+); y=(.+); z=(%d+:%d+); n=(.*); d=(.*); g=(.+); i=(.+);$");
+
 	if (not zone) then
-		pos1, pos2, name, xpos, ypos, zone = string.find(msg, "^<CTMod> New map note: (.*) x=(.+) y=(.+) z=(.+) v=.+$");
-		if (not zone) then
-			return nil;
-		end
+		return nil;
+	end
+	if (not descript) then
 		descript = "Received from " .. user;
-		icon = 1;
-		group = 1;
 	end
 
 	-- If this is the same as the last incoming message we processed...
@@ -918,17 +894,17 @@ local function CT_MapMod_ProcessWhisper(self, event, msg, user)
 	CT_LastIncMessage.msg = msg;
 	CT_LastIncMessage.user = user;
 
-	-- Notify user of a received message.
-	local zonename = CT_MapMod_GetZone(zone);
+	-- Add the note and inform the user.
 	local characterKey = CT_MapMod_GetCharKey();
 
 	if ( not CT_MapMod_Options[characterKey].receiveNotes ) then
 		module:printcolor(1.0, 0.5, 0.0, "<CTMapMod> Blocked incoming map note from " .. user .. ".");
 	else
-		module:printcolor(1.0, 0.5, 0.0, "<CTMapMod> Map note received in zone '" .. zonename .. "' at " .. round(xpos * 100, 0) .. ", " .. round(ypos * 100, 0) .. " from " .. user .. ".");
+		module:printcolor(1.0, 0.5, 0.0, "<CTMapMod> Map note received from " .. user .. ".");
 		if (strsub(zonename, 1, 1) ~= "(") then
 			-- Add the note to the map
-			CT_MapMod_AddNote(xpos, ypos, zonename, name, descript, tonumber(icon), group);
+			CT_MapMod_AddNote(xpos, ypos, zone, name, descript, tonumber(icon), group);
+
 		end
 	end
 	return true;  -- true == don't show whisper in chat frame
@@ -948,7 +924,8 @@ local function CT_MapMod_ProcessOutgoingWhisper(self, event, msg, user)
 	if (strsub(msg, 1, 7) ~= "<CTMod>") then
 		return nil;
 	end
-	local pos1, pos2, xpos, ypos, zone = string.find(msg, "^<CTMod> New map note received: x=(.+) y=(.+) z=(.+) n=.* d=.* g=.+ i=.+$");
+	local pos1, pos2, xpos, ypos, zone = string.find(msg, "^<CTMod> New map note received: x=(.+); y=(.+); z=(%d+:%d+); n=.*; d=.*; g=.+; i=.+;$");
+
 	if (not zone) then
 		return nil;
 	end
@@ -964,8 +941,7 @@ local function CT_MapMod_ProcessOutgoingWhisper(self, event, msg, user)
 	CT_LastOutMessage.user = user;
 
 	-- Notify user of sent message.
-	local zonename = CT_MapMod_GetZone(zone);
-	module:printcolor(1.0, 0.5, 0.0, "<CTMapMod> Sent map note in zone '" .. zonename .. "' at " .. round(xpos * 100, 0) .. ", " .. round(ypos * 100, 0) .. " to " .. user .. ".");
+	module:printcolor(1.0, 0.5, 0.0, "<CTMapMod> Sent map note to " .. user .. ".");
 	return true;  -- true == don't show whisper in chat frame
 end
 
@@ -985,10 +961,10 @@ function CT_MapMod_SendNote()
 	descript = CT_MapMod_NoteWindowDescriptEB:GetText();
 	zone = CT_MapMod_NoteWindow.zone;
 	player = CT_MapMod_NoteWindowSendEB:GetText();
-	
+
 	note = CT_UserMap_Notes[zone][CT_MapMod_NoteWindow.note];
 
-	if ( not CT_MapMod_NoteWindow:IsVisible() or strlen(player) == 0 or not CT_UserMap_Zone[zone] ) then
+	if ( not CT_MapMod_NoteWindow:IsVisible() or strlen(player) == 0 ) then
 		return;
 	end
 
@@ -1002,7 +978,7 @@ function CT_MapMod_SendNote()
 	y = note.y;
 	icon = note.icon;
 
-	SendChatMessage("<CTMod> New map note received: x="..x.." y="..y.." z="..CT_UserMap_Zone[zone].." n="..name.." d="..descript.." g="..group .. " i=" .. icon, "WHISPER", nil, player);
+	SendChatMessage("<CTMod> New map note received: x="..x.."; y="..y.."; z="..zone.."; n="..name.."; d="..descript.."; g="..group .. "; i=" .. icon .. ";", "WHISPER", nil, player);
 
 	CT_MapMod_NoteWindowSendEB.lastsend = player;
 	CT_MapMod_NoteWindowSendEB:SetText("");
@@ -1023,24 +999,7 @@ local function CT_MapMod_EnableAutoGatherNotes(enable, key)
 	CT_MapMod_Options[characterKey][key] = enable;
 end
 
-local function CT_MapMod_GetZoneName(id, ...)
-	if ( id >= 1 and select('#', ...) >= id ) then
-		return select(id, ...);
-	end
-end
-
-local function CT_MapMod_GetCurrentZone()
-	local x, y = GetPlayerMapPosition("player");
-	local currC, currZ = GetCurrentMapContinent(), GetCurrentMapZone();
-	SetMapToCurrentZone();
-	local name = CT_MapMod_GetZoneName(GetCurrentMapZone(), GetMapZones(GetCurrentMapContinent()));
-	if ( x == 0 and y == 0 ) then
-		SetMapZoom(currC, currZ);
-	end
-	return name;
-end
-
-local function CT_MapMod_ParseResource(event, arg1)
+local function CT_MapMod_ParseResource(event, arg1, arg2)
 	local characterKey = CT_MapMod_GetCharKey();
 	local options = CT_MapMod_Options[characterKey];
 
@@ -1056,47 +1015,30 @@ local function CT_MapMod_ParseResource(event, arg1)
 		return;
 	end
 
-	local _, name, prefix, node;
-	if ( string.find(event, "^CHAT_MSG" ) ) then
-		if ( options.autoHerbs and string.find(arg1, "^You perform Herb Gathering on") ) then
-			_,_, name = string.find(arg1, "^You perform Herb Gathering on (.+)%.$");
-			prefix = "Herb_";
-			node = 7;
+	local name, prefix, node;
 
-		elseif ( options.autoMinerals and string.find(arg1, "^You perform Mining on") ) then
-			_,_, name = string.find(arg1, "^You perform Mining on (.+)%.$");
-			prefix = "Ore_";
-			node = 8;
+	if ( options.autoHerbs and arg1 == "player" and arg2 == "Herb Gathering" ) then
+		name = "Herb";
+		prefix = "Herb_";
+		node = 7;
 
-		end
-	elseif ( string.find(event, "UI_ERROR_MESSAGE") ) then
-		name = GameTooltipTextLeft1:GetText();
-		if ( name and strlen(name) > 0 ) then
-			if ( options.autoHerbs and string.find(arg1, "Requires Herbalism") ) then
-				prefix = "Herb_";
-				node = 7;
-
-			elseif ( options.autoMinerals and string.find(arg1, "Requires Mining") ) then
-				prefix = "Ore_";
-				node = 8;
-			else
-				name = nil;
-			end
-		else
-			name = nil;
-		end
+	elseif ( options.autoMinerals and arg1 == "player" and arg2 == "Mining" ) then
+		name = "Ore";
+		prefix = "Ore_";
+		node = 8;
 	end
 
 	if (name) then
-		local zone = CT_MapMod_GetCurrentZone();
-		if ( not zone or not CT_UserMap_Zone[zone] ) then
+		SetMapToCurrentZone();
+		local zone = CT_MapMod_GetMapName();
+		if (not zone) then
 			return;
 		end
-		if ( not CT_UserMap_Notes[zone] ) then
-			CT_UserMap_Notes[zone] = { };
+		if (not CT_UserMap_Notes[zone]) then
+			CT_UserMap_Notes[zone] = { }
 		end
 		for k, v in pairs(CT_UserMap_Notes[zone]) do
-			if ( abs(v.x-x) <= 0.005 and abs(v.y-y) <= 0.005 ) then
+			if ( abs(v.x-x) <= 0.01 and abs(v.y-y) <= 0.01 ) then
 				-- Two very close nodes, most likely the same node, we don't want to add another note then
 				return;
 			end
@@ -1263,7 +1205,7 @@ local function CT_MapMod_Coord_ResetPositions()
 	for i = 1, CT_MapMod_GetMapSizeNumber("max") do
 		local optName = CT_MapMod_Coord_GetPositionOptionName(i);
 		CT_MapMod_Options[characterKey][optName] = nil;
-	end		
+	end
 	CT_MapMod_Coord_ResetPosition(false);
 end
 
@@ -1383,14 +1325,14 @@ if OmegaMapFrame:IsShown() then
 else
 	WorldMapTooltip:SetOwner(self, "ANCHOR_NONE");
 end
-	
+
 	WorldMapTooltip:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, 0);
 	WorldMapTooltip:SetText("Notes", nil, nil, nil, nil, 1);
 	WorldMapTooltip:AddLine(text, 1, 1, 1, 1);
 	WorldMapTooltip:Show();
 end
 
-CT_MapMod_MainButton:SetScript('OnEnter', CT_MapMod_MainButton_OnEnter)
+--CT_MapMod_MainButton:SetScript('OnEnter', CT_MapMod_MainButton_OnEnter)
 
 function CT_MapMod_MainButton_OnLeave(self)
 	-- Undo what we did in CT_MapMod_MainButton_OnEnter()
@@ -1491,8 +1433,8 @@ function CT_MapMod_MainButton_OnClick(self, button)
 
 		dropdown.xOffset = 0;
 		dropdown.yOffset = 0;
-		ToggleDropDownMenu(1, nil, dropdown);
-		PlaySound("igMainMenuOptionCheckBoxOn");
+		Lib_ToggleDropDownMenu(1, nil, dropdown);
+		PlaySound(856);
 	end
 end
 
@@ -1502,11 +1444,11 @@ local function CT_MapMod_MainButton_ResetPosition(clearSaved)
 	if ( WORLDMAP_SETTINGS.size == WORLDMAP_WINDOWED_SIZE ) then
 		-- Small size world map
 		CT_MapMod_MainButton:ClearAllPoints();
-		CT_MapMod_MainButton:SetPoint("RIGHT", WorldMapFrameSizeUpButton, "LEFT", 3, 0);
+		CT_MapMod_MainButton:SetPoint("RIGHT", WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "LEFT", 3, 0);
 	else
 		-- Full screen size world map
 		CT_MapMod_MainButton:ClearAllPoints();
-		CT_MapMod_MainButton:SetPoint("RIGHT", WorldMapFrameSizeUpButton, "LEFT", 3, 0);
+		CT_MapMod_MainButton:SetPoint("RIGHT", WorldMapFrame.BorderFrame.MaximizeMinimizeFrame, "LEFT", 3, 0);
 	end
 	if (clearSaved) then
 		local optName = CT_MapMod_MainButton_GetPositionOptionName();
@@ -1520,7 +1462,7 @@ local function CT_MapMod_MainButton_ResetPositions()
 	for i = 1, CT_MapMod_GetMapSizeNumber("max") do
 		local optName = CT_MapMod_MainButton_GetPositionOptionName(i);
 		CT_MapMod_Options[characterKey][optName] = nil;
-	end		
+	end
 	CT_MapMod_MainButton_ResetPosition(false);
 end
 
@@ -1716,7 +1658,7 @@ function CT_MapMod_MainMenu_DropDown_Initialize(self, level)
 
 		return;
 
-	elseif (level == 2 and Lib_UIDROPDOWNMENU_MENU_VALUE == "menu_coord") then
+	elseif (level == 2 and LIB_UIDROPDOWNMENU_MENU_VALUE == "menu_coord") then
 
 		info = Lib_UIDropDownMenu_CreateInfo();
 		if (unlockCoord) then
@@ -1908,61 +1850,48 @@ end
 function CT_MapMod_MainMenu_DropDown_OnLoad(self)
 	Lib_UIDropDownMenu_Initialize(self, CT_MapMod_MainMenu_DropDown_Initialize, "MENU");
 	Lib_UIDropDownMenu_SetWidth(self, 130);
+
+	hooksecurefunc(WorldMapFrame, "Hide", function(this)
+		if LIB_UIDROPDOWNMENU_OPEN_MENU == CT_MapMod_MainMenuDropDown then
+			Lib_ToggleDropDownMenu(1, nil, CT_MapMod_MainMenuDropDown);
+		end
+	end)
 end
 
 ---------------------------------------------
 -- Convert old notes
 
 local function CT_MapMod_UpdateOldNotes()
-	-- Convert old notes to new format.
+
+	-- TEMPORARY CODE FOR BETA TESTING
+	--for key, val in pairs(CT_UserMap_Zone) do
+	--	CT_MapMod_AddNote(0.50, 0.50, key, "BETA TEST", "BETA TEST", CT_MapMod_FindResourceIcon("Herb", "Herb_"), 7);
+	--end
+
+	-- Converts string-based mapName to integer-based mapID keys.
+	-- This was introduced in 7.3, and replaces the very old updating from 4.0
+
 	local temp = {};
-	local update = false;
 	for key, val in pairs(CT_UserMap_Notes) do
-		if ( type(key) == "number" and type(val) == "table" ) then
-			update = true;
-			-- Old notes 
-			local tempvar = {
-				name = val.desc,
-				x = val.x,
-				y = val.y,
-				icon = 1,
-				set = 1,
-			};
-			local zone = val.zone;
-			if (zone) then
-				if (not temp[zone]) then
-					temp[zone] = {};
-				end
-				temp[zone][#(temp[zone])+1] = tempvar;
-			end
-			CT_UserMap_Notes[key] = nil;
-		end
-	end
-	if (update) then
-		for key, val in pairs(temp) do
-			if ( not CT_UserMap_Notes[key] ) then
-				CT_UserMap_Notes[key] = {};
-			end
-			for k, v in pairs(val) do
-				tinsert(CT_UserMap_Notes[key], v);
+		if (type(key) == "string" and type(val) == "table" and not string.find(key,"^%d+%-%d+$")) then
+			if (CT_UserMap_Zone[key]) then
+				CT_UserMap_Notes[CT_UserMap_Zone[key]] = val;
+				CT_UserMap_Notes[key] = nil;
 			end
 		end
-		CT_MapMod_Print("<CTMod> Updated old notes to new format.", 1, 0.5, 0);
 	end
+
+
 end
+
 
 ---------------------------------------------
 -- Event frame
 
-function CT_MapMod_EventFrame_OnEvent(self, event, arg1)
+function CT_MapMod_EventFrame_OnEvent(self, event, arg1, arg2)
 
-	if ( event == "CHAT_MSG_OPENING" ) then
-		CT_MapMod_ParseResource(event, arg1);
-
-	elseif ( event == "UI_ERROR_MESSAGE" ) then
-		if ( arg1 and ( string.find(arg1, "Requires Herbalism") or string.find(arg1, "Requires Mining") ) ) then
-			CT_MapMod_ParseResource(event, arg1);
-		end
+	if ( event == "UNIT_SPELLCAST_SUCCEEDED" ) then
+		CT_MapMod_ParseResource(event, arg1, arg2)
 
 	elseif ( event == "DISPLAY_SIZE_CHANGED" ) then
 		CT_MapMod_AdjustPositions();
@@ -2093,4 +2022,4 @@ end)
 
 print(OMEGAMAP_CTMAP_LOADED_MESSAGE)
 
-end
+--end

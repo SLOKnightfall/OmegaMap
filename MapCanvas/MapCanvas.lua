@@ -1,5 +1,26 @@
 OM_MapCanvasMixin = CreateFromMixins(MapCanvasMixin);
 
+function OM_MapCanvasMixin:OnLoad()
+	CallbackRegistryBaseMixin.OnLoad(self);
+	self.detailLayerPool = CreateFramePool("FRAME", self:GetCanvas(), "OM_MapCanvasDetailLayerTemplate");
+	self.dataProviders = {};
+	self.dataProviderEventsCount = {};
+	self.pinPools = {};
+	self.pinTemplateTypes = {};
+	self.activeAreaTriggers = {};
+	self.lockReasons = {};
+	self.pinsToNudge = {};
+	self.pinFrameLevelsManager = CreateFromMixins(MapCanvasPinFrameLevelsManagerMixin);
+	self.pinFrameLevelsManager:Initialize();
+	self.mouseClickHandlers = {};
+
+	self:EvaluateLockReasons();
+
+	self.debugAreaTriggers = false;
+	self:EnableMouse(false)
+end
+
+
 
 --[[
 
@@ -24,6 +45,7 @@ function MapCanvasMixin:OnLoad()
 	self:EvaluateLockReasons();
 
 	self.debugAreaTriggers = false;
+	self:EnableMouse(false)
 end
 
 function MapCanvasMixin:OnUpdate()

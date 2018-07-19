@@ -106,6 +106,8 @@
 		</Layers>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
+			<OnMouseUp method="OnMouseUp"/>
+			<OnMouseDown method="OnMouseDown"/>
 		</Scripts>
 	</Frame>
 

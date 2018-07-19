@@ -13,11 +13,11 @@ function OmegaMapMixin:SynchronizeDisplayState()
 		self.BorderFrame.TitleText:SetText(WORLD_MAP);
 		GameTooltip:Hide();
 		--self.BlackoutFrame:Show();
-		MaximizeUIPanel(self);
+		RestoreUIPanelArea(self);
 	else
 		self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
 		--self.BlackoutFrame:Hide();
-		RestoreUIPanelArea(self);
+		--RestoreUIPanelArea(self);
 	end
 end
 
@@ -42,19 +42,19 @@ function OmegaMapMixin:Minimize()
 end
 
 function OmegaMapMixin:Maximize()
-	self.isMaximized = true;
+	--self.isMaximized = true;
 
-	ButtonFrameTemplate_HidePortrait(self.BorderFrame);
-	self.BorderFrame.Tutorial:Hide();
-	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 8, -25);
+	--ButtonFrameTemplate_HidePortrait(self.BorderFrame);
+	--self.BorderFrame.Tutorial:Hide();
+	--self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 8, -25);
 
-	self:UpdateMaximizedSize();
-	self:SynchronizeDisplayState();
+	--self:UpdateMaximizedSize();
+	--self:SynchronizeDisplayState();
 
 	--self.BorderFrame.MaximizeMinimizeFrame.MinimizeButton:Show();
 	--self.BorderFrame.MaximizeMinimizeFrame.MaximizeButton:Hide();
 
-	self:OnFrameSizeChanged();
+	--self:OnFrameSizeChanged();
 end
 
 function OmegaMapMixin:SetupMinimizeMaximizeButton()
@@ -82,7 +82,7 @@ end
 function OmegaMapMixin:OnLoad()
 	UIPanelWindows[self:GetName()] = { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP" };
 
-	MapCanvasMixin.OnLoad(self);
+	OM_MapCanvasMixin.OnLoad(self);
 
 	self:SetupTitle();
 	self:SetupMinimizeMaximizeButton();
@@ -99,10 +99,12 @@ function OmegaMapMixin:OnLoad()
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
 
 	self:AttachQuestLog();
+	self:RegisterForDrag("LeftButton")
+	self:SetMovable(true)
 end
 
 function OmegaMapMixin:OnEvent(event, ...)
-	MapCanvasMixin.OnEvent(self, event, ...);
+	OM_MapCanvasMixin.OnEvent(self, event, ...);
 
 	if event == "VARIABLES_LOADED" then
 		if self:ShouldBeMinimized() then
@@ -112,9 +114,17 @@ function OmegaMapMixin:OnEvent(event, ...)
 		end
 	elseif event == "DISPLAY_SIZE_CHANGED" then
 		if self:IsMaximized() then
-			self:UpdateMaximizedSize();
+			--self:UpdateMaximizedSize();
+		end
+	elseif event == "PLAYER_LOGOUT" then
+		if self:IsUserPlaced() then
+			OmegaMapPosition.Map.xOffset, OmegaMapPosition.Map.yOffset = self:GetCenter();
+			self:SetUserPlaced(false);
+		else
+			--BattlefieldMapOptions.position = nil;
 		end
 	end
+
 end
 
 function OmegaMapMixin:AddStandardDataProviders()
@@ -210,11 +220,11 @@ function OmegaMapMixin:AddOverlayFrames()
 	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 64, -25);
 	self.NavBar:SetPoint("BOTTOMRIGHT", self.TitleCanvasSpacerFrame, "BOTTOMRIGHT", -4, 9);
 
-	self.SidePanelToggle = self:AddOverlayFrame("OmegaMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
+	--self.SidePanelToggle = self:AddOverlayFrame("OmegaMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
 end
 
 function OmegaMapMixin:OnMapChanged()
-	MapCanvasMixin.OnMapChanged(self);
+	OM_MapCanvasMixin.OnMapChanged(self);
 	self:RefreshOverlayFrames();
 	self:RefreshQuestLog();
 
@@ -226,7 +236,7 @@ end
 function OmegaMapMixin:OnShow()
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
-	MapCanvasMixin.OnShow(self);
+	OM_MapCanvasMixin.OnShow(self);
 	self:ResetZoom();
 
 	DoEmote("READ", nil, true);
@@ -234,10 +244,12 @@ function OmegaMapMixin:OnShow()
 
 	PlayerMovementFrameFader.AddDeferredFrame(self, .5, 1.0, .5, function() return GetCVarBool("mapFade") and not self:IsMouseOver() end);
 	self.BorderFrame.Tutorial:CheckAndShowTooltip();
+
+	--OmegaMap_SetPosition()
 end
 
 function OmegaMapMixin:OnHide()
-	MapCanvasMixin.OnHide(self);
+	OM_MapCanvasMixin.OnHide(self);
 
 	CancelEmote();
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_CLOSE);
@@ -285,17 +297,16 @@ end
 
 function OmegaMapMixin:UpdateMaximizedSize()
 	assert(self:IsMaximized());
-
 	local parentWidth, parentHeight = self:GetParent():GetSize();
 	local SCREEN_BORDER_PIXELS = 30;
-	parentWidth = parentWidth - SCREEN_BORDER_PIXELS;
+	parentWidth = (parentWidth - SCREEN_BORDER_PIXELS);
 
 	local spacerFrameHeight = self.TitleCanvasSpacerFrame:GetHeight();
-	local unclampedWidth = ((parentHeight - spacerFrameHeight) * self.minimizedWidth) / (self.minimizedHeight - spacerFrameHeight);
-	local clampedWidth = math.min(parentWidth, unclampedWidth);
+	local unclampedWidth = (((parentHeight - spacerFrameHeight) * self.minimizedWidth) / (self.minimizedHeight - spacerFrameHeight));
+	local clampedWidth = (math.min(parentWidth, unclampedWidth));
 
 	local unclampedHeight = parentHeight;
-	local clampHeight = ((parentHeight - spacerFrameHeight) * (clampedWidth / unclampedWidth)) + spacerFrameHeight;
+	local clampHeight = (((parentHeight - spacerFrameHeight) * (clampedWidth / unclampedWidth)) + spacerFrameHeight);
 	self:SetSize(math.floor(clampedWidth), math.floor(clampHeight));
 
 	SetUIPanelAttribute(self, "bottomClampOverride", (unclampedHeight - clampHeight) / 2);
@@ -401,6 +412,11 @@ end
 
 function ToggleOmegaMap()
 	OmegaMapFrame:HandleUserActionToggleSelf();
+		if OmegaMapFrame:IsShown() then	
+		--OmegaMapFrame:Hide();
+	else
+		--OmegaMapFrame:Show();
+	end
 end
 
 function OpenOmegaMap(mapID)

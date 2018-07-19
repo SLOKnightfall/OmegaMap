@@ -246,6 +246,14 @@ function OmegaMapNavBarMixin:Refresh()
 	end
 end
 
+function OmegaMapNavBarMixin:OnMouseUp()
+	OmegaMapFrame:StopMovingOrSizing() 
+end
+function OmegaMapNavBarMixin:OnMouseDown()
+	OmegaMapFrame:StartMoving()
+	OmegaMapFrame:SetUserPlaced(true);
+end
+
 OmegaMapNavBarButtonMixin = { };
 
 function OmegaMapNavBarButtonMixin:GetDropDownList()

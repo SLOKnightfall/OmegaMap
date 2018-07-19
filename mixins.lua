@@ -18,9 +18,10 @@ end
 
 function OM_QuestLogOwnerMixin:SetDisplayState(displayState)
 	if displayState == DISPLAY_STATE_CLOSED then
-		HideUIPanel(self);
+
+		OmegaMapFrame:Hide();
 	else
-		ShowUIPanel(self);
+		OmegaMapFrame:Show();
 
 		local hasSynchronizedDisplayState = false;
 
@@ -45,12 +46,7 @@ function OM_QuestLogOwnerMixin:SetDisplayState(displayState)
 		end
 	end
 
-	if self:IsMaximized() then
-		self.SidePanelToggle:Hide();
-	else
-		self.SidePanelToggle:Show();
-		self.SidePanelToggle:Refresh();
-	end
+
 
 	self:RefreshQuestLog();
 	self:UpdateSpacerFrameAnchoring();

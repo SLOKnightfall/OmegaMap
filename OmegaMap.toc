@@ -6,7 +6,7 @@
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariablesPerCharacter: OmegaMapConfig, OmegaMapPosition
 ## RequiredDep: Blizzard_MapCanvas, Blizzard_SharedMapDataProviders
-## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, _NPCScan.Overlay, QuestHelperLite, DongleStub, MozzFullWorldMap, PetTracker, HandyNotes, Explorer, Vuhdo, HereBeDragons-1.0, AngryWorldQuests
+## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, DongleStub, PetTracker, HandyNotes, Vuhdo, HereBeDragons-2.0, AngryWorldQuests
 
 #Libraries
 Libs\LibStub\LibStub.lua
@@ -20,23 +20,35 @@ Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
 Libs\AceEvent-3.0\AceEvent-3.0.xml
 Libs\AceHook-3.0\AceHook-3.0.xml
 Libs\AceLocale-3.0\AceLocale-3.0.xml
-Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
-Libs\LibBabble-Zone-3.0\lib.xml
-Libs\LibBabble-SubZone-3.0\lib.xml
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
-Libs\DropDownMenu\UIDropDownMenuTemplates.xml
+#Libs\DropDownMenu\UIDropDownMenuTemplates.xml
 
 #Core Files
-MapCanvas\MapCanvas.xml
+
 mixins.lua
 localization.en.lua
 OmegaMapFunctionality.lua
 OmegaMapOptions.lua
 
+MapCanvas\MapCanvas.xml
 MapTexturePreloader.lua
 OM_WorldQuestDataProvider.xml
 OM_InvasionDataProvider.xml
 OmegaMapTemplates.xml
 OmegaMap.xml
 OmegaMapTooltip.xml
+
+#Addon Plugins
+Plugins\HereBeDragons-Pins.lua
+Plugins\HandyNotes.lua
+#Plugins\Gatherer.lua
+Plugins\GatherMate2.lua
+Plugins\Routes.lua
+Plugins\TomTom.lua
+#Plugins\CTMap.lua
+#Plugins\PetTracker.xml
+#Plugins\PetTracker.lua
+#Plugins\Vuhdo.lua
+#Plugins\AngryWorldQuests.lua

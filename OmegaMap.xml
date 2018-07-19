@@ -2,7 +2,7 @@
 ..\FrameXML\UI.xsd">
 	<Script file="OmegaMap.lua"/>
 
-	<Frame name="OmegaMapFrameTemplate" inherits="OM_MapCanvasFrameTemplate" mixin="OM_QuestLogOwnerMixin, OmegaMapMixin" virtual="true">
+	<Frame name="OmegaMapFrameTemplate" inherits="OM_MapCanvasFrameTemplate" mixin="OM_QuestLogOwnerMixin, OmegaMapMixin" enableMouse="false" virtual="true">
 		<Frames>
 			<Frame parentKey="TitleCanvasSpacerFrame">
 				<Anchors>
@@ -10,7 +10,7 @@
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-3" y="-67"/>
 				</Anchors>
 			</Frame>
-			<ScrollFrame parentKey="ScrollContainer" inherits="OM_MapCanvasFrameScrollContainerTemplate">
+			<ScrollFrame parentKey="ScrollContainer" inherits="OM_MapCanvasFrameScrollContainerTemplate" enableMouse="false">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.TitleCanvasSpacerFrame" relativePoint="BOTTOMLEFT" x="0" y="0"/>
 					<Anchor point="BOTTOMLEFT" x="0" y="2"/>
@@ -26,7 +26,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="OmegaMapFrame" inherits="OmegaMapFrameTemplate" parent="UIParent">
+	<Frame name="OmegaMapFrame" inherits="OmegaMapFrameTemplate" parent="UIParent" enableMouse="false" enableKeyboard="true" clampedToScreen="true" movable="true">
 		<Frames>
 			<Frame parentKey="BlackoutFrame" frameStrata="LOW" enableMouse="true" hidden="true">
 				<Anchors>
@@ -92,7 +92,7 @@
 				<Button name="OmegaMapPOIToggle" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
 					<Size x="25" y="55"/>
 					<Anchors>
-					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="OmegaMapFrame" x="-10" y="-70"/>
+					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="OmegaMapFrame" x="-10" y="-60"/>
 						<!--<Anchor point="TOPLEFT" relativeTo="OmegaMapTrackQuestButton" x="-20" y="0"/> -->
 					</Anchors>
 					<Scripts>
@@ -352,7 +352,7 @@
 							OmegaMap_Config.scale = OmegaMapZoomSliderFrame:GetValue();
 						</OnValueChanged>
 						<OnMouseUp>
-							OmegaMapFrame:SetScale( OmegaMap_Config.scale );
+							OmegaMap_SetScale(OmegaMapFrame);
 
 						</OnMouseUp>
 					</Scripts>
@@ -360,6 +360,64 @@
 						<Size x="32" y="32"/>
 					</ThumbTexture>
 				</Slider>
+				<Frame name="OmegaMapCoordinates" movable="true" parent="OmegaMapFrame">
+						<Size x="90" y="30"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeTo="OmegaMapFrame" relativePoint="BOTTOMLEFT"  x="25" y="75"/>
+						</Anchors>
+						<Layers>
+							<Layer level="ARTWORK">
+								<FontString name="OmegaMapLocationText" inherits="GameFontNormalLarge" text="Player" hidden="false" justifyH="CENTER" justifyV="CENTER" >
+									<Color r="1.0" g="1.0" b="1.0"/>
+									<Anchors>
+										<Anchor point="CENTER" x="0" y="0"/>
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Frame name="OmegaMapCoordinatesMovementFrame" hidden="true" setAllPoints="true" enableMouse="false" movable="true">
+								<Scripts>
+									<OnShow>
+										self:SetFrameLevel(OmegaMapCoordinates:GetFrameLevel() + 1);
+									</OnShow>
+									<OnMouseDown>
+										OmegaMapCoordinatesisMoving = true;
+										if ( OmegaMapCoordinates.isMoving ) then
+											OmegaMapCoordinates:StartMoving();
+										end
+									</OnMouseDown>
+									<OnMouseUp>
+										if ( OmegaMapCoordinates.isMoving ) then
+											OmegaMapCoordinates:StopMovingOrSizing();
+											OmegaMapCoordinates.isMoving = false;
+										end
+									</OnMouseUp>
+								</Scripts>
+							</Frame>
+						</Frames>
+						<Scripts>
+						<OnShow>
+							self:SetFrameLevel( OmegaMapFrame:GetFrameLevel() +  100);
+						</OnShow>
+							<OnUpdate>
+								OmegaMapCoordsOnUpdate(self, elapsed);
+							</OnUpdate>
+						</Scripts>
+						<Backdrop bgFile="Interface\TutorialFrame\TutorialFrameBackground" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+							<BackgroundInsets>
+								<AbsInset left="5" right="5" top="5" bottom="5"/>
+							</BackgroundInsets>
+							<TileSize>
+								<AbsValue val="16"/>
+							</TileSize>
+							<EdgeSize>
+								<AbsValue val="16"/>
+							</EdgeSize>
+						</Backdrop>
+				</Frame>
+				<Frame name="OmegaMapNoteFrame" setAllPoints="true"/>
 		</Frames>
+
 	</Frame>
 </Ui>
