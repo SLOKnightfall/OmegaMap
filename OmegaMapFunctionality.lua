@@ -402,7 +402,6 @@ function OmegaMap_SetScale(self)
 end
 
 function OmegaMap:OnInitialize()
-.
 	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfig", defaults, true)
 	OmegaMap.Config  = self.db.profile
 	OmegaMap_Config = self.db.profile

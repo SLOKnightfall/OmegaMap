@@ -26,11 +26,9 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #Libs\DropDownMenu\UIDropDownMenuTemplates.xml
 
 #Core Files
-
 mixins.lua
 localization.en.lua
 OmegaMapFunctionality.lua
-OmegaMapOptions.lua
 
 MapCanvas\MapCanvas.xml
 MapTexturePreloader.lua
