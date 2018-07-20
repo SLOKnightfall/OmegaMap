@@ -33,9 +33,9 @@ local OmegaMapLDB = LibStub("LibDataBroker-1.1"):NewDataObject("OmegaMapMini", {
 		elseif (button == "LeftButton") then
 			ToggleOmegaMap()
 		elseif (button == "MiddleButton") then
-		--Config.showHotSpot = not Config.showHotSpot
-		--OmegaMapHotSpotToggle()
-		--OmegaMapOptionsFrame.showHotSpot:SetChecked(Config.showHotSpot)
+			Config.showHotSpot = not Config.showHotSpot
+			print(Config.showHotSpot )
+			OmegaMap:HotSpotToggle(Config.showHotSpot)
 		end
 	end,})
 
@@ -44,7 +44,7 @@ local OmegaMapLDB = LibStub("LibDataBroker-1.1"):NewDataObject("OmegaMapMini", {
 --Minimap/LDB Tooltip Creation
 function OmegaMapLDB:OnTooltipShow()
 	self:AddLine(L["OMEGAMAP_MINI_LEFT"])
-	--self:AddLine(L["OMEGAMAP_MINI_MID"])
+	self:AddLine(L["OMEGAMAP_MINI_MID"])
 	self:AddLine(L["OMEGAMAP_MINI_RIGHT"])
 end
 
@@ -197,10 +197,9 @@ local options = {
 			name = L["OMEGAMAP_OPTIONS_HOTSPOT"] ,
 			desc = L["OMEGAMAP_OPTIONS_HOTSPOT_TOOLTIP"],
 			type = "toggle",
-			set = function(info,val) Config.showHotSpot = val end,
+			set = function(info,val) Config.showHotSpot = val; OmegaMap:HotSpotToggle(val) end,
 			get = function(info) return Config.showHotSpot end,
 			width = 1.5,
-			disabled = true,
 		},
 		showCompactMode = {
 			order = 8,
@@ -416,7 +415,7 @@ function OmegaMap:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfig", defaults, true)
 	OmegaMap.Config  = self.db.profile
 	OmegaMap_Config = self.db.profile
-	Config = OmegaMap.Config
+	Config = self.db.profile
 
 	LibStub("AceConfigRegistry-3.0"):ValidateOptionsTable(options, "OmegaMap")
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("OmegaMap", options)
@@ -444,6 +443,7 @@ function OmegaMap:OnInitialize()
 	OmegaMapMiniMap:Register("OmegaMapMini", OmegaMapLDB, Config.MMDB)
 
 	--OmegaMapFrame:AddDataProvider(OmegaMap.Plugins["GatherMate2"])
+	OmegaMap:HotSpotInit()
 
 end
 

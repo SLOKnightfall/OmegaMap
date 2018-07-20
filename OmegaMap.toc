@@ -37,6 +37,7 @@ OM_InvasionDataProvider.xml
 OmegaMapTemplates.xml
 OmegaMap.xml
 OmegaMapTooltip.xml
+OmegaMapHotSpot.lua
 
 #Addon Plugins
 Plugins\HereBeDragons-Pins.lua
