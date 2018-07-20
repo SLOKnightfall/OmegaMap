@@ -1,7 +1,8 @@
 -- HereBeDragons-Pins is a library to show pins/icons on the world map and minimap
 
 -- HereBeDragons-Pins-2.0 is not supported on WoW 7.x
-
+local OmegaMap = select(2, ...)
+OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")
 
 local MAJOR, MINOR = "HereBeDragons-Pins-2.0", 5
 assert(LibStub, MAJOR .. " requires LibStub")
@@ -69,5 +70,7 @@ end
 -- register pin pool with the world map
 OmegaMapFrame.pinPools["HereBeDragonsPinsTemplate"] = omegamapPinsPool
 
+
 -- register with the world map
-OmegaMapFrame:AddDataProvider(pins.omegamapProvider)
+OmegaMap.Plugins["showTomTom"] = pins.omegamapProvider
+--OmegaMapFrame:AddDataProvider(pins.omegamapProvider)

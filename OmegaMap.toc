@@ -40,7 +40,7 @@ OmegaMapTooltip.xml
 
 #Addon Plugins
 Plugins\HereBeDragons-Pins.lua
-Plugins\HandyNotes.lua
+Plugins\HandyNotes.xml
 #Plugins\Gatherer.lua
 Plugins\GatherMate2.lua
 Plugins\Routes.lua

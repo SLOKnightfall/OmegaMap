@@ -220,7 +220,7 @@ function OmegaMapMixin:AddOverlayFrames()
 	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 64, -25);
 	self.NavBar:SetPoint("BOTTOMRIGHT", self.TitleCanvasSpacerFrame, "BOTTOMRIGHT", -4, 9);
 
-	--self.SidePanelToggle = self:AddOverlayFrame("OmegaMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
+	self.SidePanelToggle = self:AddOverlayFrame("OmegaMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
 end
 
 function OmegaMapMixin:OnMapChanged()

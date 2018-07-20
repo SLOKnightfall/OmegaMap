@@ -7,7 +7,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 if IsAddOnLoaded("TomTom") then
-
+local OmegaMap = select(2, ...)
 
 local L = TomTomLocals
 local hbdp = LibStub("HereBeDragons-Pins-2.0")

@@ -1,0 +1,13 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="HandyNotes.lua"/>
+	<Frame name="HandyNotesOmegaMapPinTemplate" hidden="true" enableMouse="true" mixin="HandyNotesOmegaMapPinMixin" virtual="true">
+		<Size x="30" y="30"/>
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture parentKey="texture" setAllPoints="true">
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+</Ui>

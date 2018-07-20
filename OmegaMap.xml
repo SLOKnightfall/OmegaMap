@@ -101,12 +101,13 @@
 								OmegaMapPOIToggle:SetNormalTexture("Interface\\Buttons\\UI-MicroButton-LFG-Up")
 								OmegaMap_Config.clearMap = false
 								OmegaMapNoteFrame:Show()
-
 							else
 								OmegaMap_Config.clearMap = true
 								OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
 								OmegaMapNoteFrame:Hide()
 							end
+							HidePOI(OmegaMap_Config.clearMap, true)
+							OmegaMapFrame:RefreshAll()
 						</OnClick>
 						<OnEnter>
 							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -120,7 +121,9 @@
 						if (OmegaMap_Config.clearMap) then
 							OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
 							OmegaMapNoteFrame:Hide()
+			
 						end
+						HidePOI(OmegaMap_Config.clearMap)
 						</OnShow>
 					</Scripts>
 					<NormalTexture file="Interface\Buttons\UI-MicroButton-LFG-Up"/>
@@ -416,7 +419,7 @@
 							</EdgeSize>
 						</Backdrop>
 				</Frame>
-				<Frame name="OmegaMapNoteFrame" setAllPoints="true"/>
+				<Frame Name = "OmegaMapNoteFrame" />
 		</Frames>
 
 	</Frame>

@@ -3,6 +3,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("OmegaMap")
 local Config = OmegaMap.Config
 
 OmegaMap = LibStub("AceAddon-3.0"):NewAddon("OmegaMap", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
+OmegaMap.Plugins = {}
 
 NUM_OMEGAMAP_POI_COLUMNS = 14;
 OMEGAMAP_POI_TEXTURE_WIDTH = 256;
@@ -97,6 +98,36 @@ local function ToggleFrame(frame, value)
 
 end
 
+
+
+
+local function TogglePlugin(plugin, value, refresh)
+	local DataHandler = OmegaMap.Plugins[plugin]
+
+	if value then
+		OmegaMapFrame:AddDataProvider(DataHandler)
+	else
+		if OmegaMapFrame.dataProviders[DataHandler] then 
+			OmegaMapFrame:RemoveDataProvider(DataHandler)
+		end
+	end
+
+	if refresh then 
+		OmegaMapFrame:RefreshAll()
+	end
+end
+
+function HidePOI(value, refresh)
+
+	for plugin, _ in pairs(OmegaMap.Plugins) do
+		TogglePlugin(plugin, not value and OmegaMap.Config[plugin], false)
+	end
+	if value then
+
+	end
+end
+
+
 --ACE3 Options Constuctor
 local options = {
 	name = "OmegaMap",
@@ -110,7 +141,7 @@ local options = {
 			name = L["OMEGAMAP_OPTIONS_COORDS"] ,
 			desc = L["OMEGAMAP_OPTIONS_COORDS_TOOLTIP"],
 			type = "toggle",
-			set = function(info,val) Config.showCoords = val end,
+			set = function(info,val) Config.showCoords = val; ToggleFrame(OmegaMapCoordinates, val) end,
 			get = function(info) return Config.showCoords end,
 			width = 1.5,
 		},
@@ -233,7 +264,7 @@ local options = {
 			name = L["OMEGAMAP_OPTIONS_GATHERMATE"] ,
 			desc = L["OMEGAMAP_OPTIONS_GATHERMATE_TOOLTIP"],
 			type = "toggle",
-			set = function(info,val) Config.showGatherMate = val end,
+			set = function(info,val) Config.showGatherMate = val; TogglePlugin("showGatherMate", val, true) end,
 			get = function(info) return Config.showGatherMate end,
 			width = 1.5,
 			disabled = CheckPlugin("GatherMate2")
@@ -253,7 +284,7 @@ local options = {
 			name = L["OMEGAMAP_OPTIONS_ROUTES"] ,
 			desc = L["OMEGAMAP_OPTIONS_ROUTES_TOOLTIP"],
 			type = "toggle",
-			set = function(info,val) Config.showRoutes = val end,
+			set = function(info,val) Config.showRoutes = val; TogglePlugin("showRoutes", val, true) end,
 			get = function(info) return Config.showRoutes end,
 			width = 1.5,
 			disabled = CheckPlugin("Routes")
@@ -263,7 +294,7 @@ local options = {
 			name = L["OMEGAMAP_OPTIONS_TOMTOM"] ,
 			desc = L["OMEGAMAP_OPTIONS_TOMTOM_TOOLTIP"],
 			type = "toggle",
-			set = function(info,val) Config.showTomTom = val end,
+			set = function(info,val) Config.showTomTom = val; TogglePlugin("showTomTom", val, true) end,
 			get = function(info) return Config.showTomTom end,
 			width = 1.5,
 			disabled = CheckPlugin("TomTom")
@@ -278,32 +309,12 @@ local options = {
 			width = 1.5,
 			disabled = CheckPlugin("CT_MapMod")
 		},
-		mapnotes = {
-			order = 19,
-			name = L["OMEGAMAP_OPTIONS_MAPNOTES"] ,
-			desc = L["OMEGAMAP_OPTIONS_MAPNOTES_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showMapNotes = val end,
-			get = function(info) return Config.showMapNotes end,
-			width = 1.5,
-			disabled = CheckPlugin("MapNotes")
-		},
-		questhelper = {
-			order = 20,
-			name = L["OMEGAMAP_OPTIONS_QUESTHELPERLITE"] ,
-			desc = L["OMEGAMAP_OPTIONS_QUESTHELPERLITE_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showQuestHelperLite = val end,
-			get = function(info) return Config.showQuestHelperLite end,
-			width = 1.5,
-			disabled = CheckPlugin("QuestHelperLite")
-		},
 		handynotes = {
 			order = 21,
 			name = L["OMEGAMAP_OPTIONS_HANDYNOTES"] ,
 			desc = L["OMEGAMAP_OPTIONS_HANDYNOTES_TOOLTIP"],
 			type = "toggle",
-			set = function(info,val) Config.showHandyNotes = val end,
+			set = function(info,val) Config.showHandyNotes = val; TogglePlugin("showHandyNotes", val, true) end,
 			get = function(info) return Config.showHandyNotes end,
 			width = 1.5,
 			disabled = CheckPlugin("HandyNotes")
@@ -425,11 +436,15 @@ function OmegaMap:OnInitialize()
 	--OmegaMapHotSpotToggle()
 	ToggleFrame(OmegaMapSliderFrame, OmegaMap.Config.showAlpha)
 	ToggleFrame(OmegaMapZoomSliderFrame, OmegaMap.Config.showScale)
+	ToggleFrame(OmegaMapCoordinates, OmegaMap.Config.showCoords)
 	--ToggleFrame(OmegaMapCoordinates, OmegaMapConfig.showCoords)
 	--ToggleFrame(OmegaMapNoteFrame, OmegaMapConfig.clearMap)
 	OmegaMap:RegisterEvent("MODIFIER_STATE_CHANGED", OmegaMapSolidifyCheck)
 
 	OmegaMapMiniMap:Register("OmegaMapMini", OmegaMapLDB, Config.MMDB)
+
+	--OmegaMapFrame:AddDataProvider(OmegaMap.Plugins["GatherMate2"])
+
 end
 
 function OmegaMapSetEscPress()

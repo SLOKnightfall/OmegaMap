@@ -63,4 +63,19 @@
 			<OnHide method="OnHide"/>
 		</Scripts>
 	</Frame>
+
+		<Frame name="OM_MapNotesFrameTemplate" toplevel="true" enableMouse="true" parent="UIParent" hidden="true" frameStrata="MEDIUM" virtual="true">
+		<Size x="1004" y="689"/>
+		<Anchors>
+			<Anchor point="CENTER"/>
+		</Anchors>
+
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnUpdate method="OnUpdate"/>
+			<OnShow method="OnShow"/>
+			<OnEvent method="OnEvent"/>
+			<OnHide method="OnHide"/>
+		</Scripts>
+	</Frame>
 </Ui>
