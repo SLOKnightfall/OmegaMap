@@ -1,0 +1,423 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="OmegaMap.lua"/>
+
+	<Frame name="OmegaMapFrameTemplate" inherits="OM_MapCanvasFrameTemplate" mixin="OM_QuestLogOwnerMixin, OmegaMapMixin" enableMouse="false" virtual="true">
+		<Frames>
+			<Frame parentKey="TitleCanvasSpacerFrame">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="2" y="0"/>
+					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-3" y="-67"/>
+				</Anchors>
+			</Frame>
+			<ScrollFrame parentKey="ScrollContainer" inherits="OM_MapCanvasFrameScrollContainerTemplate" enableMouse="false">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.TitleCanvasSpacerFrame" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+					<Anchor point="BOTTOMLEFT" x="0" y="2"/>
+					<Anchor point="RIGHT" relativeKey="$parent.TitleCanvasSpacerFrame"/>
+				</Anchors>
+			</ScrollFrame>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnShow method="OnShow"/>
+			<OnEvent method="OnEvent"/>
+			<OnHide method="OnHide"/>
+		</Scripts>
+	</Frame>
+
+	<Frame name="OmegaMapFrame" inherits="OmegaMapFrameTemplate" parent="UIParent" enableMouse="false" enableKeyboard="true" clampedToScreen="true" movable="true">
+		<Frames>
+			<Frame parentKey="BlackoutFrame" frameStrata="LOW" enableMouse="true" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="UIParent"/>
+					<Anchor point="BOTTOMRIGHT" relativeTo="UIParent"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="Blackout" setAllPoints="true">
+							<Color r="0" g="0" b="0" a="1"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame parentKey="BorderFrame" inherits="PortraitFrameTemplate" frameStrata="HIGH" setAllPoints="true" hidden="true">
+				<Layers>
+					<Layer level="ARTWORK" textureSubLevel="5">
+						<Texture parentKey="Underlay" hidden="true">
+							<Color r="0" g="0" b="0" a=".5"/>
+						</Texture>
+					</Layer>
+					<Layer level="OVERLAY" textureSubLevel="1">
+						<Texture parentKey="ButtonFrameEdge" atlas="UI-OuterBorderButtonPatch" useAtlasSize="true">
+							<Anchors>
+								<Anchor point="TOPRIGHT" x="-36" y="0"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+					<Layer level="BACKGROUND" textureSubLevel="-5">
+						<Texture inherits="_UI-Frame-InnerTopTile" parentKey="InsetBorderTop">
+							<Size x="0" y="3"/>
+							<Anchors>
+								<Anchor point="TOPLEFT" x="2" y="-63"/>
+								<Anchor point="TOPRIGHT" x="-2" y="-63"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="Tutorial" inherits="MainHelpPlateButton" mixin="OmegaMapTutorialMixin">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="43" y="19"/>
+						</Anchors>
+						<Scripts>
+							<OnLoad method="OnLoad"/>
+							<OnHide method="OnHide"/>
+							<OnClick method="ToggleHelpInfo"/>
+						</Scripts>
+					</Button>
+					<Frame parentKey="MaximizeMinimizeFrame" inherits="MaximizeMinimizeButtonFrameTemplate" hidden="true">
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.CloseButton" relativePoint="LEFT" x="10" y="0"/>
+						</Anchors>
+					</Frame>
+				</Frames>
+				<Scripts>
+					<OnLoad>
+						self.onCloseCallback = function() HideParentPanel(self) end;
+					</OnLoad>
+					<OnMouseWheel function="nop" />
+				</Scripts>
+			</Frame>
+				<Button name="OmegaMapPOIToggle" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+					<Size x="25" y="55"/>
+					<Anchors>
+					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="OmegaMapFrame" x="-10" y="-60"/>
+						<!--<Anchor point="TOPLEFT" relativeTo="OmegaMapTrackQuestButton" x="-20" y="0"/> -->
+					</Anchors>
+					<Scripts>
+						<OnClick>
+							if (OmegaMap_Config.clearMap) then
+								OmegaMapPOIToggle:SetNormalTexture("Interface\\Buttons\\UI-MicroButton-LFG-Up")
+								OmegaMap_Config.clearMap = false
+								OmegaMapNoteFrame:Show()
+
+							else
+								OmegaMap_Config.clearMap = true
+								OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
+								OmegaMapNoteFrame:Hide()
+							end
+						</OnClick>
+						<OnEnter>
+							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPPOITOGGLE_TOOLTIP"], nil, nil, nil, nil, 1);
+						</OnEnter>
+						<OnLeave>
+
+							OmegaMapTooltip:Hide();
+						</OnLeave>
+						<OnShow>
+						if (OmegaMap_Config.clearMap) then
+							OmegaMapPOIToggle:SetNormalTexture("Interface\\Addons\\OmegaMap\\Icons\\off")
+							OmegaMapNoteFrame:Hide()
+						end
+						</OnShow>
+					</Scripts>
+					<NormalTexture file="Interface\Buttons\UI-MicroButton-LFG-Up"/>
+					<PushedTexture file="Interface\Buttons\UI-MicroButton-LFG-Down"/>
+					<DisabledTexture file ="Interface\Addons\OmegaMap\Icons\off"/>
+				</Button>
+				<Button name="OmegaMapLockButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+					<Size x="25" y="55"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapPOIToggle"  x="3" y="0" />
+					</Anchors>
+					<Scripts>
+						<OnShow>
+							if (OmegaMap_Config.keepInteractive) and (OmegaMap_Config.solidify) then 
+								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Up")
+								OmegaMapSolidify("On")
+							else
+								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Disabled")
+								OmegaMapSolidify("Off")
+							end
+						</OnShow>
+						<OnClick>
+							if not(OmegaMap_Config.solidify) then
+								OmegaMapSolidify("On")
+								OmegaMap_Config.solidify = true
+								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Up")
+							else
+								OmegaMapLockButton:SetNormalTexture("Interface\\Buttons\\UI-MICROBUTTON-World-Disabled")
+								OmegaMapSolidify("Off")
+								OmegaMap_Config.solidify = false
+							end
+						</OnClick>
+						<OnEnter>
+							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPLOCKBUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
+						</OnEnter>
+						<OnLeave>
+							OmegaMapTooltip:Hide();
+						</OnLeave>
+					</Scripts>
+					<NormalTexture file="Interface\Buttons\UI-MICROBUTTON-World-Up"/>
+					<PushedTexture file="Interface\Buttons\UI-MICROBUTTON-World-Down"/>
+					<DisabledTexture file="Interface\Buttons\UI-MICROBUTTON-World-Disabled"/>
+				</Button>
+				<Button name="OmegaMapOptionsButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+					<Size x="25" y="55"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapLockButton" x="3" y="0"/>
+					</Anchors>
+					<Scripts>
+						<OnClick>
+							LibStub("AceConfigDialog-3.0"):Open("OmegaMap")
+
+						</OnClick>
+						<OnEnter>
+							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_OPTION_BUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
+						</OnEnter>
+						<OnLeave>
+							OmegaMapTooltip:Hide();
+						</OnLeave>
+					</Scripts>
+					<NormalTexture file="Interface\Buttons\UI-MicroButton-Help-Up"/>
+					<PushedTexture file="Interface\Buttons\UI-MicroButton-Help-Down"/>
+				</Button>
+				<Button name="OmegaMapEncounterJournalButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+					<Size x="25" y="55"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapOptionsButton" x="3" y="0"/>
+					</Anchors>
+					<Scripts>
+						<OnClick>
+							if not EncounterJournal or not EncounterJournal:IsShown() then
+								if not ToggleEncounterJournal() then
+									return;
+								end
+							end
+						</OnClick>
+						<OnEnter>
+							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_EJ_TOOLTIP"], nil, nil, nil, nil, 1);
+						</OnEnter>
+						<OnLeave>
+							OmegaMapTooltip:Hide();
+						</OnLeave>
+					</Scripts>
+					<NormalTexture file="Interface\Buttons\UI-MicroButton-EJ-Up"/>
+					<PushedTexture file="Interface\Buttons\UI-MicroButton-EJ-Down"/>
+				</Button>
+				<Slider name="OmegaMapSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
+							defaultValue="0.3" movable="true" parent="OmegaMapFrame">
+						<Size x="16" y="128"/>
+						<Anchors>
+							<Anchor point="CENTER" relativeTo="OmegaMapFrame" relativePoint="BOTTOMLEFT" x="25" y="450"/>
+						</Anchors>
+						<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+							<EdgeSize>
+								<AbsValue val="8"/>
+							</EdgeSize>
+							<TileSize>
+								<AbsValue val="8"/>
+							</TileSize>
+							<BackgroundInsets>
+								<AbsInset left="3" right="3" top="6" bottom="6"/>
+							</BackgroundInsets>
+						</Backdrop>
+						<Layers>
+							<Layer level="ARTWORK">
+								<FontString name="$parentText" inherits="GameFontNormalSmall">
+									<Anchors>
+										<Anchor point="BOTTOM" relativePoint="TOP"/>
+									</Anchors>
+								</FontString>
+								<FontString inherits="GameFontHighlightSmall" text="0%">
+									<Anchors>
+										<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="2" y="3"/>
+									</Anchors>
+								</FontString>
+								<FontString inherits="GameFontHighlightSmall" text="100%">
+									<Anchors>
+										<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-2" y="3"/>
+									</Anchors>
+								</FontString>
+								<FontString inherits="GameFontHighlightSmall" text="Alpha">
+									<Anchors>
+										<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="15"/>
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Frame name="OmegaMapSliderMovementFrame" hidden="true" setAllPoints="true" enableMouse="false" movable="true">
+								<Scripts>
+									<OnShow>
+										self:SetFrameLevel( OmegaMapSliderFrame:GetFrameLevel() + 1 );
+									</OnShow>
+									<OnMouseDown>
+										OmegaMapSliderFrame:StartMoving();
+										OmegaMapSliderFrame.isMoving = true;
+									</OnMouseDown>
+									<OnMouseUp>
+										<!--AM_RememberSliderPos();
+										OmegaMapSliderFrame:StopMovingOrSizing();
+										OmegaMapSliderFrame.isMoving = false;
+										if ( OmegaMapSliderFrame.Adopt ) then
+											OmegaMapSliderFrame:SetUserPlaced(false);
+											AM_SetSliderPos();
+											OmegaMapSliderFrame.Adopt = nil;
+										else
+											OmegaMapSliderFrame:SetUserPlaced(true);
+										end -->
+									</OnMouseUp>
+								</Scripts>
+							</Frame>
+						</Frames>
+						<Scripts>
+							<OnShow>
+								self:SetFrameLevel( OmegaMapFrame:GetFrameLevel() + 100 );
+							</OnShow>
+							<OnLoad>
+								OmegaMapSliderFrame:SetMinMaxValues(0,1);
+								OmegaMapSliderFrame:SetValueStep(0.01);
+								OmegaMapSliderFrame:SetValue(0.2);
+							</OnLoad>
+							<OnValueChanged>
+								OmegaMapFrame_ChangeOpacity();
+							</OnValueChanged>
+							<OnMouseUp>
+								
+							</OnMouseUp>
+						</Scripts>
+						<ThumbTexture file="Interface\Buttons\UI-SliderBar-Button-Vertical">
+							<Size x="32" y="32"/>
+						</ThumbTexture>
+					</Slider>
+				<Slider name="OmegaMapZoomSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
+						defaultValue="0.3" movable="true" parent="OmegaMapFrame">
+					<Size x="16" y="128"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="OmegaMapSliderFrame" relativePoint="BOTTOMLEFT" x="0" y="-25"/>
+					</Anchors>
+					<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+						<EdgeSize>
+							<AbsValue val="8"/>
+						</EdgeSize>
+						<TileSize>
+							<AbsValue val="8"/>
+						</TileSize>
+						<BackgroundInsets>
+							<AbsInset left="3" right="3" top="6" bottom="6"/>
+						</BackgroundInsets>
+					</Backdrop>
+					<Layers>
+						<Layer level="ARTWORK">
+							<FontString name="$parentText" inherits="GameFontNormalSmall">
+								<Anchors>
+									<Anchor point="BOTTOM" relativePoint="TOP"/>
+								</Anchors>
+							</FontString>
+							<FontString inherits="GameFontHighlightSmall" text="125%">
+								<Anchors>
+									<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="2" y="3"/>
+								</Anchors>
+							</FontString>
+							<FontString inherits="GameFontHighlightSmall" text="50%">
+								<Anchors>
+									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-2" y="3"/>
+								</Anchors>
+							</FontString>
+							<FontString inherits="GameFontHighlightSmall" text="Scale">
+								<Anchors>
+									<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="15"/>
+								</Anchors>
+							</FontString>
+							
+						</Layer>
+					</Layers>
+					<Scripts>
+						<OnShow>
+							self:SetFrameLevel( OmegaMapFrame:GetFrameLevel() + 100 );
+							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
+						</OnShow>
+						<OnLoad>
+							OmegaMapZoomSliderFrame:SetMinMaxValues(.50,1.25);
+							OmegaMapZoomSliderFrame:SetValueStep(0.01);
+							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
+						</OnLoad>
+						<OnValueChanged>
+							OmegaMap_Config.scale = OmegaMapZoomSliderFrame:GetValue();
+						</OnValueChanged>
+						<OnMouseUp>
+							OmegaMap_SetScale(OmegaMapFrame);
+
+						</OnMouseUp>
+					</Scripts>
+					<ThumbTexture file="Interface\Buttons\UI-SliderBar-Button-Vertical">
+						<Size x="32" y="32"/>
+					</ThumbTexture>
+				</Slider>
+				<Frame name="OmegaMapCoordinates" movable="true" parent="OmegaMapFrame">
+						<Size x="90" y="30"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeTo="OmegaMapFrame" relativePoint="BOTTOMLEFT"  x="25" y="75"/>
+						</Anchors>
+						<Layers>
+							<Layer level="ARTWORK">
+								<FontString name="OmegaMapLocationText" inherits="GameFontNormalLarge" text="Player" hidden="false" justifyH="CENTER" justifyV="CENTER" >
+									<Color r="1.0" g="1.0" b="1.0"/>
+									<Anchors>
+										<Anchor point="CENTER" x="0" y="0"/>
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Frame name="OmegaMapCoordinatesMovementFrame" hidden="true" setAllPoints="true" enableMouse="false" movable="true">
+								<Scripts>
+									<OnShow>
+										self:SetFrameLevel(OmegaMapCoordinates:GetFrameLevel() + 1);
+									</OnShow>
+									<OnMouseDown>
+										OmegaMapCoordinatesisMoving = true;
+										if ( OmegaMapCoordinates.isMoving ) then
+											OmegaMapCoordinates:StartMoving();
+										end
+									</OnMouseDown>
+									<OnMouseUp>
+										if ( OmegaMapCoordinates.isMoving ) then
+											OmegaMapCoordinates:StopMovingOrSizing();
+											OmegaMapCoordinates.isMoving = false;
+										end
+									</OnMouseUp>
+								</Scripts>
+							</Frame>
+						</Frames>
+						<Scripts>
+						<OnShow>
+							self:SetFrameLevel( OmegaMapFrame:GetFrameLevel() +  100);
+						</OnShow>
+							<OnUpdate>
+								OmegaMapCoordsOnUpdate(self, elapsed);
+							</OnUpdate>
+						</Scripts>
+						<Backdrop bgFile="Interface\TutorialFrame\TutorialFrameBackground" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+							<BackgroundInsets>
+								<AbsInset left="5" right="5" top="5" bottom="5"/>
+							</BackgroundInsets>
+							<TileSize>
+								<AbsValue val="16"/>
+							</TileSize>
+							<EdgeSize>
+								<AbsValue val="16"/>
+							</EdgeSize>
+						</Backdrop>
+				</Frame>
+				<Frame name="OmegaMapNoteFrame" setAllPoints="true"/>
+		</Frames>
+
+	</Frame>
+</Ui>
