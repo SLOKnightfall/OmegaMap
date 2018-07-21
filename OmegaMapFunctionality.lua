@@ -358,7 +358,7 @@ local defaults = {
 		showAlpha = true,		--Show transparency slider
 		alphaLocX = 60,
 		alphaLocY = 175,
-		player_scale = 100,
+		player_scale = 1,
 	--OmegaMap Option Menu Settings
 		showExteriors = true,	--Show dungeon exteriros when available
 		showBattlegrounds = true,	--Show alt battleground maps when available
