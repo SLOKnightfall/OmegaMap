@@ -376,12 +376,16 @@ end
 -- ============================================ QUEST LOG ===============================================================================
 
 function OmegaMapMixin:AttachQuestLog()
-	--QuestMapFrame:SetParent(self);
-	--QuestMapFrame:SetFrameStrata("HIGH");
-	--QuestMapFrame:ClearAllPoints();
-	--QuestMapFrame:SetPoint("TOPRIGHT", -6, -20);
-	--QuestMapFrame:Hide();
-	self.QuestLog = QuestMapFrame;
+	OM_QuestMapFrame:SetParent(self);
+
+	OM_QuestMapFrame:SetFrameStrata("HIGH");
+	OM_QuestMapFrame:ClearAllPoints();
+	OM_QuestMapFrame:SetPoint("TOPRIGHT", self, "TOPRIGHT", -6, -25);
+	OM_QuestMapFrame:SetPoint("BOTTOMRIGHT",self,"BOTTOMRIGHT", -6, 50);
+	OM_QuestMapFrame:Hide();
+	--OM_QuestMapFrame:Show();
+
+	self.QuestLog = OM_QuestMapFrame;
 end
 
 function OmegaMapMixin:SetHighlightedQuestID(questID)
@@ -412,13 +416,12 @@ function ToggleOMQuestLog()
 end
 
 function ToggleOmegaMap()
-	OmegaMapFrame:HandleUserActionToggleSelf();
+	--OmegaMapFrame:HandleUserActionToggleSelf();
 		if OmegaMapFrame:IsShown() then	
-		--OmegaMapFrame:Hide();
+		OmegaMapFrame:Hide();
 	else
-		--OmegaMapFrame:Show();
+		OmegaMapFrame:Show();
 	end
-	print(OmegaMapFrame.unitPinSizes)
 end
 
 function OpenOmegaMap(mapID)

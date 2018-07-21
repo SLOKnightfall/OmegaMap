@@ -189,30 +189,6 @@
 					<NormalTexture file="Interface\Buttons\UI-MicroButton-Help-Up"/>
 					<PushedTexture file="Interface\Buttons\UI-MicroButton-Help-Down"/>
 				</Button>
-				<Button name="OmegaMapEncounterJournalButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
-					<Size x="25" y="55"/>
-					<Anchors>
-						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapOptionsButton" x="3" y="0"/>
-					</Anchors>
-					<Scripts>
-						<OnClick>
-							if not EncounterJournal or not EncounterJournal:IsShown() then
-								if not ToggleEncounterJournal() then
-									return;
-								end
-							end
-						</OnClick>
-						<OnEnter>
-							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_EJ_TOOLTIP"], nil, nil, nil, nil, 1);
-						</OnEnter>
-						<OnLeave>
-							OmegaMapTooltip:Hide();
-						</OnLeave>
-					</Scripts>
-					<NormalTexture file="Interface\Buttons\UI-MicroButton-EJ-Up"/>
-					<PushedTexture file="Interface\Buttons\UI-MicroButton-EJ-Down"/>
-				</Button>
 				<Slider name="OmegaMapSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
 							defaultValue="0.3" movable="true" parent="OmegaMapFrame">
 						<Size x="16" y="128"/>

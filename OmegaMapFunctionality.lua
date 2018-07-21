@@ -34,7 +34,6 @@ local OmegaMapLDB = LibStub("LibDataBroker-1.1"):NewDataObject("OmegaMapMini", {
 			ToggleOmegaMap()
 		elseif (button == "MiddleButton") then
 			Config.showHotSpot = not Config.showHotSpot
-			print(Config.showHotSpot )
 			OmegaMap:HotSpotToggle(Config.showHotSpot)
 		end
 	end,})
@@ -118,7 +117,6 @@ local function TogglePlugin(plugin, value, refresh)
 end
 
 function HidePOI(value, refresh)
-
 	for plugin, _ in pairs(OmegaMap.Plugins) do
 		TogglePlugin(plugin, not value and OmegaMap.Config[plugin], false)
 	end
@@ -127,14 +125,15 @@ function HidePOI(value, refresh)
 	end
 end
 function setplayerscale()
+	OM_groupMembersDataProvider.unitPinSizes = {
+		player = 27 * Config.player_scale,
+		party = 11 * Config.player_scale,
+		raid = 11 * 0.75 * Config.player_scale;
 
-		OM_groupMembersDataProvider.unitPinSizes = {
-			player = 27 * Config.player_scale,
-			party = 11 * Config.player_scale,
-			raid = 11 * 0.75 * Config.player_scale;
-		};
-
-
+	};
+	if OmegaMapFrame:IsVisible() then 
+		OmegaMapFrame:RefreshAll(true)
+	end
 end
 
 --ACE3 Options Constuctor
@@ -455,7 +454,7 @@ function OmegaMap:OnInitialize()
 	--OmegaMapOptionsFrame_init();
 	OmegaMapSetEscPress()
 	--OmegaMapMiniMap_Register()
-	--OmegaMapHotSpotToggle()
+	
 	ToggleFrame(OmegaMapSliderFrame, OmegaMap.Config.showAlpha)
 	ToggleFrame(OmegaMapZoomSliderFrame, OmegaMap.Config.showScale)
 	ToggleFrame(OmegaMapCoordinates, OmegaMap.Config.showCoords)
@@ -467,6 +466,8 @@ function OmegaMap:OnInitialize()
 
 	--OmegaMapFrame:AddDataProvider(OmegaMap.Plugins["GatherMate2"])
 	OmegaMap:HotSpotInit()
+	OmegaMap:HotSpotToggle(Config.showHotSpot)
+	setplayerscale()
 
 end
 

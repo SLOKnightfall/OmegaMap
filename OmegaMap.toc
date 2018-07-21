@@ -26,11 +26,13 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #Libs\DropDownMenu\UIDropDownMenuTemplates.xml
 
 #Core Files
+QuestMapFrame.xml
+MapCanvas\MapCanvas.xml
+
 mixins.lua
 localization.en.lua
 OmegaMapFunctionality.lua
 
-MapCanvas\MapCanvas.xml
 MapTexturePreloader.lua
 OM_WorldQuestDataProvider.xml
 OM_InvasionDataProvider.xml
@@ -38,6 +40,7 @@ OmegaMapTemplates.xml
 OmegaMap.xml
 OmegaMapTooltip.xml
 OmegaMapHotSpot.lua
+
 
 #Addon Plugins
 Plugins\HereBeDragons-Pins.lua
