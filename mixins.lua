@@ -1,5 +1,7 @@
 OM_QuestLogOwnerMixin = CreateFromMixins(QuestLogOwnerMixin);
 
+
+
 local DISPLAY_STATE_CLOSED = 1;
 local DISPLAY_STATE_OPEN_MINIMIZED_NO_LOG = 2;
 local DISPLAY_STATE_OPEN_MINIMIZED_WITH_LOG = 3;

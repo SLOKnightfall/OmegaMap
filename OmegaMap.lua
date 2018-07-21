@@ -165,6 +165,7 @@ function OmegaMapMixin:AddStandardDataProviders()
 
 	local groupMembersDataProvider = CreateFromMixins(GroupMembersDataProviderMixin);
 	self:AddDataProvider(groupMembersDataProvider);
+	OM_groupMembersDataProvider = groupMembersDataProvider
 
 	local worldQuestDataProvider = CreateFromMixins(OmegaMap_WorldQuestDataProviderMixin);
 	worldQuestDataProvider:SetMatchWorldMapFilters(true);
@@ -417,6 +418,7 @@ function ToggleOmegaMap()
 	else
 		--OmegaMapFrame:Show();
 	end
+	print(OmegaMapFrame.unitPinSizes)
 end
 
 function OpenOmegaMap(mapID)

@@ -126,7 +126,16 @@ function HidePOI(value, refresh)
 
 	end
 end
+function setplayerscale()
 
+		OM_groupMembersDataProvider.unitPinSizes = {
+			player = 27 * Config.player_scale,
+			party = 11 * Config.player_scale,
+			raid = 11 * 0.75 * Config.player_scale;
+		};
+
+
+end
 
 --ACE3 Options Constuctor
 local options = {
@@ -252,6 +261,19 @@ local options = {
 			max = 125,
 			step = 1,
 		},
+		player_scale = {
+			order = 12,
+			name = L["OMEGAMAP_OPTIONS_SCALE"],
+			desc = L["OMEGAMAP_OPTIONS_SCALE_TOOLTIP"],
+			type = "select",
+			type = "range",
+			set = function(info,val) Config.player_scale = val/100; setplayerscale();  end,
+			get = function(info) return Config.player_scale*100 end,
+			width = "double",
+			min = 100,
+			max = 200,
+			step = 1,
+		},
 		plugins_Header = {
 			order = 13,
 			name = "Plugins",
@@ -337,6 +359,7 @@ local defaults = {
 		showAlpha = true,		--Show transparency slider
 		alphaLocX = 60,
 		alphaLocY = 175,
+		player_scale = 100,
 	--OmegaMap Option Menu Settings
 		showExteriors = true,	--Show dungeon exteriros when available
 		showBattlegrounds = true,	--Show alt battleground maps when available
@@ -753,3 +776,4 @@ function OmegaMap_SetPosition()
 	OmegaMapFrame:SetPoint(currentMapInfo.point, UIParent, currentMapInfo.relativePoint, currentMapInfo.xOffset, currentMapInfo.yOffset)
 	OmegaMapPosition.LastType  = inBG  --Stores info incase of relogging during a BG
 end
+
