@@ -13,7 +13,11 @@ local pinsHandler = {}
 local db = HandyNotes.db.profile
 
 
-local hh = HandyNotes.plugins["HandyNotes"] 
+local hh = HandyNotes.plugins["HandyNotes"]
+
+local HBD = LibStub("HereBeDragons-2.0")
+local HBDPins = LibStub("HereBeDragons-Pins-2.0")
+local HBDMigrate = LibStub("HereBeDragons-Migrate")
 
 --[[ Handy Notes WorldMap Pin ]]--
 HandyNotesOmegaMapPinMixin = CreateFromMixins(HandyNotesWorldMapPinMixin)
@@ -34,6 +38,12 @@ function HandyNotes:UpdateWorldMapPlugin(pluginName)
 		OM_HandyNotesWorldMapDataProvider:RefreshPlugin(pluginName)
 	end
 	
+end
+
+local function LegacyNodeIterator(t, state)
+	local coord, mapFile2, iconpath, scale, alpha, level2 = t.iter(t.data, state)
+	local uiMapID = HBDMigrate:GetUIMapIDFromMapFile(mapFile2 or t.mapFile, level2 or t.level)
+	return coord, uiMapID, iconpath, scale, alpha
 end
 
 local emptyTbl = {}

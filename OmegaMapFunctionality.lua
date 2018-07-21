@@ -73,7 +73,7 @@ function OmegaMapLDB:Toggle(value)
 end
 
 
-local OMEGAMAP_DEFAULT_SCALE = .75;
+local OMEGAMAP_DEFAULT_SCALE = 1.0;
 
 
 --QUESTFRAME_MINHEIGHT = 34;
@@ -144,200 +144,208 @@ local options = {
 	childGroups = "tab",
 	inline = true,
 	args = {
-		showCoords = {
-			order = 1,
-			name = L["OMEGAMAP_OPTIONS_COORDS"] ,
-			desc = L["OMEGAMAP_OPTIONS_COORDS_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showCoords = val; ToggleFrame(OmegaMapCoordinates, val) end,
-			get = function(info) return Config.showCoords end,
-			width = 1.5,
-		},
-		showAlpha = {
-			order = 2,
-			name = L["OMEGAMAP_OPTIONS_ALPHA"] ,
-			desc = L["OMEGAMAP_OPTIONS_ALPHA_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showAlpha = val; ToggleFrame(OmegaMapSliderFrame, val) end,
-			get = function(info) return Config.showAlpha end,
-			width = 1.5,
-		},
-		showExteriors = {
-			order = 3,
-			name = L["OMEGAMAP_OPTIONS_ALTMAP"] ,
-			desc = L["OMEGAMAP_OPTIONS_ALTMAP_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showExteriors = val end,
-			get = function(info) return Config.showExteriors end,
-			width = 1.5,
-			disabled = true,
-		},
-		showBattlegrounds = {
-			order = 4,
-			name = L["OMEGAMAP_OPTIONS_BG"] ,
-			desc = L["OMEGAMAP_OPTIONS_BG_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showBattlegrounds = val end,
-			get = function(info) return Config.showBattlegrounds end,
-			width = 1.5,
-			disabled = true,
-		},
-		escapeClose = {
-			order = 5,
-			name = L["OMEGAMAP_OPTIONS_ESCAPECLOSE"] ,
-			desc = L["OMEGAMAP_OPTIONS_ESCAPECLOSE_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.escapeClose = val; OmegaMapSetEscPress(); end,
-			get = function(info) return Config.escapeClose end,
-			width = 1.5,
-		},
-		showMiniMapIcon = {
-			order = 6,
-			name = L["OMEGAMAP_OPTIONS_MINIMAP"] ,
-			desc = L["OMEGAMAP_OPTIONS_MINIMAP_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showMiniMapIcon = val; OmegaMapLDB:Toggle(val); end,
-			get = function(info) return Config.showMiniMapIcon end,
-			width = 1.5,
-		},
-		showHotSpot = {
-			order = 7,
-			name = L["OMEGAMAP_OPTIONS_HOTSPOT"] ,
-			desc = L["OMEGAMAP_OPTIONS_HOTSPOT_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showHotSpot = val; OmegaMap:HotSpotToggle(val) end,
-			get = function(info) return Config.showHotSpot end,
-			width = 1.5,
-		},
-		showCompactMode = {
-			order = 8,
-			name = L["OMEGAMAP_OPTIONS_COMPACT"] ,
-			desc = L["OMEGAMAP_OPTIONS_COMPACT_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showCompactMode = val end,
-			get = function(info) return Config.showCompactMode end,
-			width = 1.5,
-			disabled = true,
-		},
-		keepInteractive = {
-			order = 9,
-			name = L["OMEGAMAP_OPTIONS_INTERACTIVE"] ,
-			desc = L["OMEGAMAP_OPTIONS_INTERACTIVE_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.keepInteractive = val end,
-			get = function(info) return Config.keepInteractive end,
-			width = 1.5,
-		},
-		interactiveHotKey = {
-			order = 10,
-			name = "Select Map Interaction Hotkey",
-			desc = nil,
-			type = "select",
-			set = function(info,val) Config.interactiveHotKey = val end,
-			get = function(info) return Config.interactiveHotKey end,
-			width = 1.5,
-			values = {["None"] = "None", ["Shift"] = "Shift", ["Ctrl"] = "Ctrl", ["Alt"] = "Alt"}
-		},
-		showScale = {
-			order = 11,
-			name = L["OMEGAMAP_OPTIONS_SCALESLIDER"] ,
-			desc = L["OMEGAMAP_OPTIONS_SCALESLIDER_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showScale = val; ToggleFrame(OmegaMapZoomSliderFrame, val) end,
-			get = function(info) return Config.showScale end,
-			width = 1.5,
-		},
-		scale = {
-			order = 12,
-			name = L["OMEGAMAP_OPTIONS_SCALE"],
-			desc = L["OMEGAMAP_OPTIONS_SCALE_TOOLTIP"],
-			type = "select",
-			type = "range",
-			set = function(info,val) Config.scale = val/100; OmegaMap_SetScale(OmegaMapFrame); OmegaMapZoomSliderFrame:SetValue(Config.scale); end,
-			get = function(info) return Config.scale*100 end,
-			width = "double",
-			min = 50,
-			max = 125,
-			step = 1,
-		},
-		player_scale = {
-			order = 12,
-			name = L["OMEGAMAP_OPTIONS_SCALE"],
-			desc = L["OMEGAMAP_OPTIONS_SCALE_TOOLTIP"],
-			type = "select",
-			type = "range",
-			set = function(info,val) Config.player_scale = val/100; setplayerscale();  end,
-			get = function(info) return Config.player_scale*100 end,
-			width = "double",
-			min = 100,
-			max = 200,
-			step = 1,
-		},
-		plugins_Header = {
-			order = 13,
-			name = "Plugins",
-			type = "header",
-			width = "full",
-		},
-		gathermate = {
-			order = 14,
-			name = L["OMEGAMAP_OPTIONS_GATHERMATE"] ,
-			desc = L["OMEGAMAP_OPTIONS_GATHERMATE_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showGatherMate = val; TogglePlugin("showGatherMate", val, true) end,
-			get = function(info) return Config.showGatherMate end,
-			width = 1.5,
-			disabled = CheckPlugin("GatherMate2")
-		},
-		gatherer = {
-			order = 15,
-			name = L["OMEGAMAP_OPTIONS_GATHERER"] ,
-			desc = L["OMEGAMAP_OPTIONS_GATHERER_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showGatherer = val end,
-			get = function(info) return Config.showGatherer end,
-			width = 1.5,
-			disabled = CheckPlugin("Gatherer")
-		},
-		routes = {
-			order = 16,
-			name = L["OMEGAMAP_OPTIONS_ROUTES"] ,
-			desc = L["OMEGAMAP_OPTIONS_ROUTES_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showRoutes = val; TogglePlugin("showRoutes", val, true) end,
-			get = function(info) return Config.showRoutes end,
-			width = 1.5,
-			disabled = CheckPlugin("Routes")
-		},
-		tomtom = {
-			order = 17,
-			name = L["OMEGAMAP_OPTIONS_TOMTOM"] ,
-			desc = L["OMEGAMAP_OPTIONS_TOMTOM_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showTomTom = val; TogglePlugin("showTomTom", val, true) end,
-			get = function(info) return Config.showTomTom end,
-			width = 1.5,
-			disabled = CheckPlugin("TomTom")
-		},
-		ctmap = {
-			order = 18,
-			name = L["OMEGAMAP_OPTIONS_CTMAP"] ,
-			desc = L["OMEGAMAP_OPTIONS_CTMAP_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showCTMap = val end,
-			get = function(info) return Config.showCTMap end,
-			width = 1.5,
-			disabled = CheckPlugin("CT_MapMod")
-		},
-		handynotes = {
-			order = 21,
-			name = L["OMEGAMAP_OPTIONS_HANDYNOTES"] ,
-			desc = L["OMEGAMAP_OPTIONS_HANDYNOTES_TOOLTIP"],
-			type = "toggle",
-			set = function(info,val) Config.showHandyNotes = val; TogglePlugin("showHandyNotes", val, true) end,
-			get = function(info) return Config.showHandyNotes end,
-			width = 1.5,
-			disabled = CheckPlugin("HandyNotes")
+		settings={
+			name = "Options",
+			type = "group",
+			--inline = true,
+			order = 0,
+			args={
+				showCoords = {
+					order = 1,
+					name = L["OMEGAMAP_OPTIONS_COORDS"] ,
+					desc = L["OMEGAMAP_OPTIONS_COORDS_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showCoords = val; ToggleFrame(OmegaMapCoordinates, val) end,
+					get = function(info) return Config.showCoords end,
+					width = 1.5,
+				},
+				showAlpha = {
+					order = 2,
+					name = L["OMEGAMAP_OPTIONS_ALPHA"] ,
+					desc = L["OMEGAMAP_OPTIONS_ALPHA_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showAlpha = val; ToggleFrame(OmegaMapSliderFrame, val) end,
+					get = function(info) return Config.showAlpha end,
+					width = 1.5,
+				},
+				showExteriors = {
+					order = 3,
+					name = L["OMEGAMAP_OPTIONS_ALTMAP"] ,
+					desc = L["OMEGAMAP_OPTIONS_ALTMAP_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showExteriors = val end,
+					get = function(info) return Config.showExteriors end,
+					width = 1.5,
+					disabled = true,
+				},
+				showBattlegrounds = {
+					order = 4,
+					name = L["OMEGAMAP_OPTIONS_BG"] ,
+					desc = L["OMEGAMAP_OPTIONS_BG_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showBattlegrounds = val end,
+					get = function(info) return Config.showBattlegrounds end,
+					width = 1.5,
+					disabled = true,
+				},
+				escapeClose = {
+					order = 5,
+					name = L["OMEGAMAP_OPTIONS_ESCAPECLOSE"] ,
+					desc = L["OMEGAMAP_OPTIONS_ESCAPECLOSE_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.escapeClose = val; OmegaMapSetEscPress(); end,
+					get = function(info) return Config.escapeClose end,
+					width = 1.5,
+				},
+				showMiniMapIcon = {
+					order = 6,
+					name = L["OMEGAMAP_OPTIONS_MINIMAP"] ,
+					desc = L["OMEGAMAP_OPTIONS_MINIMAP_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showMiniMapIcon = val; OmegaMapLDB:Toggle(val); end,
+					get = function(info) return Config.showMiniMapIcon end,
+					width = 1.5,
+				},
+				showHotSpot = {
+					order = 7,
+					name = L["OMEGAMAP_OPTIONS_HOTSPOT"] ,
+					desc = L["OMEGAMAP_OPTIONS_HOTSPOT_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showHotSpot = val; OmegaMap:HotSpotToggle(val) end,
+					get = function(info) return Config.showHotSpot end,
+					width = 1.5,
+				},
+				showCompactMode = {
+					order = 8,
+					name = L["OMEGAMAP_OPTIONS_COMPACT"] ,
+					desc = L["OMEGAMAP_OPTIONS_COMPACT_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showCompactMode = val end,
+					get = function(info) return Config.showCompactMode end,
+					width = 1.5,
+					disabled = true,
+				},
+				keepInteractive = {
+					order = 9,
+					name = L["OMEGAMAP_OPTIONS_INTERACTIVE"] ,
+					desc = L["OMEGAMAP_OPTIONS_INTERACTIVE_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.keepInteractive = val end,
+					get = function(info) return Config.keepInteractive end,
+					width = 1.5,
+				},
+				interactiveHotKey = {
+					order = 10,
+					name = "Select Map Interaction Hotkey",
+					desc = nil,
+					type = "select",
+					set = function(info,val) Config.interactiveHotKey = val end,
+					get = function(info) return Config.interactiveHotKey end,
+					width = 1.5,
+					values = {["None"] = "None", ["Shift"] = "Shift", ["Ctrl"] = "Ctrl", ["Alt"] = "Alt"}
+				},
+				showScale = {
+					order = 11,
+					name = L["OMEGAMAP_OPTIONS_SCALESLIDER"] ,
+					desc = L["OMEGAMAP_OPTIONS_SCALESLIDER_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showScale = val; ToggleFrame(OmegaMapZoomSliderFrame, val) end,
+					get = function(info) return Config.showScale end,
+					width = 1.5,
+				},
+				scale = {
+					order = 12,
+					name = L["OMEGAMAP_OPTIONS_SCALE"],
+					desc = L["OMEGAMAP_OPTIONS_SCALE_TOOLTIP"],
+					type = "select",
+					type = "range",
+					set = function(info,val) Config.scale = val/100; OmegaMap_SetScale(OmegaMapFrame); OmegaMapZoomSliderFrame:SetValue(Config.scale); end,
+					get = function(info) return Config.scale*100 end,
+					width = "double",
+					min = 50,
+					max = 125,
+					step = 1,
+				},
+				player_scale = {
+					order = 12,
+					name = L["OMEGAMAP_OPTIONS_SCALE"],
+					desc = L["OMEGAMAP_OPTIONS_SCALE_TOOLTIP"],
+					type = "select",
+					type = "range",
+					set = function(info,val) Config.player_scale = val/100; setplayerscale();  end,
+					get = function(info) return Config.player_scale*100 end,
+					width = "double",
+					min = 100,
+					max = 200,
+					step = 1,
+				},
+				plugins_Header = {
+					order = 13,
+					name = "Plugins",
+					type = "header",
+					width = "full",
+				},
+				gathermate = {
+					order = 14,
+					name = L["OMEGAMAP_OPTIONS_GATHERMATE"] ,
+					desc = L["OMEGAMAP_OPTIONS_GATHERMATE_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showGatherMate = val; TogglePlugin("showGatherMate", val, true) end,
+					get = function(info) return Config.showGatherMate end,
+					width = 1.5,
+					disabled = CheckPlugin("GatherMate2")
+				},
+				gatherer = {
+					order = 15,
+					name = L["OMEGAMAP_OPTIONS_GATHERER"] ,
+					desc = L["OMEGAMAP_OPTIONS_GATHERER_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showGatherer = val end,
+					get = function(info) return Config.showGatherer end,
+					width = 1.5,
+					disabled = CheckPlugin("Gatherer")
+				},
+				routes = {
+					order = 16,
+					name = L["OMEGAMAP_OPTIONS_ROUTES"] ,
+					desc = L["OMEGAMAP_OPTIONS_ROUTES_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showRoutes = val; TogglePlugin("showRoutes", val, true) end,
+					get = function(info) return Config.showRoutes end,
+					width = 1.5,
+					disabled = CheckPlugin("Routes")
+				},
+				tomtom = {
+					order = 17,
+					name = L["OMEGAMAP_OPTIONS_TOMTOM"] ,
+					desc = L["OMEGAMAP_OPTIONS_TOMTOM_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showTomTom = val; TogglePlugin("showTomTom", val, true) end,
+					get = function(info) return Config.showTomTom end,
+					width = 1.5,
+					disabled = CheckPlugin("TomTom")
+				},
+				ctmap = {
+					order = 18,
+					name = L["OMEGAMAP_OPTIONS_CTMAP"] ,
+					desc = L["OMEGAMAP_OPTIONS_CTMAP_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showCTMap = val end,
+					get = function(info) return Config.showCTMap end,
+					width = 1.5,
+					disabled = CheckPlugin("CT_MapMod")
+				},
+				handynotes = {
+					order = 21,
+					name = L["OMEGAMAP_OPTIONS_HANDYNOTES"] ,
+					desc = L["OMEGAMAP_OPTIONS_HANDYNOTES_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showHandyNotes = val; TogglePlugin("showHandyNotes", val, true) end,
+					get = function(info) return Config.showHandyNotes end,
+					width = 1.5,
+					disabled = CheckPlugin("HandyNotes")
+				},
+			},
 		},
 	},	
 }
@@ -433,18 +441,35 @@ function OmegaMap_SetScale(self)
 
 end
 
+---Updates Profile after changes
+function OmegaMap:RefreshConfig()
+	OmegaMap.Config  = self.db.profile
+	OmegaMap_Config = self.db.profile
+	Config = self.db.profile
+end
+
 function OmegaMap:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfig", defaults, true)
+	options.args.profiles  = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+	LibStub("AceConfigRegistry-3.0"):ValidateOptionsTable(options, "OmegaMap")
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("OmegaMap", options)
+	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("OmegaMap", "OmegaMap")
+	self.db.RegisterCallback(OmegaMap, "OnProfileChanged", "RefreshConfig")
+	self.db.RegisterCallback(OmegaMap, "OnProfileCopied", "RefreshConfig")
+	self.db.RegisterCallback(OmegaMap, "OnProfileReset", "RefreshConfig")
+
+
+	OmegaMapFrame.ScrollContainer:EnableMouse(false)
 	OmegaMap.Config  = self.db.profile
 	OmegaMap_Config = self.db.profile
 	Config = self.db.profile
 
-	LibStub("AceConfigRegistry-3.0"):ValidateOptionsTable(options, "OmegaMap")
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("OmegaMap", options)
 
-	OmegaMapFrame.ScrollContainer:EnableMouse(false)
 
-	self.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("OmegaMap", "OmegaMap")
+
+
+
+
 
 	OmegaMapSliderFrame:SetValue(OmegaMap.Config.opacity);
 	--OmegaMapQuestShowObjectives_Toggle();
