@@ -441,15 +441,41 @@ function OmegaMap_SetScale(self)
 
 end
 
+
+
+
+
+local function setOptionSettings()
+	OmegaMapSliderFrame:SetValue(OmegaMap.Config.opacity);
+	--OmegaMapQuestShowObjectives_Toggle();
+	OmegaMap_SetScale(OmegaMapFrame)
+	--OmegaMapFrame:SetScale(OmegaMap.Config.scale);
+	--OmegaMapFrame.ScrollContainer.Child:SetScale( OmegaMap.Config.scale ); 
+	OmegaMapSetEscPress()
+	--OmegaMapMiniMap_Register()
+	
+	ToggleFrame(OmegaMapSliderFrame, OmegaMap.Config.showAlpha)
+	ToggleFrame(OmegaMapZoomSliderFrame, OmegaMap.Config.showScale)
+	ToggleFrame(OmegaMapCoordinates, OmegaMap.Config.showCoords)
+	--ToggleFrame(OmegaMapCoordinates, OmegaMapConfig.showCoords)
+	--ToggleFrame(OmegaMapNoteFrame, OmegaMapConfig.clearMap)
+	OmegaMap:HotSpotToggle(Config.showHotSpot)
+	setplayerscale()
+
+
+
+end
+
 ---Updates Profile after changes
 function OmegaMap:RefreshConfig()
 	OmegaMap.Config  = self.db.profile
 	OmegaMap_Config = self.db.profile
 	Config = self.db.profile
+	setOptionSettings()
 end
 
 function OmegaMap:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfig", defaults, true)
+	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfigProfile", defaults, true)
 	options.args.profiles  = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	LibStub("AceConfigRegistry-3.0"):ValidateOptionsTable(options, "OmegaMap")
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("OmegaMap", options)
@@ -464,35 +490,15 @@ function OmegaMap:OnInitialize()
 	OmegaMap_Config = self.db.profile
 	Config = self.db.profile
 
-
-
-
-
-
-
-
-	OmegaMapSliderFrame:SetValue(OmegaMap.Config.opacity);
-	--OmegaMapQuestShowObjectives_Toggle();
-	OmegaMap_SetScale(OmegaMapFrame)
-	--OmegaMapFrame:SetScale(OmegaMap.Config.scale);
-	--OmegaMapFrame.ScrollContainer.Child:SetScale( OmegaMap.Config.scale ); 
-	--OmegaMapOptionsFrame_init();
-	OmegaMapSetEscPress()
-	--OmegaMapMiniMap_Register()
-	
-	ToggleFrame(OmegaMapSliderFrame, OmegaMap.Config.showAlpha)
-	ToggleFrame(OmegaMapZoomSliderFrame, OmegaMap.Config.showScale)
-	ToggleFrame(OmegaMapCoordinates, OmegaMap.Config.showCoords)
-	--ToggleFrame(OmegaMapCoordinates, OmegaMapConfig.showCoords)
-	--ToggleFrame(OmegaMapNoteFrame, OmegaMapConfig.clearMap)
 	OmegaMap:RegisterEvent("MODIFIER_STATE_CHANGED", OmegaMapSolidifyCheck)
 
 	OmegaMapMiniMap:Register("OmegaMapMini", OmegaMapLDB, Config.MMDB)
 
 	--OmegaMapFrame:AddDataProvider(OmegaMap.Plugins["GatherMate2"])
 	OmegaMap:HotSpotInit()
-	OmegaMap:HotSpotToggle(Config.showHotSpot)
-	setplayerscale()
+
+	setOptionSettings()
+
 
 end
 

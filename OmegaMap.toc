@@ -4,7 +4,7 @@
 ## Game Version: 8.0
 ## Author: Gathirer - Feathermoon
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
-## SavedVariables: OmegaMapConfig
+## SavedVariables: OmegaMapConfig, OmegaMapConfigProfile
 ## SavedVariablesPerCharacter: OmegaMapPosition
 ## RequiredDep: Blizzard_MapCanvas, Blizzard_SharedMapDataProviders
 ## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, DongleStub, PetTracker, HandyNotes, Vuhdo, HereBeDragons-2.0, AngryWorldQuests
