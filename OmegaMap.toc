@@ -7,7 +7,7 @@
 ## SavedVariables: OmegaMapConfig, OmegaMapConfigProfile
 ## SavedVariablesPerCharacter: OmegaMapPosition
 ## RequiredDep: Blizzard_MapCanvas, Blizzard_SharedMapDataProviders
-## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, DongleStub, PetTracker, HandyNotes, Vuhdo, HereBeDragons-2.0, AngryWorldQuests
+## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, DongleStub, PetTracker, HandyNotes, Vuhdo, HereBeDragons-2.0, AngryWorldQuests, WorldQuestTracker
 
 #Libraries
 Libs\LibStub\LibStub.lua
@@ -55,4 +55,6 @@ Plugins\TomTom.lua
 #Plugins\PetTracker.xml
 #Plugins\PetTracker.lua
 #Plugins\Vuhdo.lua
-#Plugins\AngryWorldQuests.lua
+Plugins\AngryWorldQuests.lua
+#Plugins\WorldQuestTracker.lua
+#Plugins\WorldQuestTracker.xml

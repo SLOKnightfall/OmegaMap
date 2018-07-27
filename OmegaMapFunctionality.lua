@@ -672,8 +672,10 @@ function OmegaMapCoordsOnUpdate(self, elapsed)
 			self.timer = 0;
 			local cX, cY, cLoc = nil, nil, nil;
 			local mapID = C_Map.GetBestMapForUnit("player")
-			local pX, pY = C_Map.GetPlayerMapPosition(mapID, "player"):GetXY()
-			if pX == nil then return end
+			local playerPosition = C_Map.GetPlayerMapPosition(mapID, "player")
+			if pX == playerPosition then return end
+			local pX, pY = playerPosition:GetXY()
+
 			local fmtng = "%d, %d";
 
 			local pLoc = OM_GREEN..(format( fmtng, pX * 100.0, pY * 100.0)).."|r\n";
