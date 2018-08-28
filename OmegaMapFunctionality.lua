@@ -247,7 +247,26 @@ local options = {
 					name = "" ,
 					type = "description",
 					width = 1.5,
-					disabled = true,
+
+				},
+				hideInCombat = {
+					order = 8.5,
+					name = L["OMEGAMAP_OPTIONS_HIDE_IN_COMBAT"] ,
+					desc = L["OMEGAMAP_OPTIONS_HIDE_IN_COMBAT_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.hideInCombat = val end,
+					get = function(info) return Config.hideInCombat end,
+					width = 1.5,
+				},
+				ShowAfterCombat = {
+					order = 8.6,
+					name = L["OMEGAMAP_OPTIONS_SHOW_AFTER_COMBAT"] ,
+					desc = L["OMEGAMAP_OPTIONS_SHOW_AFTER_COMBAT_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showAfterCombat = val end,
+					get = function(info) return Config.showAfterCombat end,
+					width = 1.5,
+					disabled = function() return not Config.hideInCombat end
 				},
 				keepInteractive = {
 					order = 9,
@@ -414,6 +433,8 @@ local defaults = {
 		showMiniMapIcon = true,
 		showHotSpot = false,
 		showCompactMode = false,
+		hideInCombat = false,
+		showAfterCombat = false,
 	--Plugin Settings
 		showGatherer = false,	--Show gathering POI
 		showTomTom = false,		--Show Tomtom poi
@@ -508,6 +529,21 @@ function OmegaMap:RefreshConfig()
 end
 
 
+
+local CombatToggleTriggered = false
+
+local function CombatToggle(trigger)
+	if trigger and  Config.hideInCombat then
+		OmegaMapFrame:Hide();
+		CombatToggleTriggered = true
+	end
+
+	if not trigger and Config.hideInCombat and Config.showAfterCombat and CombatToggleTriggered then
+		OmegaMapFrame:Show();
+		CombatToggleTriggered = false
+	end
+end
+
 function OmegaMap:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfigProfile", defaults, true)
 	options.args.profiles  = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
@@ -525,6 +561,8 @@ function OmegaMap:OnInitialize()
 	Config = self.db.profile
 
 	OmegaMap:RegisterEvent("MODIFIER_STATE_CHANGED", OmegaMapSolidifyCheck)
+	OmegaMap:RegisterEvent("PLAYER_REGEN_DISABLED", function() CombatToggle(true)  end)
+	OmegaMap:RegisterEvent("PLAYER_REGEN_ENABLED", function() CombatToggle(false) end)
 
 	OmegaMapMiniMap:Register("OmegaMapMini", OmegaMapLDB, Config.MMDB)
 
