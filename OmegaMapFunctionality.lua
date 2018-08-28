@@ -99,22 +99,28 @@ end
 
 
 
-
 local function TogglePlugin(plugin, value, refresh)
-	local DataHandler = OmegaMap.Plugins[plugin]
+	local DataHandler = OmegaMap.Plugins["showPetTracker"]
 
-	if value then
-		OmegaMapFrame:AddDataProvider(DataHandler)
+	if plugin == "showPetTracker" then
+		OmegaMap.Plugins["showPetTracker"] = value
+		OmegaMap:PetTrackerUpdate()
 	else
-		if OmegaMapFrame.dataProviders[DataHandler] then 
-			OmegaMapFrame:RemoveDataProvider(DataHandler)
+		if value then
+			OmegaMapFrame:AddDataProvider(DataHandler)
+		else
+			if OmegaMapFrame.dataProviders[DataHandler] then 
+				OmegaMapFrame:RemoveDataProvider(DataHandler)
+			end
 		end
 	end
 
 	if refresh then 
 		OmegaMapFrame:RefreshAll()
 	end
+
 end
+
 
 function HidePOI(value, refresh)
 	for plugin, _ in pairs(OmegaMap.Plugins) do
@@ -124,6 +130,8 @@ function HidePOI(value, refresh)
 
 	end
 end
+
+
 function setplayerscale()
 	OM_groupMembersDataProvider.unitPinSizes = {
 		player = 27 * Config.player_scale,
@@ -197,6 +205,15 @@ local options = {
 					get = function(info) return Config.escapeClose end,
 					width = 1.5,
 				},
+				disableZoomReset = {
+					order = 5.1,
+					name = L["OMEGAMAP_OPTIONS_ZOOM_RESET"] ,
+					desc = L["OMEGAMAP_OPTIONS_ZOOM_RESET_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.disableZoomReset = val; end,
+					get = function(info) return Config.disableZoomReset end,
+					width = 1.5,
+				},
 				showMiniMapIcon = {
 					order = 6,
 					name = L["OMEGAMAP_OPTIONS_MINIMAP"] ,
@@ -222,6 +239,13 @@ local options = {
 					type = "toggle",
 					set = function(info,val) Config.showCompactMode = val end,
 					get = function(info) return Config.showCompactMode end,
+					width = 1.5,
+					disabled = true,
+				},
+				break1 = {
+					order = 8.1,
+					name = "" ,
+					type = "description",
 					width = 1.5,
 					disabled = true,
 				},
@@ -330,6 +354,8 @@ local options = {
 					name = L["OMEGAMAP_OPTIONS_CTMAP"] ,
 					desc = L["OMEGAMAP_OPTIONS_CTMAP_TOOLTIP"],
 					type = "toggle",
+					set = function(info,val) Config.showCTMap = val; TogglePlugin("showCTMap", val, true) end,
+
 					set = function(info,val) Config.showCTMap = val end,
 					get = function(info) return Config.showCTMap end,
 					width = 1.5,
@@ -344,6 +370,16 @@ local options = {
 					get = function(info) return Config.showHandyNotes end,
 					width = 1.5,
 					disabled = CheckPlugin("HandyNotes")
+				},
+				pettracker = {
+					order = 22,
+					name = L["OMEGAMAP_OPTIONS_PETTRACKER"] ,
+					desc = L["OMEGAMAP_OPTIONS_PETTRACKER_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showPetTracker = val; TogglePlugin("showPetTracker", val, true) end,
+					get = function(info) return Config.showPetTracker end,
+					width = 1.5,
+					disabled = CheckPlugin("PetTracker")
 				},
 			},
 		},
@@ -374,6 +410,7 @@ local defaults = {
 		interactiveHotKey = "None",	--Hotkey for making the map interactive
 		keepInteractive = false, -- Keeps map interactive between viewings
 		escapeClose = true, --Closes OmegaMap on Escape key press,
+		disableZoomReset = false,
 		showMiniMapIcon = true,
 		showHotSpot = false,
 		showCompactMode = false,
@@ -384,6 +421,7 @@ local defaults = {
 		showCTMap = false,		--Show CT Map
 		showMapNotes = false,	--Show MapNotes
 		showGatherMate = false,	--Show Gathermate POI
+		showPetTracker = false,
 		showNPCScanOverlay = false,  --Show NPCScan.Overlay
 		showQuestHelperLite = false,
 		showHandyNotes = false,
@@ -442,9 +480,6 @@ function OmegaMap_SetScale(self)
 end
 
 
-
-
-
 local function setOptionSettings()
 	OmegaMapSliderFrame:SetValue(OmegaMap.Config.opacity);
 	--OmegaMapQuestShowObjectives_Toggle();
@@ -461,10 +496,8 @@ local function setOptionSettings()
 	--ToggleFrame(OmegaMapNoteFrame, OmegaMapConfig.clearMap)
 	OmegaMap:HotSpotToggle(Config.showHotSpot)
 	setplayerscale()
-
-
-
 end
+
 
 ---Updates Profile after changes
 function OmegaMap:RefreshConfig()
@@ -473,6 +506,7 @@ function OmegaMap:RefreshConfig()
 	Config = self.db.profile
 	setOptionSettings()
 end
+
 
 function OmegaMap:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("OmegaMapConfigProfile", defaults, true)
@@ -498,9 +532,8 @@ function OmegaMap:OnInitialize()
 	OmegaMap:HotSpotInit()
 
 	setOptionSettings()
-
-
 end
+
 
 function OmegaMapSetEscPress()
 	--Register to close on ESC
@@ -660,6 +693,7 @@ function OmegaMapSolidify(state)
 	end
 end
 
+
 function OmegaMapCoordsOnUpdate(self, elapsed)
 	if ( not self.isMoving ) then
 		if ( not self.timer ) then
@@ -699,6 +733,7 @@ function OmegaMapCoordsOnUpdate(self, elapsed)
 	end
 end
 
+
 --Gets coords of cursor in relation to its positon over the map
 function OmegaMapGetCLoc()
 	local x, y = nil, nil;
@@ -725,6 +760,7 @@ function OmegaMapGetCLoc()
 	return cx*100.000, cy*100.000;
 end
 
+
 --Solidifies the map is hot key is held
 function OmegaMapSolidifyCheck(self,...)
 	if (not OmegaMapFrame:IsVisible()) then return end
@@ -748,6 +784,7 @@ function OmegaMapSolidifyCheck(self,...)
 		end
 	end
 end
+
 
 --Only shows the explored areas of the map in a compact view. 
 function OmegaMapCompactView()
@@ -781,6 +818,7 @@ function OmegaMapCompactView()
 	end
 end
 
+
 --Function to save map position and scale when entering & exiting BGs
 function OmegaMap_SetPosition()
 
@@ -810,4 +848,3 @@ function OmegaMap_SetPosition()
 	OmegaMapFrame:SetPoint(currentMapInfo.point, UIParent, currentMapInfo.relativePoint, currentMapInfo.xOffset, currentMapInfo.yOffset)
 	OmegaMapPosition.LastType  = inBG  --Stores info incase of relogging during a BG
 end
-

@@ -51,9 +51,8 @@ Plugins\HandyNotes.xml
 Plugins\GatherMate2.lua
 Plugins\Routes.lua
 Plugins\TomTom.lua
-#Plugins\CTMap.lua
-#Plugins\PetTracker.xml
-#Plugins\PetTracker.lua
+Plugins\CTMap.xml
+Plugins\PetTracker.xml
 #Plugins\Vuhdo.lua
 Plugins\AngryWorldQuests.lua
 #Plugins\WorldQuestTracker.lua

@@ -1,3 +1,7 @@
+local OmegaMap = select(2, ...)
+OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")
+local Config = OmegaMap.Config
+
 OmegaMapMixin = {};
 
 function OmegaMapMixin:SetupTitle()
@@ -238,7 +242,11 @@ function OmegaMapMixin:OnShow()
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
 	OM_MapCanvasMixin.OnShow(self);
-	self:ResetZoom();
+
+	if not OmegaMap.Config.disableZoomReset then
+		self:ResetZoom();
+	end
+
 
 	DoEmote("READ", nil, true);
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);

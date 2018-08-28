@@ -60,7 +60,8 @@ L["OMEGAMAP_OPTIONS_HOTSPOT"] = "Show Moveable HotSpot"
 L["OMEGAMAP_OPTIONS_HOTSPOT_TOOLTIP"] = "Moveable HotSpot that toggles OmegaMap on mouseover"
 L["OMEGAMAP_OPTIONS_COMPACT"] = "Show Compact Map Mode"
 L["OMEGAMAP_OPTIONS_COMPACT_TOOLTIP"] = "Trims the viewed portions of the map to explored areas."
-
+L["OMEGAMAP_OPTIONS_ZOOM_RESET"] = "Disable Map Zoom Reset"
+L["OMEGAMAP_OPTIONS_ZOOM_RESET_TOOLTIP"] = "Disables Map Zoom Reseting when map is shown."
 --Option Menu Plugins
 L["OMEGAMAP_OPTIONS_GATHERMATE"] = "Display GatherMate Nodes"
 L["OMEGAMAP_OPTIONS_GATHERMATE_TOOLTIP"] = "Have Map Display GatherMate2 Nodes"
@@ -89,6 +90,9 @@ L["OMEGAMAP_OPTIONS_QUESTHELPERLITE_DISABLED"] = "QuestHelper Lite Not Loaded"
 L["OMEGAMAP_OPTIONS_HANDYNOTES"] = "Show HandyNotes "
 L["OMEGAMAP_OPTIONS_HANDYNOTES_TOOLTIP"] = "Have Map Display HandyNotes items"
 L["OMEGAMAP_OPTIONS_HANDYNOTES_DISABLED"] = "HandyNotes Lite Not Loaded"
+L["OMEGAMAP_OPTIONS_PETTRACKER"] = "Show PetTracker "
+L["OMEGAMAP_OPTIONS_PETTRACKER_TOOLTIP"] = "Have Map Display PetTracker items"
+L["OMEGAMAP_OPTIONS_PETTRACKER_DISABLED"] = "PetTracker Lite Not Loaded"
 
 --Minimap Tooltip
 L["OMEGAMAP_MINI_LEFT"] = OM_WHITE.."Left Click: ".."|r".."Toggle Map"
