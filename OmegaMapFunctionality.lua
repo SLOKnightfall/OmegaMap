@@ -100,7 +100,7 @@ end
 
 
 local function TogglePlugin(plugin, value, refresh)
-	local DataHandler = OmegaMap.Plugins["showPetTracker"]
+	local DataHandler = OmegaMap.Plugins[plugin]
 
 	if plugin == "showPetTracker" then
 		OmegaMap.Plugins["showPetTracker"] = value
