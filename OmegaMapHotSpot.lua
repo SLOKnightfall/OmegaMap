@@ -19,6 +19,7 @@ function OmegaMap:HotSpotToggle(value)
 	end
 end
 
+
 if  not OmegaMapHotSpot then 
 	OmegaMapHotSpotFrame = CreateFrame("Button", "OmegaMapHotSpot", UIParent)
 end 
@@ -57,13 +58,24 @@ end
 		OmegaMapHotSpotFrame:SetNormalTexture("Interface\\Icons\\INV_Misc_Map04")
 end
 
+
 function OmegaMap:HotSpotMapToggle(state)
 	if state == true and OmegaMapFrame:IsVisible()then 
+		if OmegaMap.Config.fullHotSpotAlpha then
+			OmegaMapFrame_SetOpacity(0)
+		end
 		return
 	elseif Config.hotSpotLock == true then
+		if OmegaMap.Config.fullHotSpotAlpha then
+			OmegaMapFrame_SetOpacity(OmegaMap.Config.opacity)
+		end
 		return
-	else
+	elseif OmegaMap.Config.fullHotSpotAlpha and not OmegaMapFrame:IsVisible() then
+		OmegaMapFrame_SetOpacity(0)
 		ToggleOmegaMap()
-	--Config.hotSpotLock = false
+
+	else
+		OmegaMapFrame_SetOpacity(OmegaMap.Config.opacity)
+		ToggleOmegaMap()
 	end
 end

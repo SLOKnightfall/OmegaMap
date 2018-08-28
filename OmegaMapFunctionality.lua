@@ -223,6 +223,13 @@ local options = {
 					get = function(info) return Config.showMiniMapIcon end,
 					width = 1.5,
 				},
+				break1 = {
+					order = 6.1,
+					name = "" ,
+					type = "description",
+					width = 1.5,
+
+				},
 				showHotSpot = {
 					order = 7,
 					name = L["OMEGAMAP_OPTIONS_HOTSPOT"] ,
@@ -230,6 +237,15 @@ local options = {
 					type = "toggle",
 					set = function(info,val) Config.showHotSpot = val; OmegaMap:HotSpotToggle(val) end,
 					get = function(info) return Config.showHotSpot end,
+					width = 1.5,
+				},
+				fullHotSpotAlpha = {
+					order = 7.5,
+					name = L["OMEGAMAP_OPTIONS_FULL_HOTSPOT_ALPHA"] ,
+					desc = L["OMEGAMAP_OPTIONS_FULL_HOTSPOT_ALPHA_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.fullHotSpotAlpha = val; end,
+					get = function(info) return Config.fullHotSpotAlpha end,
 					width = 1.5,
 				},
 				showCompactMode = {
@@ -241,14 +257,9 @@ local options = {
 					get = function(info) return Config.showCompactMode end,
 					width = 1.5,
 					disabled = true,
+					hidden = true
 				},
-				break1 = {
-					order = 8.1,
-					name = "" ,
-					type = "description",
-					width = 1.5,
 
-				},
 				hideInCombat = {
 					order = 8.5,
 					name = L["OMEGAMAP_OPTIONS_HIDE_IN_COMBAT"] ,
@@ -432,6 +443,7 @@ local defaults = {
 		disableZoomReset = false,
 		showMiniMapIcon = true,
 		showHotSpot = false,
+		fullHotSpotAlpha = false,
 		showCompactMode = false,
 		hideInCombat = false,
 		showAfterCombat = false,

@@ -66,6 +66,8 @@ L["OMEGAMAP_OPTIONS_HIDE_IN_COMBAT"] = "Hide map while in combat"
 L["OMEGAMAP_OPTIONS_HIDE_IN_COMBAT_TOOLTIP"] = "Hide map while in combat."
 L["OMEGAMAP_OPTIONS_SHOW_AFTER_COMBAT"] = "Show hidden map after combat"
 L["OMEGAMAP_OPTIONS_SHOW_AFTER_COMBAT_TOOLTIP"] = "Show hidden map after combat."
+L["OMEGAMAP_OPTIONS_FULL_HOTSPOT_ALPHA"] = "HotSpot 100% Alpha"
+L["OMEGAMAP_OPTIONS_FULL_HOTSPOT_ALPHA_TOOLTIP"] = "Using the HotSpot sets the alpha to 100%."
 --Option Menu Plugins
 L["OMEGAMAP_OPTIONS_GATHERMATE"] = "Display GatherMate Nodes"
 L["OMEGAMAP_OPTIONS_GATHERMATE_TOOLTIP"] = "Have Map Display GatherMate2 Nodes"
