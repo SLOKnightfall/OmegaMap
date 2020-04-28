@@ -1,8 +1,8 @@
-## Interface: 80200
+## Interface: 80300
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 8.2
-## Author: Gathirer - Feathermoon
+## Game Version: 8.3
+## Author: SLOKnightfall
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariables: OmegaMapConfig, OmegaMapConfigProfile
 ## SavedVariablesPerCharacter: OmegaMapPosition
@@ -27,22 +27,25 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 #Libs\DropDownMenu\UIDropDownMenuTemplates.xml
 
 #Core Files
-QuestMapFrame.xml
+FrameXML\QuestMapFrame.xml
+#Modified Blizzard_MapCanvas addon
 MapCanvas\MapCanvas.xml
 
 mixins.lua
-localization.en.lua
+Localization\localization.en.lua
 OmegaMapFunctionality.lua
 
+#Modified Blizzard_WorldMap addon
 MapTexturePreloader.lua
 OM_WorldQuestDataProvider.xml
-OM_InvasionDataProvider.xml
+OM_EventOverlayDataProvider.xml
 OmegaMapTemplates.xml
 OmegaMap.xml
+
+
 #OmegaMapAltMap.xml
 OmegaMapTooltip.xml
 OmegaMapHotSpot.lua
-
 
 #Addon Plugins
 Plugins\HereBeDragons-Pins.lua

@@ -101,6 +101,8 @@ function OmegaMapMixin:OnLoad()
 
 	self:RegisterEvent("VARIABLES_LOADED");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
+	self:RegisterEvent("WORLD_MAP_OPEN");
+	self:RegisterEvent("WORLD_MAP_CLOSE");
 
 	self:AttachQuestLog();
 	self:RegisterForDrag("LeftButton")
@@ -120,6 +122,11 @@ function OmegaMapMixin:OnEvent(event, ...)
 		if self:IsMaximized() then
 			--self:UpdateMaximizedSize();
 		end
+	elseif event == "WORLD_MAP_OPEN" then
+		local mapID = ...;
+		OpenWorldMap(mapID);
+	elseif event == "WORLD_MAP_CLOSE" then
+		HideUIPanel(self);
 	elseif event == "PLAYER_LOGOUT" then
 		if self:IsUserPlaced() then
 			OmegaMapPosition.Map.xOffset, OmegaMapPosition.Map.yOffset = self:GetCenter();
@@ -134,7 +141,7 @@ end
 function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(MapExplorationDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(MapHighlightDataProviderMixin));
-	self:AddDataProvider(CreateFromMixins(OmegaMap_InvasionDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(OmegaMap_EventOverlayDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(StorylineQuestDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BattlefieldFlagDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BonusObjectiveDataProviderMixin));
@@ -180,6 +187,7 @@ function OmegaMapMixin:AddStandardDataProviders()
 
 	local pinFrameLevelsManager = self:GetPinFrameLevelsManager();
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_MAP_EXPLORATION");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_EVENT_OVERLAY");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_GARRISON_PLOT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_FOG_OF_WAR");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_QUEST_BLOB");
@@ -216,10 +224,11 @@ end
 
 function OmegaMapMixin:AddOverlayFrames()
 	self:AddOverlayFrame("OmegaMapFloorNavigationFrameTemplate", "FRAME", "TOPLEFT", self:GetCanvasContainer(), "TOPLEFT", -15, 2);
-	self:AddOverlayFrame("OmegaMapTrackingOptionsButtonTemplate", "BUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, -2);
+	self:AddOverlayFrame("OmegaMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, -2);
 	self:AddOverlayFrame("WorldMapBountyBoardTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapActionButtonTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("OmegaMapZoneTimerTemplate", "FRAME", "BOTTOM", self:GetCanvasContainer(), "BOTTOM", 0, 20);
+	self:AddOverlayFrame("WorldMapThreatFrameTemplate", "FRAME", "BOTTOMLEFT", self:GetCanvasContainer(), "BOTTOMLEFT", 0, 0);
 
 	self.NavBar = self:AddOverlayFrame("OmegaMapNavBarTemplate", "FRAME");
 	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 64, -25);
@@ -267,6 +276,9 @@ function OmegaMapMixin:OnHide()
 	self.BorderFrame.Tutorial:CheckAndHideHelpInfo();
 
 	self:OnUIClose();
+
+	self:TriggerEvent("WorldMapOnHide");
+	C_Map.CloseWorldMapInteraction();
 end
 
 function OmegaMapMixin:RefreshOverlayFrames()

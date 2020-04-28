@@ -762,23 +762,21 @@ function OmegaMapCoordsOnUpdate(self, elapsed)
 
 			local fmtng = "%d, %d";
 
-			local pLoc = OM_GREEN..(format( fmtng, pX * 100.0, pY * 100.0)).."|r\n";
+			local pLoc = "Player: "..(format( fmtng, pX * 100.0, pY * 100.0)).."\n";
+
 			if ( OmegaMapFrame:IsVisible() ) then
 				cX, cY = OmegaMapGetCLoc(OmegaMapFrame);
 			else
 				cX, cY = OmegaMapGetCLoc(OmegaMapFrame);
 			end
-			if ( ( cX ) and ( cY ) ) then
-				cLoc = OM_YELLOW..( format( fmtng, cX, cY ) ).."|r";
-			end
-			OmegaMapLocationText:SetText( pLoc .. (cLoc or "") );
 
-			OmegaMapCoordinates:SetWidth( OmegaMapLocationText:GetWidth() + 9 );
-			if ( cLoc ) then
-				OmegaMapCoordinates:SetHeight(48);
+			if ( ( cX ) and ( cY ) ) then
+				cLoc = "Cursor: "..( format( fmtng, cX, cY ) );
 			else
-				OmegaMapCoordinates:SetHeight(30);
+				cLoc = "Cursor: "..( format( fmtng, "--", "--" ) );
 			end
+
+			OmegaMapLocationText:SetText( pLoc .. (cLoc or "") );
 		end
 	end
 end
