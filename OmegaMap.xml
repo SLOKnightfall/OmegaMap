@@ -10,7 +10,7 @@
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-3" y="-67"/>
 				</Anchors>
 			</Frame>
-			<ScrollFrame parentKey="ScrollContainer" inherits="OM_MapCanvasFrameScrollContainerTemplate" enableMouse="false">
+			<ScrollFrame parentKey="ScrollContainer" inherits="MapCanvasFrameScrollContainerTemplate" enableMouse="false">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.TitleCanvasSpacerFrame" relativePoint="BOTTOMLEFT" x="0" y="0"/>
 					<Anchor point="BOTTOMLEFT" x="0" y="2"/>
@@ -41,7 +41,7 @@
 					</Layer>
 				</Layers>
 			</Frame>
-			<Frame parentKey="BorderFrame" inherits="PortraitFrameTemplate" frameStrata="HIGH" setAllPoints="true" hidden="true">
+			<Frame parentKey="BorderFrame" inherits="PortraitFrameTemplateMinimizable" frameStrata="HIGH" setAllPoints="true" hidden="true">
 				<Layers>
 					<Layer level="ARTWORK" textureSubLevel="5">
 						<Texture parentKey="Underlay" hidden="true">
@@ -78,7 +78,7 @@
 					</Button>
 					<Frame parentKey="MaximizeMinimizeFrame" inherits="MaximizeMinimizeButtonFrameTemplate" hidden="true">
 						<Anchors>
-							<Anchor point="RIGHT" relativeKey="$parent.CloseButton" relativePoint="LEFT" x="10" y="0"/>
+							<Anchor point="RIGHT" relativeKey="$parent.CloseButton" relativePoint="LEFT" x="8.5" y="0"/>
 						</Anchors>
 					</Frame>
 				</Frames>

@@ -2,8 +2,8 @@ local OmegaMap = select(2, ...)
 OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")
 local Config = OmegaMap.Config
 
-OmegaMapMixin = {};
-
+OmegaMapMixin = CreateFromMixins(WorldMapMixin)
+--[[]]
 function OmegaMapMixin:SetupTitle()
 	self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
 	--self.BorderFrame.Bg:SetParent(self);
@@ -16,7 +16,7 @@ function OmegaMapMixin:SynchronizeDisplayState()
 	if self:IsMaximized() then
 		self.BorderFrame.TitleText:SetText(WORLD_MAP);
 		GameTooltip:Hide();
-		--self.BlackoutFrame:Show();
+		self.BlackoutFrame:Show();
 		RestoreUIPanelArea(self);
 	else
 		self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
@@ -24,7 +24,7 @@ function OmegaMapMixin:SynchronizeDisplayState()
 		--RestoreUIPanelArea(self);
 	end
 end
-
+--[[
 function OmegaMapMixin:Minimize()
 	--self.isMaximized = false;
 
@@ -86,7 +86,7 @@ end
 function OmegaMapMixin:OnLoad()
 	UIPanelWindows[self:GetName()] = { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP" };
 
-	OM_MapCanvasMixin.OnLoad(self);
+	MapCanvasMixin.OnLoad(self);
 
 	self:SetupTitle();
 	self:SetupMinimizeMaximizeButton();
@@ -105,23 +105,23 @@ function OmegaMapMixin:OnLoad()
 	self:RegisterEvent("WORLD_MAP_CLOSE");
 
 	self:AttachQuestLog();
-	self:RegisterForDrag("LeftButton")
-	self:SetMovable(true)
-end
 
+	self:UpdateSpacerFrameAnchoring();
+end
+]]--
 function OmegaMapMixin:OnEvent(event, ...)
-	OM_MapCanvasMixin.OnEvent(self, event, ...);
+	MapCanvasMixin.OnEvent(self, event, ...);
 
 	if event == "VARIABLES_LOADED" then
-		if self:ShouldBeMinimized() then
-			self:Minimize();
-		else
-			self:Maximize();
-		end
+		--if self:ShouldBeMinimized() then
+			--self:Minimize();
+		--else
+			--self:Maximize();
+		--end
 	elseif event == "DISPLAY_SIZE_CHANGED" then
-		if self:IsMaximized() then
+		--if self:IsMaximized() then
 			--self:UpdateMaximizedSize();
-		end
+		--end
 	elseif event == "WORLD_MAP_OPEN" then
 		local mapID = ...;
 		OpenWorldMap(mapID);
@@ -137,11 +137,11 @@ function OmegaMapMixin:OnEvent(event, ...)
 	end
 
 end
-
+--[[
 function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(MapExplorationDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(MapHighlightDataProviderMixin));
-	self:AddDataProvider(CreateFromMixins(OmegaMap_EventOverlayDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(WorldMap_EventOverlayDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(StorylineQuestDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BattlefieldFlagDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BonusObjectiveDataProviderMixin));
@@ -165,6 +165,8 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(MapLinkDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(SelectableGraveyardDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(AreaPOIDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(MapIndicatorQuestDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(QuestSessionDataProviderMixin));
 
 	if IsGMClient() then
 		self:AddDataProvider(CreateFromMixins(WorldMap_DebugDataProviderMixin));
@@ -178,7 +180,7 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(groupMembersDataProvider);
 	OM_groupMembersDataProvider = groupMembersDataProvider
 
-	local worldQuestDataProvider = CreateFromMixins(OmegaMap_WorldQuestDataProviderMixin);
+	local worldQuestDataProvider = CreateFromMixins(WorldMap_WorldQuestDataProviderMixin);
 	worldQuestDataProvider:SetMatchWorldMapFilters(true);
 	worldQuestDataProvider:SetUsesSpellEffect(true);
 	worldQuestDataProvider:SetCheckBounties(true);
@@ -221,24 +223,24 @@ function OmegaMapMixin:AddStandardDataProviders()
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_CORPSE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_AREA_POI_BANNER");
 end
-
+]]--
 function OmegaMapMixin:AddOverlayFrames()
-	self:AddOverlayFrame("OmegaMapFloorNavigationFrameTemplate", "FRAME", "TOPLEFT", self:GetCanvasContainer(), "TOPLEFT", -15, 2);
-	self:AddOverlayFrame("OmegaMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, -2);
+	self:AddOverlayFrame("WorldMapFloorNavigationFrameTemplate", "FRAME", "TOPLEFT", self:GetCanvasContainer(), "TOPLEFT", -15, 2);
+	self:AddOverlayFrame("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, -2);
 	self:AddOverlayFrame("WorldMapBountyBoardTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapActionButtonTemplate", "FRAME", nil, self:GetCanvasContainer());
-	self:AddOverlayFrame("OmegaMapZoneTimerTemplate", "FRAME", "BOTTOM", self:GetCanvasContainer(), "BOTTOM", 0, 20);
+	self:AddOverlayFrame("WorldMapZoneTimerTemplate", "FRAME", "BOTTOM", self:GetCanvasContainer(), "BOTTOM", 0, 20);
 	self:AddOverlayFrame("WorldMapThreatFrameTemplate", "FRAME", "BOTTOMLEFT", self:GetCanvasContainer(), "BOTTOMLEFT", 0, 0);
 
 	self.NavBar = self:AddOverlayFrame("OmegaMapNavBarTemplate", "FRAME");
 	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 64, -25);
 	self.NavBar:SetPoint("BOTTOMRIGHT", self.TitleCanvasSpacerFrame, "BOTTOMRIGHT", -4, 9);
 
-	self.SidePanelToggle = self:AddOverlayFrame("OmegaMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
+	self.SidePanelToggle = self:AddOverlayFrame("WorldMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
 end
-
+--[[
 function OmegaMapMixin:OnMapChanged()
-	OM_MapCanvasMixin.OnMapChanged(self);
+	MapCanvasMixin.OnMapChanged(self);
 	self:RefreshOverlayFrames();
 	self:RefreshQuestLog();
 
@@ -246,13 +248,15 @@ function OmegaMapMixin:OnMapChanged()
 		C_MapInternal.SetDebugMap(self:GetMapID());
 	end
 end
-
+]]--
 function OmegaMapMixin:OnShow()
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
-	OM_MapCanvasMixin.OnShow(self);
+	OmegaMap_SetScale(OmegaMapFrame)
+	MapCanvasMixin.OnShow(self);
 
 	if not OmegaMap.Config.disableZoomReset then
+		print("SSSS")
 		self:ResetZoom();
 	end
 
@@ -263,11 +267,13 @@ function OmegaMapMixin:OnShow()
 	PlayerMovementFrameFader.AddDeferredFrame(self, .5, 1.0, .5, function() return GetCVarBool("mapFade") and not self:IsMouseOver() end);
 	self.BorderFrame.Tutorial:CheckAndShowTooltip();
 
+	self:UpdateSpacerFrameAnchoring()
+
 	--OmegaMap_SetPosition()
 end
-
+--[[
 function OmegaMapMixin:OnHide()
-	OM_MapCanvasMixin.OnHide(self);
+	MapCanvasMixin.OnHide(self);
 
 	CancelEmote();
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_CLOSE);
@@ -344,10 +350,13 @@ function OmegaMapMixin:UpdateSpacerFrameAnchoring()
 		self.TitleCanvasSpacerFrame:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", -3, -67);
 	--end
 	self:OnFrameSizeChanged();
-end
 
+		--groupMembersDataProvider:SetUnitPinSize("player", BATTLEFIELD_MAP_PLAYER_SIZE);
+
+end
+]]--
 --[[ Help Plate ]] --
-OmegaMapTutorialMixin = { }
+OmegaMapTutorialMixin = CreateFromMixins(WorldMapTutorialMixin)
 
 function OmegaMapTutorialMixin:OnLoad()
 	self.helpInfo = {
@@ -407,7 +416,7 @@ function OmegaMapMixin:AttachQuestLog()
 
 	self.QuestLog = OM_QuestMapFrame;
 end
-
+--[[
 function OmegaMapMixin:SetHighlightedQuestID(questID)
 	self:TriggerEvent("SetHighlightedQuestID", questID);
 end
@@ -429,7 +438,7 @@ function OmegaMapMixin:PingQuestID(questID)
 		self:TriggerEvent("PingQuestID", questID);
 	end
 end
-
+--]]
 -- ============================================ GLOBAL API ===============================================================================
 function ToggleOMQuestLog()
 	--OmegaMapFrame:HandleUserActionToggleQuestLog();

@@ -356,7 +356,6 @@ function QuestSessionManagement_OnLeave(self)
 	self:GetParent():OnLeave();
 end
 ]]--
-
 function OM_QuestMapFrame_UpdateQuestSessionState(self)
 	self.QuestSessionManagement:UpdateVisibility();
 	self.QuestSessionManagement:UpdateTooltip();
@@ -507,7 +506,7 @@ function OM_QuestMapFrame_ShowQuestDetails(questID)
 
 	local mapFrame = OM_QuestMapFrame:GetParent();
 	local questPortrait, questPortraitText, questPortraitName, questPortraitMount = GetQuestLogPortraitGiver();
-	if (questPortrait and questPortrait ~= 0 and QuestLogShouldShowPortrait() and (UIParent:GetRight() - mapFrame:GetRight() > QuestNPCModel:GetWidth() + 6)) then
+	if (questPortrait and questPortrait ~= 0 and QuestLogShouldShowPortrait() and (UIParent:GetRight() - mapFrame:GetRight() > QuestModelScene:GetWidth() + 6)) then
 		QuestFrame_ShowQuestPortrait(mapFrame, questPortrait, questPortraitMount, questPortraitText, questPortraitName, -2, -43);
 		QuestNPCModel:SetFrameLevel(mapFrame:GetFrameLevel() + 2);
 	else
@@ -551,7 +550,7 @@ function OM_QuestMapFrame_ShowQuestDetails(questID)
 	OM_QuestMapFrame_UpdateQuestDetailsButtons();
 	OM_QuestMapFrame_AdjustPathButtons();
 
-	if ( IsQuestComplete(questID) and GetQuestLogIsAutoComplete(questLogIndex) ) then
+	if not C_QuestLog.IsQuestDisabledForSession(questID) and IsQuestComplete(questID) and GetQuestLogIsAutoComplete(questLogIndex) then
 		OM_QuestMapFrame.DetailsFrame.CompleteQuestFrame:Show();
 		OM_QuestMapFrame.DetailsFrame.RewardsFrame:SetPoint("BOTTOMLEFT", 0, 44);
 	else
@@ -897,7 +896,7 @@ function OM_QuestLogQuests_AddQuestButton(prevButton, questLogIndex, poiTable, t
 	end
 
 	-- POI
-	if ( hasLocalPOI and GetCVarBool("questPOI") ) then
+	if (hasLocalPOI or isDisabledQuest) and GetCVarBool("questPOI") then
 		local poiButton;
 		if isDisabledQuest then
 			poiButton = QuestPOI_GetButton(OM_QuestScrollFrame.Contents, questID, "disabled", nil);
@@ -974,7 +973,7 @@ function OM_QuestLogQuests_Update(poiTable)
 				campaignHeader.Background:SetDesaturated(true);
 				campaignHeader.Text:SetTextColor(DISABLED_FONT_COLOR:GetRGB());
 				campaignNextObj:Hide();
-			elseif (campaignChapterID) then
+			elseif (campaignChapterID and warCampaignInfo.overrideStepActive == false) then
 				local campaignChapterInfo = C_CampaignInfo.GetCampaignChapterInfo(campaignChapterID);		
 				if (campaignChapterInfo) then
 					campaignHeader.Progress:SetText(campaignChapterInfo.name);

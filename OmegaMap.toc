@@ -28,18 +28,15 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 #Core Files
 FrameXML\QuestMapFrame.xml
-#Modified Blizzard_MapCanvas addon
-MapCanvas\MapCanvas.xml
 
 mixins.lua
+MapCanvasTemplates.xml
+
+
 Localization\localization.en.lua
 OmegaMapFunctionality.lua
 
 #Modified Blizzard_WorldMap addon
-MapTexturePreloader.lua
-OM_WorldQuestDataProvider.xml
-OM_EventOverlayDataProvider.xml
-OmegaMapTemplates.xml
 OmegaMap.xml
 
 

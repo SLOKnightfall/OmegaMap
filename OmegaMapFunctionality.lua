@@ -133,12 +133,12 @@ end
 
 
 function setplayerscale()
-	OM_groupMembersDataProvider.unitPinSizes = {
-		player = 27 * Config.player_scale,
-		party = 11 * Config.player_scale,
-		raid = 11 * 0.75 * Config.player_scale;
-
-	};
+	--print(Config.player_scale)
+	--OM_groupMembersDataProvider.unitPinSizes = {
+		--player = 27 * Config.player_scale,
+		--party = 11 * Config.player_scale,
+		--raid = 11 * 0.75 * Config.player_scale;
+--};
 	if OmegaMapFrame:IsVisible() then 
 		OmegaMapFrame:RefreshAll(true)
 	end
@@ -568,6 +568,8 @@ function OmegaMap:OnInitialize()
 
 
 	OmegaMapFrame.ScrollContainer:EnableMouse(false)
+	OmegaMapFrame:RegisterForDrag("LeftButton")
+	OmegaMapFrame:SetMovable(true)
 	OmegaMap.Config  = self.db.profile
 	OmegaMap_Config = self.db.profile
 	Config = self.db.profile
@@ -580,6 +582,8 @@ function OmegaMap:OnInitialize()
 
 	--OmegaMapFrame:AddDataProvider(OmegaMap.Plugins["GatherMate2"])
 	OmegaMap:HotSpotInit()
+
+
 
 	setOptionSettings()
 end

@@ -71,3 +71,18 @@ function OM_QuestLogOwnerMixin:HandleUserActionToggleSidePanel()
 end
 
 
+
+
+OmegaMapNavBarMixin = CreateFromMixins(WorldMapNavBarMixin);
+
+function OmegaMapNavBarMixin:OnMouseUp()
+	OmegaMapFrame:StopMovingOrSizing() 
+end
+function OmegaMapNavBarMixin:OnMouseDown()
+	OmegaMapFrame:StartMoving()
+	OmegaMapFrame:SetUserPlaced(true);
+end
+
+function MapCanvasMixin:ResetZoom()
+	--self.ScrollContainer:ResetZoom();
+end
