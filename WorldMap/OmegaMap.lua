@@ -3,7 +3,7 @@ OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")
 local Config = OmegaMap.Config
 
 OmegaMapMixin = CreateFromMixins(WorldMapMixin)
---[[]]
+
 function OmegaMapMixin:SetupTitle()
 	self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
 	--self.BorderFrame.Bg:SetParent(self);
@@ -11,7 +11,7 @@ function OmegaMapMixin:SetupTitle()
 
 	SetPortraitToTexture(self.BorderFrame.portrait, [[Interface\QuestFrame\UI-QuestLog-BookIcon]]);
 end
-
+--[[
 function OmegaMapMixin:SynchronizeDisplayState()
 	if self:IsMaximized() then
 		self.BorderFrame.TitleText:SetText(WORLD_MAP);
@@ -20,11 +20,11 @@ function OmegaMapMixin:SynchronizeDisplayState()
 		RestoreUIPanelArea(self);
 	else
 		self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
-		--self.BlackoutFrame:Hide();
-		--RestoreUIPanelArea(self);
+		self.BlackoutFrame:Hide();
+		RestoreUIPanelArea(self);
 	end
 end
---[[
+
 function OmegaMapMixin:Minimize()
 	--self.isMaximized = false;
 
@@ -137,7 +137,7 @@ function OmegaMapMixin:OnEvent(event, ...)
 	end
 
 end
---[[
+
 function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(MapExplorationDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(MapHighlightDataProviderMixin));
@@ -167,10 +167,12 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(AreaPOIDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(MapIndicatorQuestDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(QuestSessionDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(WaypointLocationDataProviderMixin));
 
-	if IsGMClient() then
-		self:AddDataProvider(CreateFromMixins(WorldMap_DebugDataProviderMixin));
-	end
+
+	--if IsGMClient() then
+		--self:AddDataProvider(CreateFromMixins(WorldMap_DebugDataProviderMixin));
+	--end
 
 	local areaLabelDataProvider = CreateFromMixins(AreaLabelDataProviderMixin);	-- no pins
 	areaLabelDataProvider:SetOffsetY(-10);
@@ -180,7 +182,7 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(groupMembersDataProvider);
 	OM_groupMembersDataProvider = groupMembersDataProvider
 
-	local worldQuestDataProvider = CreateFromMixins(WorldMap_WorldQuestDataProviderMixin);
+	local worldQuestDataProvider = CreateFromMixins(OmegaMap_WorldQuestDataProviderMixin);
 	worldQuestDataProvider:SetMatchWorldMapFilters(true);
 	worldQuestDataProvider:SetUsesSpellEffect(true);
 	worldQuestDataProvider:SetCheckBounties(true);
@@ -211,8 +213,8 @@ function OmegaMapMixin:AddStandardDataProviders()
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VIGNETTE", 200);
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_STORY_LINE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SCENARIO");
-	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WORLD_QUEST_PING");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WORLD_QUEST", 500);
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WORLD_QUEST_PING");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_ACTIVE_QUEST", C_QuestLog.GetMaxNumQuests());
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_QUEST");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VEHICLE_BELOW_GROUP_MEMBER");
@@ -223,10 +225,11 @@ function OmegaMapMixin:AddStandardDataProviders()
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_CORPSE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_AREA_POI_BANNER");
 end
-]]--
+
 function OmegaMapMixin:AddOverlayFrames()
 	self:AddOverlayFrame("WorldMapFloorNavigationFrameTemplate", "FRAME", "TOPLEFT", self:GetCanvasContainer(), "TOPLEFT", -15, 2);
 	self:AddOverlayFrame("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, -2);
+	self:AddOverlayFrame("WorldMapTrackingPinButtonTemplate", "BUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -36, -2);
 	self:AddOverlayFrame("WorldMapBountyBoardTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapActionButtonTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapZoneTimerTemplate", "FRAME", "BOTTOM", self:GetCanvasContainer(), "BOTTOM", 0, 20);
@@ -252,11 +255,10 @@ end
 function OmegaMapMixin:OnShow()
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
-	OmegaMap_SetScale(OmegaMapFrame)
+	--OmegaMap_SetScale(OmegaMapFrame)
 	MapCanvasMixin.OnShow(self);
 
 	if not OmegaMap.Config.disableZoomReset then
-		print("SSSS")
 		self:ResetZoom();
 	end
 
@@ -265,9 +267,9 @@ function OmegaMapMixin:OnShow()
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
 
 	PlayerMovementFrameFader.AddDeferredFrame(self, .5, 1.0, .5, function() return GetCVarBool("mapFade") and not self:IsMouseOver() end);
-	self.BorderFrame.Tutorial:CheckAndShowTooltip();
+	--self.BorderFrame.Tutorial:CheckAndShowTooltip();
 
-	self:UpdateSpacerFrameAnchoring()
+	--self:UpdateSpacerFrameAnchoring()
 
 	--OmegaMap_SetPosition()
 end
@@ -311,29 +313,35 @@ end
 
 function OmegaMapMixin:SetOverlayFrameLocation(frame, location)
 	frame:ClearAllPoints();
-	if location == LE_MAP_OVERLAY_DISPLAY_LOCATION_BOTTOM_LEFT then
+	if location == Enum.MapOverlayDisplayLocation.BottomLeft then
+
 		frame:SetPoint("BOTTOMLEFT", frame.relativeFrame, 15, 15);
-	elseif location == LE_MAP_OVERLAY_DISPLAY_LOCATION_TOP_LEFT then
+	elseif location == Enum.MapOverlayDisplayLocation.TopLeft then
+
 		frame:SetPoint("TOPLEFT", frame.relativeFrame, 15, -15);
-	elseif location == LE_MAP_OVERLAY_DISPLAY_LOCATION_BOTTOM_RIGHT then
+	elseif location == Enum.MapOverlayDisplayLocation.BottomRight then
+
 		frame:SetPoint("BOTTOMRIGHT", frame.relativeFrame, -18, 15);
-	elseif location == LE_MAP_OVERLAY_DISPLAY_LOCATION_TOP_RIGHT then
+	elseif location == Enum.MapOverlayDisplayLocation.TopRight then
+
 		frame:SetPoint("TOPRIGHT", frame.relativeFrame, -15, -15);
 	end
 end
 
 function OmegaMapMixin:UpdateMaximizedSize()
 	assert(self:IsMaximized());
+
 	local parentWidth, parentHeight = self:GetParent():GetSize();
 	local SCREEN_BORDER_PIXELS = 30;
-	parentWidth = (parentWidth - SCREEN_BORDER_PIXELS);
+	parentWidth = parentWidth - SCREEN_BORDER_PIXELS;
 
-	local spacerFrameHeight = self.TitleCanvasSpacerFrame:GetHeight();
-	local unclampedWidth = (((parentHeight - spacerFrameHeight) * self.minimizedWidth) / (self.minimizedHeight - spacerFrameHeight));
-	local clampedWidth = (math.min(parentWidth, unclampedWidth));
+	local spacerFrameHeight = TITLE_CANVAS_SPACER_FRAME_HEIGHT;
+
+	local unclampedWidth = ((parentHeight - spacerFrameHeight) * self.minimizedWidth) / (self.minimizedHeight - spacerFrameHeight);
+	local clampedWidth = math.min(parentWidth, unclampedWidth);
 
 	local unclampedHeight = parentHeight;
-	local clampHeight = (((parentHeight - spacerFrameHeight) * (clampedWidth / unclampedWidth)) + spacerFrameHeight);
+	local clampHeight = ((parentHeight - spacerFrameHeight) * (clampedWidth / unclampedWidth)) + spacerFrameHeight;
 	self:SetSize(math.floor(clampedWidth), math.floor(clampHeight));
 
 	SetUIPanelAttribute(self, "bottomClampOverride", (unclampedHeight - clampHeight) / 2);
@@ -344,16 +352,14 @@ function OmegaMapMixin:UpdateMaximizedSize()
 end
 
 function OmegaMapMixin:UpdateSpacerFrameAnchoring()
-	--if self.QuestLog and self.QuestLog:IsShown() then
-		--self.TitleCanvasSpacerFrame:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", -3 - self.questLogWidth, -67);
-	--else
-		self.TitleCanvasSpacerFrame:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", -3, -67);
-	--end
+	if self.QuestLog and self.QuestLog:IsShown() then
+		self.TitleCanvasSpacerFrame:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", -3 - self.questLogWidth, -TITLE_CANVAS_SPACER_FRAME_HEIGHT);
+	else
+		self.TitleCanvasSpacerFrame:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", -3, -TITLE_CANVAS_SPACER_FRAME_HEIGHT);
+	end
 	self:OnFrameSizeChanged();
-
-		--groupMembersDataProvider:SetUnitPinSize("player", BATTLEFIELD_MAP_PLAYER_SIZE);
-
 end
+
 ]]--
 --[[ Help Plate ]] --
 OmegaMapTutorialMixin = CreateFromMixins(WorldMapTutorialMixin)
@@ -409,7 +415,7 @@ function OmegaMapMixin:AttachQuestLog()
 
 	OM_QuestMapFrame:SetFrameStrata("HIGH");
 	OM_QuestMapFrame:ClearAllPoints();
-	OM_QuestMapFrame:SetPoint("TOPRIGHT", self, "TOPRIGHT", -6, -25);
+	OM_QuestMapFrame:SetPoint("TOPRIGHT", self, "TOPRIGHT", -3, -25);
 	OM_QuestMapFrame:SetPoint("BOTTOMRIGHT",self,"BOTTOMRIGHT", -6, 50);
 	OM_QuestMapFrame:Hide();
 	--OM_QuestMapFrame:Show();

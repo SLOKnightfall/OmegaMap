@@ -21,7 +21,7 @@ end
 
 
 if  not OmegaMapHotSpot then 
-	OmegaMapHotSpotFrame = CreateFrame("Button", "OmegaMapHotSpot", UIParent)
+	OmegaMapHotSpotFrame = CreateFrame("Button", "OmegaMapHotSpot", UIParent, "BackdropTemplate")
 end 
 
 --Initializes the HotSpot Button Attributes

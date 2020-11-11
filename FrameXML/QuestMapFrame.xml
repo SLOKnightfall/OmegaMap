@@ -42,35 +42,19 @@
 		</Scripts>
 	</Button>
 
-	<Button name="OM_QuestLogHeaderTemplate" virtual="true">
-		<Size x="16" y="16"/>
+	<Button name="OM_QuestLogHeaderCodeTemplate" mixin="OM_QuestLogHeaderCodeMixin" registerForClicks="LeftButtonUp" virtual="true">
+    <Scripts>
+      <OnClick method="OnClick"/>
+      <OnEnter method="OnEnter"/>
+      <OnLeave method="OnLeave"/>
+    </Scripts>
+  </Button>
+
+	<Button name="OM_QuestLogHeaderTemplate" inherits="OM_QuestLogHeaderCodeTemplate" mixin="OM_QuestLogHeaderMixin" virtual="true">
+    <Size x="20" y="20"/>
 		<KeyValues>
 			<KeyValue key="leftPadding" value="4" type="number"/>
 		</KeyValues>
-		<Scripts>
-			<OnLoad>
-				--QuestLogTitleButton_OnLoad(self);
-				self.ButtonText:SetTextColor(0.7, 0.7, 0.7);
-				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-			</OnLoad>
-			<OnEvent>
-				--QuestLogTitleButton_OnEvent(self, event, ...);
-			</OnEvent>
-			<OnClick function="OM_QuestMapLogHeaderButton_OnClick"/>
-			<OnEnter>
-				self.ButtonText:SetTextColor(1, 1, 1);
-				if ( self.ButtonText:IsTruncated() ) then
-					GameTooltip:ClearAllPoints();
-					GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPRIGHT", 239, 0);
-					GameTooltip:SetOwner(self, "ANCHOR_PRESERVE");
-					GameTooltip:SetText(self.ButtonText:GetText(), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
-				end
-			</OnEnter>
-			<OnLeave>
-				self.ButtonText:SetTextColor(0.7, 0.7, 0.7);
-				GameTooltip:Hide();
-			</OnLeave>
-		</Scripts>
 		<ButtonText nonspacewrap="true" parentKey="ButtonText" justifyH="LEFT">
 			<Size x="234" y="10"/>
 			<Anchors>
@@ -79,7 +63,60 @@
 		</ButtonText>
 		<NormalFont style="GameFontNormalMed3"/>
 		<HighlightFont style="GameFontHighlightMedium"/>
+		<Scripts>
+	      <OnLoad method="OnLoad"/>
+	    </Scripts>
 	</Button>
+
+	<Button name="OM_CovenantCallingsHeaderTemplate" inherits="OM_QuestLogHeaderTemplate" mixin="OM_CovenantCallingsHeaderMixin" virtual="true">
+    <KeyValues>
+      <KeyValue key="leftPadding" value="18" type="number"/>
+      <KeyValue key="bottomPadding" value="10" type="number"/>
+      <KeyValue key="topPadding" value="0" type="number"/>
+    </KeyValues>
+    <Anchors>
+      <Anchor point="TOPLEFT" x="1" y="1"/>
+    </Anchors>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture parentKey="Background" atlas="StoryHeader-BG">
+          <Size x="260" y="36"/>
+          <Anchors>
+            <Anchor point="TOPLEFT" x="-19" y="7"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+      <Layer level="OVERLAY" textureSubLevel="-1">
+        <Texture parentKey="SelectedTexture" atlas="CampaignHeader_SelectedGlow" alphaMode="ADD">
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeKey="$parent.Background" x="0" y="0"/>
+            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.Background" x="0" y="3"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+      <Layer level="OVERLAY">
+        <Texture parentKey="Divider" atlas="ZoneStory_Divider" useAtlasSize="true">
+          <Anchors>
+            <Anchor point="TOPLEFT" x="-16" y="29"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+      <Layer level="HIGHLIGHT">
+        <Texture parentKey="HighlightBackground" atlas="StoryHeader-BG" alphaMode="ADD" alpha=".5">
+          <Size x="260" y="36"/>
+          <Anchors>
+            <Anchor point="TOPLEFT" x="-19" y="7"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+    </Layers>
+    <NormalFont style="GameFontNormalSmall"/>
+    <HighlightFont style="GameFontHighlightSmall"/>
+    <Scripts>
+      <OnLoad method="OnLoadCovenantCallings" inherit="prepend"/>
+    </Scripts>
+  </Button>
+
 	<Button name="OM_QuestLogTitleTemplate" virtual="true">
 		<Size x="255" y="16"/>
 		<Layers>
@@ -271,7 +308,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						OM_QuestMapQuestOptions_ShareQuest(self:GetParent().questID);
+						OM_QuestMapQuestOptions_AbandonQuest(self:GetParent().questID);
 					</OnClick>
 					<OnLeave function="GameTooltip_Hide"/>
 				</Scripts>
@@ -309,15 +346,23 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="OM_QuestMapFrame" enableMouse="true" mixin="OM_QuestLogMixin" hidden="true">
+	<Frame name="OM_QuestMapFrame" enableMouse="true" mixin="OM_QuestLogMixin" hidden="true" >
 		<Size x="286" y="0"/>
 		<Layers>
+			<Layer level="BACKGROUND">
+		        <Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
+		          <Anchors>
+		            <Anchor point="TOPLEFT" x="0" y="3"/>
+		             <Anchor point="BOTTOMRIGHT" x="0" y="3"/>
+		          </Anchors>
+		        </Texture>
+		    </Layer>
 			<Layer level="OVERLAY">
 				<Texture parentKey="VerticalSeparator" inherits="!UI-Frame-InnerRightTile">
 					<Size x="3" y="0"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT" relativePoint="TOPLEFT" x="0" y="0"/>
-						<Anchor point="BOTTOMLEFT"/>
+						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" x="0" y="0"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -330,108 +375,27 @@
 					<Anchor point="TOPLEFT"/>
 					<Anchor point="BOTTOMRIGHT"/>
 				</Anchors>
-				<Layers>
-					<Layer level="BACKGROUND">
-						<Texture parentKey="Background" atlas="QuestLogBackground" useAtlasSize="true">
-							<Anchors>
-								<Anchor point="TOPLEFT" x="0" y="3"/>
-								<Anchor point="BOTTOMLEFT" />
-							</Anchors>
-						</Texture>
-					</Layer>
-				</Layers>
 				<ScrollChild>
 					<Frame parentKey="Contents" inherits="VerticalLayoutFrame">
 						<Size x="258" y="454"/>
 						<Anchors>
 							<Anchor point="TOPLEFT"/>
-							<Anchor point="BOTTOMLEFT"/>
 						</Anchors>
 						<Frames>
-							<Frame parentKey="EmptySpacer">
-								<KeyValues>
-									<KeyValue key="layoutIndex" value="1" type="number"/>
-								</KeyValues>
-								<Size x="260" y="10"/>
-							</Frame>
-							<Frame parentKey="WarCampaignHeader" hidden="true">
-								<KeyValues>
-									<KeyValue key="layoutIndex" value="QUEST_LOG_WAR_CAMPAIGN_LAYOUT_INDEX" type="global"/>
-									<KeyValue key="topPadding" value="-10" type="number"/>
-								</KeyValues>
-								<Size x="260" y="62"/>
-								<Anchors>
-									<Anchor point="TOPLEFT" x="1" y="1"/>
-								</Anchors>
-								<Layers>
-									<Layer level="BACKGROUND">
-										<Texture parentKey="Background" atlas="Campaign_Horde" useAtlasSize="true">
-											<Anchors>
-												<Anchor point="TOP" x="0" y="0"/>
-											</Anchors>
-										</Texture>
-									</Layer>
-									<Layer level="ARTWORK">
-										<FontString parentKey="Text" inherits="GameFontHighlightMedium">
-											<Anchors>
-												<Anchor point="TOPLEFT" x="18" y="-11"/>
-											</Anchors>
-										</FontString>
-										<FontString parentKey="Progress" inherits="GameFontNormalSmall">
-											<Anchors>
-												<Anchor point="TOPLEFT" relativeKey="$parent.Text" relativePoint="BOTTOMLEFT" x="0" y="-4"/>
-											</Anchors>
-										</FontString>
-									</Layer>
-									<Layer level="HIGHLIGHT">
-										<Texture parentKey="HighlightTexture" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" alphaMode="ADD">
-											<Size x="248" y="50"/>
-											<Anchors>
-												<Anchor point="BOTTOM" x="0" y="11"/>
-											</Anchors>
-										</Texture>
-									</Layer>
-								</Layers>
-								<Scripts>
-									<OnEnter function="OM_QuestMapLog_ShowWarCampaignTooltip"/>
-									<OnLeave function="OM_QuestMapLog_HideWarCampaignTooltip"/>
-								</Scripts>
-							</Frame>
-							<Frame parentKey="WarCampaignNextObjective" hidden="false">
-								<KeyValues>
-									<KeyValue key="layoutIndex" value="QUEST_LOG_WAR_CAMPAIGN_NEXT_OBJECTIVE_LAYOUT_INDEX" type="global"/>
-								</KeyValues>
-								<Size x="262" y="59"/>
-								<Layers>
-									<Layer level="ARTWORK">
-										<FontString parentKey="Text" inherits="GameFontNormal" justifyH="LEFT">
-											<Size x="220" y="0"/>
-											<Anchors>
-												<Anchor point="TOPLEFT" x="18" y="-12"/>
-											</Anchors>
-										</FontString>
-									</Layer>
-								</Layers>
-							</Frame>
 							<Frame parentKey="Separator" hidden="true">
-								<KeyValues>
-									<KeyValue key="layoutIndex" value="QUEST_LOG_SEPARATOR_LAYOUT_INDEX" type="global"/>
-								</KeyValues>
-								<Size x="260" y="37"/>
+               					<Size x="260" y="20"/>
 								<Layers>
 									<Layer level="OVERLAY">
 										<Texture parentKey="Divider" atlas="QuestLog_Divider" useAtlasSize="true">
 											<Anchors>
-												<Anchor point="CENTER"/>
-											</Anchors>
+                        						<Anchor point="TOP" y="16"/>
+                        					</Anchors>
 										</Texture>
 									</Layer>
 								</Layers>
 							</Frame>
 							<Frame parentKey="StoryHeader" hidden="true">
 								<KeyValues>
-									<KeyValue key="layoutIndex" value="QUEST_LOG_STORY_LAYOUT_INDEX" type="global"/>
-									<KeyValue key="topPadding" value="-18" type="number"/>
 									<KeyValue key="bottomPadding" value="7" type="number"/>
 								</KeyValues>
 								<Size x="260" y="62"/>
@@ -464,6 +428,7 @@
 											<Anchors>
 												<Anchor point="BOTTOM" x="0" y="10"/>
 											</Anchors>
+											<Color color="HIGHLIGHT_LIGHT_BLUE"/>
 										</Texture>
 									</Layer>
 								</Layers>
@@ -490,13 +455,13 @@
 								</Texture>
 								<Texture parentKey="TopDetail" atlas="QuestLog_TopDetail" useAtlasSize="true">
 									<Anchors>
-										<Anchor point="TOP" x="0" y="0"/>
+										<Anchor point="TOP" x="0" y="9"/>
 									</Anchors>
 								</Texture>
 							</Layer>
 						</Layers>
 					</Frame>
-					<Slider name="$parentScrollBar" inherits="UIPanelScrollBarTemplate" parentKey="ScrollBar">
+					<Slider parentKey="ScrollBar" inherits="UIPanelScrollBarTemplate">
 						<Anchors>
 			              <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="6" y="-18"/>
 			              <Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="6" y="18"/>
@@ -527,19 +492,8 @@
 							</Layer>
 						</Layers>
 					</Slider>
-					<Frame parentKey="StoryTooltip" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true">
-						<Size x="10" y="10"/>
-						<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
-							<EdgeSize>
-								<AbsValue val="16"/>
-							</EdgeSize>
-							<TileSize>
-								<AbsValue val="16"/>
-							</TileSize>
-							<BackgroundInsets>
-								<AbsInset left="5" right="5" top="5" bottom="5"/>
-							</BackgroundInsets>
-						</Backdrop>
+      			    <Frame parentKey="StoryTooltip" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true" inherits="TooltipBackdropTemplate">		
+      			    	<Size x="10" y="10"/>
 						<Layers>
 							<Layer level="ARTWORK">
 								<FontString parentKey="Title" inherits="GameFontHighlightMedium">
@@ -571,20 +525,19 @@
 							</Layer>
 						</Layers>
 					</Frame>
-					<Frame parentKey="WarCampaignTooltip" inherits="WarCampaignTooltipTemplate"/>
 				</Frames>
 				<Scripts>
 					<OnLoad function="OM_QuestsFrame_OnLoad"/>
 				</Scripts>
 			</ScrollFrame>
-			<Frame parentKey="QuestSessionManagement" mixin="QuestSessionManagementMixin">
+			<Frame parentKey="QuestSessionManagement" mixin="OM_QuestSessionManagementMixin">
 		        <Size x="0" y="49"/>
 		        <Anchors>
 		          <Anchor point="BOTTOMLEFT"/>
 		          <Anchor point="BOTTOMRIGHT"/>
 		        </Anchors>
 		        <Frames>
-		          <Button parentKey="ExecuteSessionCommand" hidden="true">
+					<Button parentKey="ExecuteSessionCommand" motionScriptsWhileDisabled="true" hidden="true">
 		            <Size x="44" y="44"/>
 		            <Anchors>
 		              <Anchor point="LEFT" x="14"/>
@@ -639,20 +592,24 @@
 		          </Layer>
 		        </Layers>
 		        <Scripts>
-		          <OnLoad method="OnLoad"/>
-		          <OnHide method="OnHide"/>
+			          <OnLoad method="OnLoad"/>
+			          <OnShow method="OnShow"/>
+			          <OnHide method="OnHide"/>
+			          <OnEvent method="OnEvent"/>
 		        </Scripts>
 		      </Frame>
 			<Frame parentKey="DetailsFrame" hidden="true">
 				<Size x="259" y="462"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-26" y="-42"/>
+					<Anchor point="BOTTOMLEFT"/>
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
 						<Texture atlas="QuestDetailsBackgrounds" useAtlasSize="true">
 							<Anchors>
 								<Anchor point="TOPLEFT"/>
+								<Anchor point="BOTTOMRIGHT"/>
 							</Anchors>
 						</Texture>
 					</Layer>
@@ -668,6 +625,7 @@
 							<Size x="285" y="407"/>
 							<Anchors>
 								<Anchor point="TOPLEFT" x="0" y="6"/>
+								<Anchor point="BOTTOMRIGHT" />
 							</Anchors>
 							<TexCoords left="0.0468" right="1" top="0" bottom="1"/>
 						</Texture>
@@ -694,7 +652,7 @@
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Button parentKey="DestinationMapButton" inherits="QuestLogPathButtonTemplate">
+					<Button parentKey="DestinationMapButton" inherits="OM_QuestLogPathButtonTemplate">
 			            <KeyValues>
 			              <KeyValue key="tooltipText" value="QUEST_WAYPOINT_FINAL" type="global"/>
 			            </KeyValues>
@@ -706,7 +664,7 @@
 			              </OnLoad>
 			            </Scripts>
 			          </Button>
-			          <Button parentKey="WaypointMapButton" inherits="QuestLogPathButtonTemplate">
+			          <Button parentKey="WaypointMapButton" inherits="OM_QuestLogPathButtonTemplate">
 			            <KeyValues>
 			              <KeyValue key="tooltipText" value="QUEST_WAYPOINT_ROUTE" type="global"/>
 			            </KeyValues>
@@ -759,8 +717,8 @@
 							</Frame>
 						</ScrollChild>
 						<Frames>
-							<Slider name="$parentScrollBar" parentKey="ScrollBar" inherits="MinimalScrollBarTemplate">
-								<Anchors>
+              			<Slider parentKey="ScrollBar" inherits="MinimalScrollBarTemplate">
+  								<Anchors>
 									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="0" y="-14"/>
 									<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="0" y="14"/>
 								</Anchors>
@@ -839,7 +797,7 @@
 								</Layers>
 								<Scripts>
 									<OnClick>
-										ShowQuestComplete(GetQuestLogSelection());
+										ShowQuestComplete(C_QuestLog.GetSelectedQuest());
 										AutoQuestPopupTracker_RemovePopUp(OM_QuestMapFrame.DetailsFrame.questID);
 									</OnClick>
 									<OnShow>
@@ -908,6 +866,12 @@
 		          <OnShow function="OM_QuestDetailsFrame_OnShow"/>
 		          <OnHide function="OM_QuestDetailsFrame_OnHide"/>
 		        </Scripts>
+		   </Frame>
+   		  <Frame parentKey="CampaignOverview" inherits="OM_CampaignOverviewTemplate" hidden="true">
+	        <Anchors>
+	          <Anchor point="TOPLEFT" relativeKey="$parent.QuestsFrame"/>
+	          <Anchor point="BOTTOMRIGHT" relativeKey="$parent.QuestsFrame"/>
+	        </Anchors>
 			</Frame>
 		</Frames>
 		<Scripts>

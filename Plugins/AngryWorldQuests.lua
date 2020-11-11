@@ -123,7 +123,7 @@ local function TitleButton_OnEnter(self)
 	end
 
 	if Config.showComparisonRight then
-		OmegaMapTooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide = "right"
+		GameTooltip.ItemTooltip.Tooltip.overrideComparisonAnchorSide = "right"
 	end
 	TaskPOI_OnEnter(self)
 end
@@ -173,7 +173,7 @@ end
 local function FilterButton_OnEnter(self)
 	local text = Mod.Filters[ self.filter ].name
 	if self.filter == "EMISSARY" and Config.filterEmissary and not IsQuestComplete(Config.filterEmissary) then
-		local title = GetQuestLogTitle(GetQuestLogIndexByID(Config.filterEmissary))
+		local title = C_QuestLog.GetInfo()(GetQuestLogIndexByID(Config.filterEmissary))
 		if title then text = text..": "..title end
 	end
 	if self.filter == "LOOT" then
@@ -246,7 +246,7 @@ local function FilterMenu_Initialize(self, level)
 		local bounties = GetQuestBountyInfoForMapID(MAPID_BROKENISLES)
 		for _, bounty in ipairs(bounties) do
 			if not IsQuestComplete(bounty.questID) then
-				info.text =  GetQuestLogTitle(GetQuestLogIndexByID(bounty.questID))
+				info.text =  C_QuestLog.GetInfo((GetQuestLogIndexByID(bounty.questID))
 				info.icon = bounty.icon
 				info.value = bounty.questID
 				info.checked = info.value == value

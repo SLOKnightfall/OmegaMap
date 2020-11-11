@@ -1,4 +1,4 @@
-## Interface: 80300
+## Interface: 90001
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
 ## Game Version: 8.3
@@ -24,24 +24,28 @@ Libs\AceLocale-3.0\AceLocale-3.0.xml
 
 Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
-#Libs\DropDownMenu\UIDropDownMenuTemplates.xml
-
-#Core Files
-FrameXML\QuestMapFrame.xml
-
-mixins.lua
-MapCanvasTemplates.xml
-
+#Libs\MSA-DropDownMenu-1.0\MSA-DropDownMenu-1.0.xml
 
 Localization\localization.en.lua
+
+#Core Files
+FrameXML\CampaignOverview.xml
+FrameXML\WarCampaignTemplates.xml
+FrameXML\QuestMapFrame.xml
+mixins.lua
+WorldMap\MapCanvasTemplates.xml
+
 OmegaMapFunctionality.lua
 
 #Modified Blizzard_WorldMap addon
-OmegaMap.xml
 
 
+WorldMap\WM_WorldQuestDataProvider.xml
+WorldMap\WM_EventOverlayDataProvider.xml
+#WorldMap\Blizzard_WorldMapTemplates.xml
+#WorldMap\Blizzard_WorldMap.xml
+WorldMap\OmegaMap.xml
 #OmegaMapAltMap.xml
-OmegaMapTooltip.xml
 OmegaMapHotSpot.lua
 
 #Addon Plugins
@@ -54,6 +58,6 @@ Plugins\TomTom.lua
 Plugins\CTMap.xml
 Plugins\PetTracker.xml
 #Plugins\Vuhdo.lua
-Plugins\AngryWorldQuests.lua
+#Plugins\AngryWorldQuests.lua
 #Plugins\WorldQuestTracker.lua
 #Plugins\WorldQuestTracker.xml

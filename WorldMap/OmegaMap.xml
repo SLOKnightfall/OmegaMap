@@ -2,7 +2,10 @@
 ..\FrameXML\UI.xsd">
 	<Script file="OmegaMap.lua"/>
 
-	<Frame name="OmegaMapFrameTemplate" inherits="OM_MapCanvasFrameTemplate" mixin="OM_QuestLogOwnerMixin, OmegaMapMixin" enableMouse="false" virtual="true">
+	<Frame name="OmegaMapFrameTemplate" inherits="MapCanvasFrameTemplate" mixin="OM_QuestLogOwnerMixin, OmegaMapMixin" enableMouse="false" virtual="true">
+		<Anchors>
+			<Anchor point="CENTER"/>
+		</Anchors>
 		<Frames>
 			<Frame parentKey="TitleCanvasSpacerFrame">
 				<Anchors>
@@ -48,19 +51,12 @@
 							<Color r="0" g="0" b="0" a=".5"/>
 						</Texture>
 					</Layer>
-					<Layer level="OVERLAY" textureSubLevel="1">
-						<Texture parentKey="ButtonFrameEdge" atlas="UI-OuterBorderButtonPatch" useAtlasSize="true">
-							<Anchors>
-								<Anchor point="TOPRIGHT" x="-36" y="0"/>
-							</Anchors>
-						</Texture>
-					</Layer>
 					<Layer level="BACKGROUND" textureSubLevel="-5">
 						<Texture inherits="_UI-Frame-InnerTopTile" parentKey="InsetBorderTop">
 							<Size x="0" y="3"/>
 							<Anchors>
 								<Anchor point="TOPLEFT" x="2" y="-63"/>
-								<Anchor point="TOPRIGHT" x="-2" y="-63"/>
+								<Anchor point="RIGHT" relativeKey="$parent.$parent.ScrollContainer"/>
 							</Anchors>
 						</Texture>
 					</Layer>
@@ -110,12 +106,12 @@
 							OmegaMapFrame:RefreshAll()
 						</OnClick>
 						<OnEnter>
-							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPPOITOGGLE_TOOLTIP"], nil, nil, nil, nil, 1);
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPPOITOGGLE_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
 
-							OmegaMapTooltip:Hide();
+							GameTooltip:Hide();
 						</OnLeave>
 						<OnShow>
 						if (OmegaMap_Config.clearMap) then
@@ -157,11 +153,11 @@
 							end
 						</OnClick>
 						<OnEnter>
-							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPLOCKBUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAPLOCKBUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
-							OmegaMapTooltip:Hide();
+							GameTooltip:Hide();
 						</OnLeave>
 					</Scripts>
 					<NormalTexture file="Interface\Buttons\UI-MICROBUTTON-World-Up"/>
@@ -179,33 +175,25 @@
 
 						</OnClick>
 						<OnEnter>
-							OmegaMapTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							OmegaMapTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_OPTION_BUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip:SetText(LibStub("AceLocale-3.0"):GetLocale("OmegaMap")["OMEGAMAP_OPTION_BUTTON_TOOLTIP"], nil, nil, nil, nil, 1);
 						</OnEnter>
 						<OnLeave>
-							OmegaMapTooltip:Hide();
+							GameTooltip:Hide();
 						</OnLeave>
 					</Scripts>
 					<NormalTexture file="Interface\Buttons\UI-MicroButton-Help-Up"/>
 					<PushedTexture file="Interface\Buttons\UI-MicroButton-Help-Down"/>
 				</Button>
 				<Slider name="OmegaMapSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
-							defaultValue="0.3" movable="true" parent="OmegaMapFrame">
+							defaultValue="0.3" movable="true" parent="OmegaMapFrame" inherits="BackdropTemplate">
 						<Size x="16" y="128"/>
 						<Anchors>
 							<Anchor point="CENTER" relativeTo="OmegaMapFrame" relativePoint="BOTTOMLEFT" x="25" y="450"/>
 						</Anchors>
-						<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
-							<EdgeSize>
-								<AbsValue val="8"/>
-							</EdgeSize>
-							<TileSize>
-								<AbsValue val="8"/>
-							</TileSize>
-							<BackgroundInsets>
-								<AbsInset left="3" right="3" top="6" bottom="6"/>
-							</BackgroundInsets>
-						</Backdrop>
+					<KeyValues>
+				        <KeyValue key="backdropInfo" value="BACKDROP_SLIDER_8_8" type="global"/>
+				    </KeyValues>
 						<Layers>
 							<Layer level="ARTWORK">
 								<FontString name="$parentText" inherits="GameFontNormalSmall">
@@ -260,6 +248,7 @@
 								self:SetFrameLevel( OmegaMapFrame:GetFrameLevel() + 100 );
 							</OnShow>
 							<OnLoad>
+								self:OnBackdropLoaded()
 								OmegaMapSliderFrame:SetMinMaxValues(0,1);
 								OmegaMapSliderFrame:SetValueStep(0.01);
 								OmegaMapSliderFrame:SetValue(0.2);
@@ -276,22 +265,14 @@
 						</ThumbTexture>
 					</Slider>
 				<Slider name="OmegaMapZoomSliderFrame" orientation="VERTICAL" minValue="0" maxValue="1" valueStep="0.01"
-						defaultValue="0.3" movable="true" parent="OmegaMapFrame">
+						defaultValue="0.3" movable="true" parent="OmegaMapFrame" inherits="BackdropTemplate">
+					<KeyValues>
+				        <KeyValue key="backdropInfo" value="BACKDROP_SLIDER_8_8" type="global"/>
+				    </KeyValues>
 					<Size x="16" y="128"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="OmegaMapSliderFrame" relativePoint="BOTTOMLEFT" x="0" y="-25"/>
 					</Anchors>
-					<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
-						<EdgeSize>
-							<AbsValue val="8"/>
-						</EdgeSize>
-						<TileSize>
-							<AbsValue val="8"/>
-						</TileSize>
-						<BackgroundInsets>
-							<AbsInset left="3" right="3" top="6" bottom="6"/>
-						</BackgroundInsets>
-					</Backdrop>
 					<Layers>
 						<Layer level="ARTWORK">
 							<FontString name="$parentText" inherits="GameFontNormalSmall">
@@ -323,6 +304,7 @@
 							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
 						</OnShow>
 						<OnLoad>
+							self:OnBackdropLoaded()
 							OmegaMapZoomSliderFrame:SetMinMaxValues(.50,1.25);
 							OmegaMapZoomSliderFrame:SetValueStep(0.01);
 							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
@@ -339,6 +321,7 @@
 						<Size x="32" y="32"/>
 					</ThumbTexture>
 				</Slider>
+				           
 				<Frame name="OmegaMapCoordinates" movable="true" parent="OmegaMapFrame">
 						<Size x="90" y="30"/>
 						<Anchors>

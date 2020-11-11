@@ -1,36 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	
-	<Frame name="OM_MapCanvasFrameTemplate" toplevel="true" enableMouse="true" parent="UIParent" hidden="true" frameStrata="MEDIUM" mixin="MapCanvasMixin" virtual="true">
-		<Size x="1004" y="689"/>
-		<Anchors>
-			<Anchor point="CENTER"/>
-		</Anchors>
-
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnUpdate method="OnUpdate"/>
-			<OnShow method="OnShow"/>
-			<OnEvent method="OnEvent"/>
-			<OnHide method="OnHide"/>
-		</Scripts>
-	</Frame>
-
-		<Frame name="OM_MapNotesFrameTemplate" toplevel="true" enableMouse="true" parent="UIParent" hidden="true" frameStrata="MEDIUM" virtual="true">
-		<Size x="1004" y="689"/>
-		<Anchors>
-			<Anchor point="CENTER"/>
-		</Anchors>
-
-		<Scripts>
-			<OnLoad method="OnLoad"/>
-			<OnUpdate method="OnUpdate"/>
-			<OnShow method="OnShow"/>
-			<OnEvent method="OnEvent"/>
-			<OnHide method="OnHide"/>
-		</Scripts>
-	</Frame>
-
 		<Frame name="OmegaMapNavBarTemplate" inherits="NavBarTemplate" mixin="OmegaMapNavBarMixin" virtual="true">
 		<Anchors>
 			<Anchor point="TOPLEFT" relativeKey="$parent.BorderFrame" x="10" y="-23"/>

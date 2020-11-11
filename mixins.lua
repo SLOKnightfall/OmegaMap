@@ -46,8 +46,6 @@ function OM_QuestLogOwnerMixin:SetDisplayState(displayState)
 		end
 	end
 
-
-
 	self:RefreshQuestLog();
 	self:UpdateSpacerFrameAnchoring();
 
@@ -81,8 +79,4 @@ end
 function OmegaMapNavBarMixin:OnMouseDown()
 	OmegaMapFrame:StartMoving()
 	OmegaMapFrame:SetUserPlaced(true);
-end
-
-function MapCanvasMixin:ResetZoom()
-	--self.ScrollContainer:ResetZoom();
 end
