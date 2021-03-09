@@ -14,7 +14,7 @@ OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")
 local Config = OmegaMap.Config
 
 local ADDON, Addon = "PetTracker", _G["PetTracker"]
-local MapFilter = Addon.MapFilter
+local MapSearch = Addon.MapSearch
 local MapCanvas = Addon.MapCanvas
 local L = Addon.Locals
 
@@ -22,8 +22,9 @@ OmegaMap.Plugins["showPetTracker"] = true
 
 
 function OmegaMap:PetTrackerUpdate()
-	MapCanvas:TrackingChanged()
+--MapSearch:ToggleTrackingTypes()
 end
+
 
 
 function OmegaMap:PetTrackerDraw(...)
@@ -39,37 +40,19 @@ OmegaMap:RawHook(MapCanvas,"Draw", "PetTrackerDraw")
 
 
 
-function MapFilter:Init(frame)
-  if self.frames[frame] then
-    return
-  else
-    self.frames[frame] = 1
-  end
+function MapSearch:Init(frame)
+  if not self.Frames[frame] then
+    for i, overlay in ipairs(frame.overlayFrames or {}) do
+      if overlay.Icon and overlay.Icon.GetTexture and overlay.Icon:GetTexture() == 'Interface\\Minimap\\Tracking\\None' then
+        overlay:SetScript('OnMouseDown', function()
+          overlay.Icon:SetPoint('TOPLEFT', 8, -8)
+          overlay.IconOverlay:Show()
 
-  for i, overlay in ipairs(frame.overlayFrames or {}) do
-    if overlay.OnClick == WorldMapTrackingOptionsButtonMixin.OnClick or overlay.OnClick == OmegaMapTrackingOptionsButtonMixin.OnClick then
-      local search = CreateFrame('EditBox', '$parent'.. ADDON .. 'Filter', overlay, 'SearchBoxTemplate')
-      search.Instructions:SetText(L.FilterPets)
-      search:SetPoint('RIGHT', overlay, 'LEFT', 0, 1)
-      search:SetSize(128, 20)
-      search:SetScript('OnTextChanged', function(search, manual)
-        self:SetTextFilter(search:GetText())
-      end)
-
-      search:HookScript('OnEditFocusGained', function()
-        SushiDropFrame:Toggle('TOP', search, 'BOTTOM', 0, -15, true, self.ShowSuggestions)
-      end)
-
-      search:HookScript('OnEditFocusLost', function()
-        SushiDropFrame:CloseAll()
-      end)
-
-      overlay:SetScript('OnClick', function()
-        SushiDropFrame:Toggle('TOPLEFT', overlay, 'BOTTOMLEFT', 0, -15, true, self.ShowTrackingTypes)
-      end)
-
-      self.frames[frame] = search
-      self:UpdateSearch(frame)
+          PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+          self:ToggleTrackingTypes(overlay)
+        end)
+        self.Frames[frame] = overlay
+      end
     end
-  end
+   end
 end

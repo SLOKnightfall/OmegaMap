@@ -1,13 +1,13 @@
-## Interface: 90001
+## Interface: 90005
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 8.3
+## Game Version: 9.0.5
 ## Author: SLOKnightfall
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariables: OmegaMapConfig, OmegaMapConfigProfile
 ## SavedVariablesPerCharacter: OmegaMapPosition
 ## RequiredDep: Blizzard_MapCanvas, Blizzard_SharedMapDataProviders
-## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, DongleStub, PetTracker, HandyNotes, Vuhdo, HereBeDragons-2.0, AngryWorldQuests, WorldQuestTracker
+## OptionalDeps: Gatherer, TomTom, Routes, CT_MapMod, GatherMate2, MapNotes, DongleStub, PetTracker, HandyNotes, Vuhdo, HereBeDragons-2.0, AngryWorldQuests, WorldQuestTracker, Wholly
 
 #Libraries
 Libs\LibStub\LibStub.lua
@@ -57,6 +57,8 @@ Plugins\Routes.lua
 Plugins\TomTom.lua
 Plugins\CTMap.xml
 Plugins\PetTracker.xml
+Plugins\Wholly.lua
+
 #Plugins\Vuhdo.lua
 #Plugins\AngryWorldQuests.lua
 #Plugins\WorldQuestTracker.lua

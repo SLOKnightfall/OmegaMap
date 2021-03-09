@@ -285,7 +285,7 @@
 									<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="2" y="3"/>
 								</Anchors>
 							</FontString>
-							<FontString inherits="GameFontHighlightSmall" text="50%">
+							<FontString inherits="GameFontHighlightSmall" text="20%">
 								<Anchors>
 									<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-2" y="3"/>
 								</Anchors>
@@ -305,7 +305,7 @@
 						</OnShow>
 						<OnLoad>
 							self:OnBackdropLoaded()
-							OmegaMapZoomSliderFrame:SetMinMaxValues(.50,1.25);
+							OmegaMapZoomSliderFrame:SetMinMaxValues(.20,1.25);
 							OmegaMapZoomSliderFrame:SetValueStep(0.01);
 							OmegaMapZoomSliderFrame:SetValue(OmegaMap_Config.scale);
 						</OnLoad>

@@ -158,6 +158,15 @@ local options = {
 			--inline = true,
 			order = 0,
 			args={
+				showNavBar = {
+					order = 1,
+					name = L["OMEGAMAP_OPTIONS_NAVBAR"] ,
+					desc = L["OMEGAMAP_OPTIONS_NAVBAR_TOOLTIP"],
+					type = "toggle",
+					set = function(info,val) Config.showNavBar = val; ToggleFrame(OmegaMapFrame.NavBar, val) end,
+					get = function(info) return Config.showNavBar end,
+					width = 1.5,
+				},
 				showCoords = {
 					order = 1,
 					name = L["OMEGAMAP_OPTIONS_COORDS"] ,
@@ -316,7 +325,7 @@ local options = {
 					set = function(info,val) Config.scale = val/100; OmegaMap_SetScale(OmegaMapFrame); OmegaMapZoomSliderFrame:SetValue(Config.scale); end,
 					get = function(info) return Config.scale*100 end,
 					width = "double",
-					min = 50,
+					min = 20,
 					max = 125,
 					step = 1,
 				},
@@ -332,6 +341,7 @@ local options = {
 					min = 100,
 					max = 200,
 					step = 1,
+					hidden = true, 
 				},
 				plugins_Header = {
 					order = 13,
@@ -459,6 +469,7 @@ local defaults = {
 		showQuestHelperLite = false,
 		showHandyNotes = false,
 		hotSpotLock = false,
+		showNavBar = true, 
 	--MiniMap button Settings
 		MMDB = { hide = false,
 				--minimap = {},
@@ -525,6 +536,7 @@ local function setOptionSettings()
 	ToggleFrame(OmegaMapSliderFrame, OmegaMap.Config.showAlpha)
 	ToggleFrame(OmegaMapZoomSliderFrame, OmegaMap.Config.showScale)
 	ToggleFrame(OmegaMapCoordinates, OmegaMap.Config.showCoords)
+	ToggleFrame(OmegaMapFrame.NavBar, OmegaMap.Config.showNavBar)
 	--ToggleFrame(OmegaMapCoordinates, OmegaMapConfig.showCoords)
 	--ToggleFrame(OmegaMapNoteFrame, OmegaMapConfig.clearMap)
 	OmegaMap:HotSpotToggle(Config.showHotSpot)

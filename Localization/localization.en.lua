@@ -37,6 +37,8 @@ L["OMEGAMAPPOITOGGLE_TOOLTIP"] = "Toggle Points of Interest"
 L["OMEGAMAPLOCKBUTTON_TOOLTIP"] = "Allows Map Interaction"
 
 --Option Menu
+L["OMEGAMAP_OPTIONS_NAVBAR"] = "Display Map Navbar"
+L["OMEGAMAP_OPTIONS_NAVBAR_TOOLTIP"] = "Have map navbar shown on map"
 L["OMEGAMAP_OPTIONS_COORDS"] = "Display Coordinates"
 L["OMEGAMAP_OPTIONS_COORDS_TOOLTIP"] = "Have map display coordinates"
 L["OMEGAMAP_OPTIONS_ALPHA"] = "Show Alpha Slider"
