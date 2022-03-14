@@ -1,7 +1,7 @@
-## Interface: 90005
+## Interface: 90200
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 9.0.5
+## Game Version: 9.2
 ## Author: SLOKnightfall
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariables: OmegaMapConfig, OmegaMapConfigProfile
@@ -57,7 +57,7 @@ Plugins\Routes.lua
 Plugins\TomTom.lua
 Plugins\CTMap.xml
 Plugins\PetTracker.xml
-Plugins\Wholly.lua
+#Plugins\Wholly.lua
 
 #Plugins\Vuhdo.lua
 #Plugins\AngryWorldQuests.lua

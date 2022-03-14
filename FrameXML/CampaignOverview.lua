@@ -11,7 +11,7 @@ function OM_CampaignOverviewMixin:OnLoad()
 end
 --[[
 do
-	dynamicEvents = {
+	local dynamicEvents = {
 		"QUEST_LOG_UPDATE",
 		"QUEST_LOG_CRITERIA_UPDATE",
 		"GROUP_ROSTER_UPDATE",

@@ -94,8 +94,8 @@ function WorldMapTrackingOptionsButtonMixin:OnSelection(value, checked)
 		SetCVar(value, checked and "1" or "0");
 	elseif (value == "worldQuestFilterResources" or value == "worldQuestFilterArtifactPower" or
 			value == "worldQuestFilterProfessionMaterials" or value == "worldQuestFilterGold" or
-			value == "worldQuestFilterEquipment" or value == "worldQuestFilterReputation") then
-		-- World quest reward filter cvars
+			value == "worldQuestFilterEquipment" or value == "worldQuestFilterReputation" or
+			value == "worldQuestFilterAnima") then		-- World quest reward filter cvars
 		SetCVar(value, checked and "1" or "0");
 	end
 	self:GetParent():RefreshAllDataProviders();
@@ -147,7 +147,7 @@ function WorldMapTrackingOptionsButtonMixin:InitializeDropDown()
 
 	-- If we aren't on a map which has emissaries don't show the world quest reward filter options.
 	local mapID = self:GetParent():GetMapID();
-	if not mapID or not MapUtil.MapHasEmissaries(mapID) then
+	if not mapID or not MapUtil.MapShouldShowWorldQuestFilters(mapID) then
 		return;
 	end
 
@@ -181,15 +181,24 @@ function WorldMapTrackingOptionsButtonMixin:InitializeDropDown()
 	info.keepShownOnClick = true;
 	info.func = OnSelection;
 
-	info.text = WORLD_QUEST_REWARD_FILTERS_RESOURCES;
-	info.value = "worldQuestFilterResources";
-	info.checked = GetCVarBool("worldQuestFilterResources");
-	UIDropDownMenu_AddButton(info);
+	
+		-- TODO:: Further adjustments to more cleanly determine filters per map and make this future-proof.
+	if MapUtil.IsShadowlandsZoneMap(mapID) then
+		info.text = WORLD_QUEST_REWARD_FILTERS_ANIMA;
+		info.value = "worldQuestFilterAnima";
+		info.checked = GetCVarBool("worldQuestFilterAnima");
+		UIDropDownMenu_AddButton(info);
+	else
+		info.text = WORLD_QUEST_REWARD_FILTERS_RESOURCES;
+		info.value = "worldQuestFilterResources";
+		info.checked = GetCVarBool("worldQuestFilterResources");
+		UIDropDownMenu_AddButton(info);
 
-	info.text = WORLD_QUEST_REWARD_FILTERS_ARTIFACT_POWER;
-	info.value = "worldQuestFilterArtifactPower";
-	info.checked = GetCVarBool("worldQuestFilterArtifactPower");
-	UIDropDownMenu_AddButton(info);
+		info.text = WORLD_QUEST_REWARD_FILTERS_ARTIFACT_POWER;
+		info.value = "worldQuestFilterArtifactPower";
+		info.checked = GetCVarBool("worldQuestFilterArtifactPower");
+		UIDropDownMenu_AddButton(info);
+	end
 
 	info.text = WORLD_QUEST_REWARD_FILTERS_PROFESSION_MATERIALS;
 	info.value = "worldQuestFilterProfessionMaterials";
@@ -235,9 +244,13 @@ function WorldMapTrackingPinButtonMixin:OnMouseUp()
 end
 
 function WorldMapTrackingPinButtonMixin:OnClick()
-	local mapID = self:GetParent():GetMapID();
-	self:SetActive(not self.isActive);
-	PlaySound(SOUNDKIT.UI_MAP_WAYPOINT_BUTTON_CLICK);
+	local shouldSetActive = not self.isActive;
+	self:SetActive(shouldSetActive);
+	if shouldSetActive then
+		PlaySound(SOUNDKIT.UI_MAP_WAYPOINT_BUTTON_CLICK_ON);
+	else
+		PlaySound(SOUNDKIT.UI_MAP_WAYPOINT_BUTTON_CLICK_OFF);
+	end
 end
 
 function WorldMapTrackingPinButtonMixin:OnEnter()
@@ -249,7 +262,7 @@ function WorldMapTrackingPinButtonMixin:OnEnter()
 		GameTooltip_AddBlankLineToTooltip(GameTooltip);
 		GameTooltip_AddInstructionLine(GameTooltip, MAP_PIN_TOOLTIP_INSTRUCTIONS);
 	else
-		GameTooltip_AddErrorLine(GameTooltip, ERR_CLIENT_LOCKED_OUT);
+		GameTooltip_AddErrorLine(GameTooltip, MAP_PIN_INVALID_MAP);
 	end
 	GameTooltip:Show();
 end
@@ -304,7 +317,19 @@ function WorldMapNavBarMixin:Refresh()
 			id = mapInfo.mapID,
 			OnClick = WorldMapNavBarButtonMixin.OnClick,
 		};
-		if ( C_Map.IsMapValidForNavBarDropDown(mapInfo.mapID) ) then
+		-- Check if we are on a multifloor map belonging to a UIMapGroup, and if any map within the group should populate a dropdown
+		local mapGroupID = C_Map.GetMapGroupID(mapInfo.mapID);
+		if ( mapGroupID ) then
+			local mapGroupMembersInfo = C_Map.GetMapGroupMembersInfo(mapGroupID);
+			if ( mapGroupMembersInfo ) then
+				for i, mapGroupMemberInfo in ipairs(mapGroupMembersInfo) do
+					if ( C_Map.IsMapValidForNavBarDropDown(mapGroupMemberInfo.mapID) ) then
+						buttonData.listFunc = WorldMapNavBarButtonMixin.GetDropDownList;
+						break;
+					end
+				end
+			end	
+		elseif ( C_Map.IsMapValidForNavBarDropDown(mapInfo.mapID) ) then
 			buttonData.listFunc = WorldMapNavBarButtonMixin.GetDropDownList;
 		end
 		tinsert(hierarchy, 1, buttonData);

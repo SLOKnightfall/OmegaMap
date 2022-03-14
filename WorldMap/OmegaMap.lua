@@ -5,7 +5,7 @@ local Config = OmegaMap.Config
 OmegaMapMixin = CreateFromMixins(WorldMapMixin)
 
 function OmegaMapMixin:SetupTitle()
-	self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
+	self.BorderFrame:SetTitle(MAP_AND_QUEST_LOG);
 	--self.BorderFrame.Bg:SetParent(self);
 	self.BorderFrame.TopTileStreaks:Hide();
 
@@ -118,7 +118,7 @@ function OmegaMapMixin:OnEvent(event, ...)
 		--else
 			--self:Maximize();
 		--end
-	elseif event == "DISPLAY_SIZE_CHANGED" then
+	elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
 		--if self:IsMaximized() then
 			--self:UpdateMaximizedSize();
 		--end
