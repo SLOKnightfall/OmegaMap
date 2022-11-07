@@ -9,7 +9,7 @@ function OmegaMapMixin:SetupTitle()
 	--self.BorderFrame.Bg:SetParent(self);
 	self.BorderFrame.TopTileStreaks:Hide();
 
-	SetPortraitToTexture(self.BorderFrame.portrait, [[Interface\QuestFrame\UI-QuestLog-BookIcon]]);
+	----SetPortraitToTexture(self.BorderFrame.portrait, [[Interface\QuestFrame\UI-QuestLog-BookIcon]]);
 end
 --[[
 function OmegaMapMixin:SynchronizeDisplayState()
