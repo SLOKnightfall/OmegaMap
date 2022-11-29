@@ -42,20 +42,22 @@
 		</Scripts>
 	</Button>
 
+
 	<Button name="OM_QuestLogHeaderCodeTemplate" mixin="OM_QuestLogHeaderCodeMixin" registerForClicks="LeftButtonUp" virtual="true">
-    <Scripts>
+    <Scripts>			
+    	<OnLoad method="OnLoad"/>
       <OnClick method="OnClick"/>
       <OnEnter method="OnEnter"/>
       <OnLeave method="OnLeave"/>
     </Scripts>
   </Button>
 
-	<Button name="OM_QuestLogHeaderTemplate" inherits="OM_QuestLogHeaderCodeTemplate" mixin="OM_QuestLogHeaderMixin" virtual="true">
+	<Button name="OM_QuestLogHeaderTemplate" inherits="OM_QuestLogHeaderCodeTemplate"  virtual="true">
     <Size x="20" y="20"/>
 		<KeyValues>
 			<KeyValue key="leftPadding" value="4" type="number"/>
 		</KeyValues>
-		<ButtonText nonspacewrap="true" parentKey="ButtonText" justifyH="LEFT">
+		<ButtonText parentKey="ButtonText" nonspacewrap="true" justifyH="LEFT">
 			<Size x="234" y="10"/>
 			<Anchors>
 				<Anchor point="LEFT" relativePoint="RIGHT" x="5" y="0"/>
@@ -63,16 +65,11 @@
 		</ButtonText>
 		<NormalFont style="GameFontNormalMed3"/>
 		<HighlightFont style="GameFontHighlightMedium"/>
-		<Scripts>
-	      <OnLoad method="OnLoad"/>
-	    </Scripts>
 	</Button>
 
 	<Button name="OM_CovenantCallingsHeaderTemplate" inherits="OM_QuestLogHeaderTemplate" mixin="OM_CovenantCallingsHeaderMixin" virtual="true">
     <KeyValues>
-      <KeyValue key="leftPadding" value="18" type="number"/>
-      <KeyValue key="bottomPadding" value="10" type="number"/>
-      <KeyValue key="topPadding" value="0" type="number"/>
+      <KeyValue key="leftPadding" value="4" type="number"/>
     </KeyValues>
     <Anchors>
       <Anchor point="TOPLEFT" x="1" y="1"/>
@@ -82,7 +79,7 @@
         <Texture parentKey="Background" atlas="StoryHeader-BG">
           <Size x="260" y="36"/>
           <Anchors>
-            <Anchor point="TOPLEFT" x="-19" y="7"/>
+            <Anchor point="TOPLEFT" x="-5" y="7"/>
           </Anchors>
         </Texture>
       </Layer>
@@ -97,7 +94,7 @@
       <Layer level="OVERLAY">
         <Texture parentKey="Divider" atlas="ZoneStory_Divider" useAtlasSize="true">
           <Anchors>
-            <Anchor point="TOPLEFT" x="-16" y="29"/>
+            <Anchor point="TOPLEFT" x="-2" y="29"/>
           </Anchors>
         </Texture>
       </Layer>
@@ -105,7 +102,7 @@
         <Texture parentKey="HighlightBackground" atlas="StoryHeader-BG" alphaMode="ADD" alpha=".5">
           <Size x="260" y="36"/>
           <Anchors>
-            <Anchor point="TOPLEFT" x="-19" y="7"/>
+            <Anchor point="TOPLEFT" x="-5" y="7"/>
           </Anchors>
         </Texture>
       </Layer>
@@ -117,7 +114,7 @@
     </Scripts>
   </Button>
 
-	<Button name="OM_QuestLogTitleTemplate" virtual="true">
+	<Button name="OM_QuestLogTitleTemplate" mixin="OM_QuestLogTitleMixin" virtual="true">
 		<Size x="255" y="16"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -172,7 +169,8 @@
 		<HighlightFont style="GameFontHighlightLeft"/>
 		<DisabledFont style="GameFontHighlightLeft"/>
 	</Button>
-	<Frame name="OM_QuestLogObjectiveTemplate" virtual="true">
+	
+	<Frame name="OM_QuestLogObjectiveTemplate" mixin="OM_QuestLogObjectiveMixin" virtual="true">
 		<Size x="220" y="16"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -368,7 +366,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="OM_QuestMapQuestOptionsDropDown" inherits="UIDropDownMenuTemplate" hidden="true"/>
+			<Frame name="OM_QuestMapQuestOptionsDropDown" inherits="BW_UIDropDownMenuTemplate" hidden="true"/>
 			<ScrollFrame parentKey="QuestsFrame" name="OM_QuestScrollFrame" inherits="UIPanelScrollFrameCodeTemplate">
 				<!-- NOTE: See QuestMapFrame_UpdateQuestSessionState for anchor updates, these are default -->
 				<Anchors>
@@ -394,7 +392,7 @@
 									</Layer>
 								</Layers>
 							</Frame>
-							<Frame parentKey="StoryHeader" hidden="true">
+							<Frame parentKey="StoryHeader" mixin="OM_StoryHeaderMixin" hidden="true">
 								<KeyValues>
 									<KeyValue key="bottomPadding" value="7" type="number"/>
 								</KeyValues>
@@ -602,14 +600,12 @@
 				<Size x="259" y="462"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-26" y="-42"/>
-					<Anchor point="BOTTOMLEFT"/>
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
-						<Texture atlas="QuestDetailsBackgrounds" useAtlasSize="true">
+						<Texture parentKey="Bg" atlas="QuestDetailsBackgrounds" useAtlasSize="true">
 							<Anchors>
 								<Anchor point="TOPLEFT"/>
-								<Anchor point="BOTTOMRIGHT"/>
 							</Anchors>
 						</Texture>
 					</Layer>
@@ -625,7 +621,6 @@
 							<Size x="285" y="407"/>
 							<Anchors>
 								<Anchor point="TOPLEFT" x="0" y="6"/>
-								<Anchor point="BOTTOMRIGHT" />
 							</Anchors>
 							<TexCoords left="0.0468" right="1" top="0" bottom="1"/>
 						</Texture>
