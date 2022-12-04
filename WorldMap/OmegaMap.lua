@@ -82,7 +82,7 @@ end
 function OmegaMapMixin:IsMaximized()
 	return self.isMaximized;
 end
-
+]]--
 function OmegaMapMixin:OnLoad()
 	UIPanelWindows[self:GetName()] = { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP" };
 
@@ -101,14 +101,14 @@ function OmegaMapMixin:OnLoad()
 
 	self:RegisterEvent("VARIABLES_LOADED");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
-	self:RegisterEvent("WORLD_MAP_OPEN");
-	self:RegisterEvent("WORLD_MAP_CLOSE");
+	--self:RegisterEvent("WORLD_MAP_OPEN");
+	--self:RegisterEvent("WORLD_MAP_CLOSE");
 
 	self:AttachQuestLog();
 
 	self:UpdateSpacerFrameAnchoring();
 end
-]]--
+
 function OmegaMapMixin:OnEvent(event, ...)
 	MapCanvasMixin.OnEvent(self, event, ...);
 
@@ -297,7 +297,7 @@ function OmegaMapMixin:RefreshOverlayFrames()
 		end
 	end
 end
-
+]]--
 function OmegaMapMixin:AddOverlayFrame(templateName, templateType, anchorPoint, relativeFrame, relativePoint, offsetX, offsetY)
 	local frame = CreateFrame(templateType, nil, self, templateName);
 	if anchorPoint then
@@ -311,7 +311,7 @@ function OmegaMapMixin:AddOverlayFrame(templateName, templateType, anchorPoint, 
 
 	return frame;
 end
-
+--[[
 function OmegaMapMixin:SetOverlayFrameLocation(frame, location)
 	frame:ClearAllPoints();
 	if location == Enum.MapOverlayDisplayLocation.BottomLeft then

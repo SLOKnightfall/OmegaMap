@@ -244,7 +244,7 @@ local function QuestMapFrame_DoFullUpdate()
 			OM_QuestMapFrame_UpdateAll();
 		end
 	elseif ( event == "QUEST_ACCEPTED" ) then
-		TUTORIAL_QUEST_ACCEPTED = arg1;
+		--TUTORIAL_QUEST_ACCEPTED = arg1;
 	elseif ( event == "AJ_QUEST_LOG_OPEN" ) then
 		OM_OpenQuestLog();
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(arg1);
@@ -519,18 +519,18 @@ function OM_QuestMapFrame_Hide()
 end
 
 function OM_QuestMapFrame_CheckTutorials()
-	if (TUTORIAL_QUEST_ACCEPTED) then
-		if (not IsTutorialFlagged(2)) then
-			local _, raceName  = UnitRace("player");
-			if ( strupper(raceName) ~= "PANDAREN" ) then
-				TriggerTutorial(2);
-			end
-		end
-		if (not IsTutorialFlagged(10) and (TUTORIAL_QUEST_ACCEPTED == TUTORIAL_QUEST_TO_WATCH)) then
-			TriggerTutorial(10);
-		end
-		TUTORIAL_QUEST_ACCEPTED = nil;
-	end
+	--if (TUTORIAL_QUEST_ACCEPTED) then
+	--	if (not IsTutorialFlagged(2)) then
+		--	local _, raceName  = UnitRace("player");
+		--	if ( strupper(raceName) ~= "PANDAREN" ) then
+		--		TriggerTutorial(2);
+			--end
+		--end
+		--if (not IsTutorialFlagged(10) and (TUTORIAL_QUEST_ACCEPTED == TUTORIAL_QUEST_TO_WATCH)) then
+		--	TriggerTutorial(10);
+		--end
+		--TUTORIAL_QUEST_ACCEPTED = nil;
+	--end
 end
 
 function OM_QuestMapFrame_UpdateAll(numPOIs)
@@ -808,7 +808,7 @@ function OM_QuestMapQuestOptionsDropDown_Initialize(self)
 	end
 	info.func =function(_, questID) OM_QuestMapQuestOptions_TrackQuest(questID) end;
 	info.arg1 = self.questID;
-	BW_UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+	BW_UIDropDownMenu_AddButton(info, BW_UIDROPDOWNMENU_MENU_LEVEL);
 
 	info.text = SHARE_QUEST;
 	info.func = function(_, questID) OM_QuestMapQuestOptions_ShareQuest(questID) end;
@@ -816,14 +816,14 @@ function OM_QuestMapQuestOptionsDropDown_Initialize(self)
 	if ( not C_QuestLog.IsPushableQuest(self.questID) or not IsInGroup() ) then
 			info.disabled = 1;
 	end
-	BW_UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+	BW_UIDropDownMenu_AddButton(info, BW_UIDROPDOWNMENU_MENU_LEVEL);
 
 	if C_QuestLog.CanAbandonQuest(self.questID) then
 		info.text = ABANDON_QUEST;
 		info.func = function(_, questID) OM_QuestMapQuestOptions_AbandonQuest(questID) end;
 		info.arg1 = self.questID;
 		info.disabled = nil;
-		BW_UIDropDownMenu_AddButton(info, UIDROPDOWNMENU_MENU_LEVEL);
+		BW_UIDropDownMenu_AddButton(info, BW_UIDROPDOWNMENU_MENU_LEVEL);
 	end
 end
 
@@ -1665,7 +1665,7 @@ function OM_QuestMapLogTitleButton_OnClick(self, button)
 				CloseDropDownMenus();
 			end
 			OM_QuestMapQuestOptionsDropDown.questID = self.questID;
-			ToggleDropDownMenu(1, nil, OM_QuestMapQuestOptionsDropDown, "cursor", 6, -6);
+			BW_ToggleDropDownMenu(1, nil, OM_QuestMapQuestOptionsDropDown, "cursor", 6, -6);
 		elseif button == "LeftButton" then
 			OM_QuestMapFrame_ShowQuestDetails(self.questID);
 		end

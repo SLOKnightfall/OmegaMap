@@ -25,7 +25,6 @@ Libs\AceLocale-3.0\AceLocale-3.0.xml
 Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\UIDropDownMenu\UIDropDownMenu.xml
-#Libs\MSA-DropDownMenu-1.0\MSA-DropDownMenu-1.0.xml
 
 Localization\localization.en.lua
 
@@ -33,6 +32,7 @@ Localization\localization.en.lua
 FrameXML\CampaignOverview.xml
 FrameXML\WarCampaignTemplates.xml
 FrameXML\QuestMapFrame.xml
+FrameXML\NavigationBar.xml
 mixins.lua
 WorldMap\MapCanvasTemplates.xml
 

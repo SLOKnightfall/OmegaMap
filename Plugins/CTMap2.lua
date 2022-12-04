@@ -1368,7 +1368,7 @@ function CT_MapMod_MainButton_OnClick(self, button)
 
 		dropdown.xOffset = 0;
 		dropdown.yOffset = 0;
-		ToggleDropDownMenu(1, nil, dropdown);
+		BW_ToggleDropDownMenu(1, nil, dropdown);
 		PlaySound("igMainMenuOptionCheckBoxOn");
 	end
 end

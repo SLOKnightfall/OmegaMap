@@ -1,7 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	
-		<Frame name="OmegaMapNavBarTemplate" inherits="NavBarTemplate" mixin="OmegaMapNavBarMixin" virtual="true">
+		<Frame name="OmegaMapNavBarTemplate" inherits="OM_NavBarTemplate" mixin="OmegaMapNavBarMixin" virtual="true">
 		<Anchors>
 			<Anchor point="TOPLEFT" relativeKey="$parent.BorderFrame" x="10" y="-23"/>
 		</Anchors>
