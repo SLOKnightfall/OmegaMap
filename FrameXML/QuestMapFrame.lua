@@ -65,6 +65,12 @@ function OM_QuestLogMixin:HideCampaignOverview(campaignID)
 	OM_QuestScrollFrame:Show();
 end
 
+function OM_QuestLogMixin:OnHighlightedQuestPOIChange(questID)
+	local poiButton = self.QuestsFrame.Contents:FindButtonByQuestID(questID);
+	if poiButton then
+		poiButton:EvaluateManagedHighlight();
+	end
+end
 
 OM_QuestLogHeaderCodeMixin = CreateFromMixins(QuestLogHeaderCodeMixin);
 
@@ -151,14 +157,22 @@ function OM_QuestMapFrame_OnLoad(self)
 	self:RegisterEvent("CVAR_UPDATE");
 
 	--self:InitLayoutIndexManager();
-	
+	EventRegistry:RegisterCallback("SetHighlightedQuestPOI", self.OnHighlightedQuestPOIChange, self);
+	EventRegistry:RegisterCallback("ClearHighlightedQuestPOI", self.OnHighlightedQuestPOIChange, self);
+
 	self.completedCriteria = {};
-	QuestPOI_Initialize(OM_QuestScrollFrame.Contents);
+	local onCreateFunc = nil;
+	local useHighlightManager = true;
+	OM_QuestScrollFrame.Contents:Init(onCreateFunc, useHighlightManager);
 	OM_QuestMapQuestOptionsDropDown.questID = 0;		-- for OM_QuestMapQuestOptionsDropDown_Initialize
 	--UIDropDownMenu_Initialize(OM_QuestMapQuestOptionsDropDown, OM_QuestMapQuestOptionsDropDown_Initialize, "MENU");
 	BW_UIDropDownMenu_SetInitializeFunction(OM_QuestMapQuestOptionsDropDown, OM_QuestMapQuestOptionsDropDown_Initialize);
 	BW_UIDropDownMenu_SetDisplayMode(OM_QuestMapQuestOptionsDropDown, "MENU");
 	C_Timer.After(.05, function() OM_QuestMapFrame:SetFrameLevel( 10) end)
+
+	OM_QuestMapFrame.DetailsFrame.ScrollFrame:RegisterCallback("OnScrollRangeChanged", function(o, xrange, yrange)
+		OM_QuestMapFrame_AdjustPathButtons();
+	end);
 end
 
 local function QuestMapFrame_DoFullUpdate()
@@ -611,6 +625,8 @@ end
 
 function OM_QuestMapFrame_ShowQuestDetails(questID)
 	OM_QuestMapFrame_CheckAutoSupertrackOnShowDetails(questID);
+	OM_QuestMapFrame_PingQuestID(questID);
+
 	EventRegistry:TriggerEvent("QuestLog.HideCampaignOverview");
 	C_QuestLog.SetSelectedQuest(questID);
 
@@ -702,7 +718,7 @@ function OM_QuestMapFrame_UpdateSuperTrackedQuest(self)
 	local questID = C_SuperTrack.GetSuperTrackedQuestID();
 	if ( questID ~= OM_QuestMapFrame.DetailsFrame.questID ) then
 		OM_QuestMapFrame_CloseQuestDetails(self:GetParent());
-		QuestPOI_SelectButtonByQuestID(OM_QuestScrollFrame.Contents, questID);
+		OM_QuestScrollFrame.Contents:SelectButtonByQuestID(questID);
 	end
 end
 
@@ -731,7 +747,7 @@ function OM_QuestMapFrame_UpdateQuestDetailsButtons()
 
 	local enableShare = not isQuestDisabled and C_QuestLog.IsPushableQuest(questID) and IsInGroup();
 	OM_QuestMapFrame.DetailsFrame.ShareButton:SetEnabled(enableShare);
-	OM_QuestLogPopupDetailFrame.ShareButton:Enable(enableShare);
+	OM_QuestLogPopupDetailFrame.ShareButton:SetEnabled(enableShare);
 end
 
 function OM_QuestMapFrame_ReturnFromQuestDetails()
@@ -897,14 +913,6 @@ local function QuestLogQuests_GetPreviousButtonInfo(displayState)
 	return displayState.prevButton, displayState.prevButtonInfo;
 end
 
-local function QuestLogQuests_IsPreviousButtonCollapsed(displayState)
-	local _, info = QuestLogQuests_GetPreviousButtonInfo(displayState);
-	if info then
-		return info.isHeader and info.isCollapsed;
-	end
-
-	return false;
-end
 
 local function QuestLogQuests_SetPreviousButtonInfo(displayState, previousButton, previousButtonInfo)
 	displayState.prevButton = previousButton;
@@ -1087,7 +1095,7 @@ end
 local function QuestLogQuests_GetQuestInfos(questInfoContainer)
 	local infos = {};
 	for index, info in ipairs(questInfoContainer) do
-		if info.questSortType == QuestSortType.Normal then
+		if info.questSortType == QuestSortType.Normal or info.questSortType == QuestSortType.Legendary then
 			table.insert(infos, info);
 		end
 	end
@@ -1098,20 +1106,26 @@ local function QuestLogQuests_ShouldDisplayPOIButton(displayState, info, isDisab
 end
 local function QuestLogQuests_GetPOIButton(displayState, info, isDisabledQuest, isComplete)
 	if isDisabledQuest then
-		return QuestPOI_GetButton(OM_QuestScrollFrame.Contents, info.questID, "disabled", nil);
+		return OM_QuestScrollFrame.Contents:GetButtonForQuest(info.questID, POIButtonUtil.Style.QuestDisabled, nil);
 	elseif isComplete then
-		return QuestPOI_GetButton(OM_QuestScrollFrame.Contents, info.questID, "normal", nil);
+		return OM_QuestScrollFrame.Contents:GetButtonForQuest(info.questID, POIButtonUtil.Style.QuestComplete, nil);
 	else
 		for index, poiQuestID in ipairs(displayState.poiTable) do
 			if poiQuestID == info.questID then
-				return QuestPOI_GetButton(OM_QuestScrollFrame.Contents, info.questID, "numeric", index);
+				return OM_QuestScrollFrame.Contents:GetButtonForQuest(info.questID, POIButtonUtil.Style.Numeric, index);
 			end
 		end
 	end
 end
 local function QuestLogQuests_GetBestTagID(questID, info, isComplete)
+	local tagInfo = C_QuestLog.GetQuestTagInfo(questID);
+	local questTagID = tagInfo and tagInfo.tagID;
 	if isComplete then
-		return "COMPLETED";
+		if questTagID == Enum.QuestTag.Legendary then
+			return "COMPLETED_LEGENDARY";
+		else
+			return "COMPLETED";
+		end
 	end
 	-- At this point, we know the quest is not complete, no need to check it any more.
 	if C_QuestLog.IsFailed(questID) then
@@ -1127,8 +1141,7 @@ local function QuestLogQuests_GetBestTagID(questID, info, isComplete)
 			end
 		end
 	end
-	local tagInfo = C_QuestLog.GetQuestTagInfo(questID);
-	local questTagID = tagInfo and tagInfo.tagID;
+
 	if questTagID == Enum.QuestTag.Account then
 		local factionGroup = GetQuestFactionGroup(questID);
 		if factionGroup then
@@ -1178,11 +1191,12 @@ local function QuestLogQuests_AddQuestButton(displayState, info)
 	
 	local isComplete = C_QuestLog.IsComplete(questID);
 	local tagID = QuestLogQuests_GetBestTagID(questID, info, isComplete);
-	local tagCoords = tagID and QUEST_TAG_TCOORDS[tagID];
-	button.TagTexture:SetShown(tagCoords ~= nil);
+	local tagAtlas = QuestUtils_GetQuestTagAtlas(tagID);
 
-	if tagCoords then
-		button.TagTexture:SetTexCoord(unpack(tagCoords));
+	button.TagTexture:SetShown(tagAtlas ~= nil);
+
+	if tagAtlas then
+		button.TagTexture:SetAtlas(tagAtlas, TextureKitConstants.UseAtlasSize);
 		button.TagTexture:SetDesaturated(C_QuestLog.IsQuestDisabledForSession(questID));
 	end
 
@@ -1385,6 +1399,7 @@ local function QuestLogQuests_BuildInitialDisplayState(poiTable, questInfoContai
 		questInfoContainer = questInfoContainer,
 		poiTable = poiTable,
 		displayQuestID = GetCVarBool("displayQuestID"),
+		displayInternalOnlyStatus = GetCVarBool("displayInternalOnlyStatus"),
 		showReadyToRecord = GetCVarBool("showReadyToRecord"),
 		questPOI = GetCVarBool("questPOI"),
 	};
@@ -1409,7 +1424,7 @@ function OM_QuestLogQuests_Update(poiTable)
 	OM_QuestScrollFrame.campaignHeaderFramePool:ReleaseAll();
 	OM_QuestScrollFrame.campaignHeaderMinimalFramePool:ReleaseAll();
 	OM_QuestScrollFrame.covenantCallingsHeaderFramePool:ReleaseAll();
-	QuestPOI_ResetUsage(OM_QuestScrollFrame.Contents);
+	OM_QuestScrollFrame.Contents:ResetUsage();
 	OM_QuestMapFrame:ResetLayoutIndex();
 	-- Build the info table, to determine what needs to be displayed
 	local questInfoContainer = QuestLogQuests_BuildQuestInfoContainer();
@@ -1459,8 +1474,7 @@ function OM_QuestLogQuests_Update(poiTable)
 	-- Display the rest of the normal quests and their headers.
 	QuestLogQuests_DisplayQuestsFromIndices(displayState, questInfos);
 	QuestLogQuests_UpdateBackground(displayState);
-	QuestPOI_SelectButtonByQuestID(OM_QuestScrollFrame.Contents, C_SuperTrack.GetSuperTrackedQuestID());
-	QuestPOI_HideUnusedButtons(OM_QuestScrollFrame.Contents);
+	OM_QuestScrollFrame.Contents:SelectButtonByQuestID(C_SuperTrack.GetSuperTrackedQuestID());
 	OM_QuestScrollFrame.Contents:Layout();
 end
 
@@ -1540,7 +1554,7 @@ function OM_QuestMapLogTitleButton_OnEnter(self)
 		end
 
 		local overrideQuestTag = tagInfo.tagID;
-		if ( QUEST_TAG_TCOORDS[tagInfo.tagID] ) then
+		if ( QuestUtils_GetQuestTagAtlas(tagInfo.tagID) ) then
 			if ( tagInfo.tagID == Enum.QuestTag.Account and factionGroup ) then
 				overrideQuestTag = "ALLIANCE";
 				if ( factionGroup == LE_QUEST_FACTION_HORDE ) then
@@ -1746,7 +1760,7 @@ function OM_QuestMapLog_ShowStoryTooltip(self)
 	totalHeight = totalHeight + tooltip.ProgressLabel:GetHeight() + tooltip.ProgressCount:GetHeight();
 
 	tooltip:ClearAllPoints();
-	local tooltipWidth = max(MIN_STORY_TOOLTIP_WIDTH, maxWidth + 20);
+	local tooltipWidth = max(240, maxWidth + 20);
 	if ( tooltipWidth > UIParent:GetRight() - OM_QuestMapFrame:GetParent():GetRight() ) then
 		tooltip:SetPoint("TOPRIGHT", self:GetParent().StoryHeader, "TOPLEFT", -5, 0);
 	else
@@ -1767,10 +1781,6 @@ end
 -- *****************************************************************************************************
 -- ***** POPUP DETAIL FRAME
 -- *****************************************************************************************************
-
-function OM_QuestLogPopupDetailFrame_OnLoad(self)
-	self.ScrollFrame.ScrollBar:SetPoint("TOPLEFT", self.ScrollFrame, "TOPRIGHT", 6, -14);
-end
 
 function OM_QuestLogPopupDetailFrame_OnHide(self)
 	self.questID = nil;
@@ -1797,6 +1807,7 @@ function OM_QuestLogPopupDetailFrame_Show(questLogIndex)
 	QuestLogPopupDetailFrame_Update(true);
 	ShowUIPanel(OM_QuestLogPopupDetailFrame);
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
+	OM_QuestLogPopupDetailFrame.Bg:SetAtlas(QuestUtil.GetDefaultQuestBackgroundTexture());
 
 	-- portrait
 	local questPortrait, questPortraitText, questPortraitName, questPortraitMount, questPortraitModelSceneID = C_QuestLog.GetQuestLogPortraitGiver();

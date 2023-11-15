@@ -108,14 +108,21 @@ end
 
 
 
-FadeScrollMixin = {};
+CampaignOverviewScrollFrameMixin = {};
 
-function FadeScrollMixin:OnVerticalScroll(offset)
-	ScrollFrame_OnVerticalScroll(self, offset);
-	self:UpdateFade();
+function CampaignOverviewScrollFrameMixin:OnLoad()
+	ScrollFrame_OnLoad(self);
+
+	self:RegisterCallback("OnVerticalScroll", function(offset)
+
+
+
+
+		self:UpdateFade();
+	end);
 end
 
-function FadeScrollMixin:GetVerticalScrollNormalized()
+function CampaignOverviewScrollFrameMixin:GetVerticalScrollNormalized()
 	local range = self:GetVerticalScrollRange();
 	local offset = self:GetVerticalScroll();
 	if range ~= 0 then
@@ -125,7 +132,7 @@ function FadeScrollMixin:GetVerticalScrollNormalized()
 	return nil;
 end
 
-function FadeScrollMixin:UpdateFade()
+function CampaignOverviewScrollFrameMixin:UpdateFade()
 	local offset = self:GetVerticalScrollNormalized();
 	if offset ~= nil then
 		if offset < 0.15 then
@@ -140,5 +147,6 @@ function FadeScrollMixin:UpdateFade()
 		self.BottomShadow:SetAlpha(0);
 	end
 end
+
 
 ]]--

@@ -1,5 +1,8 @@
 -- English is the default localization 
 --if GetLocale() == "usEN" then
+local addonName, addon = ...
+
+OmegaMap = LibStub("AceAddon-3.0"):NewAddon("OmegaMap", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")	
 local L = LibStub("AceLocale-3.0"):NewLocale("OmegaMap", "enUS", true)
 --Colors
 OM_RED	= "|c00FF1010";

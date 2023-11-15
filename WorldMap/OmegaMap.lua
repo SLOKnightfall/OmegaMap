@@ -4,6 +4,8 @@ local Config = OmegaMap.Config
 
 OmegaMapMixin = CreateFromMixins(WorldMapMixin)
 
+local TITLE_CANVAS_SPACER_FRAME_HEIGHT = 67;
+
 function OmegaMapMixin:SetupTitle()
 	self.BorderFrame:SetTitle(MAP_AND_QUEST_LOG);
 	--self.BorderFrame.Bg:SetParent(self);
@@ -153,6 +155,7 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(ScenarioDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(VignetteDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(QuestDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(ContentTrackingDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(InvasionDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(GossipDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(FlightPointDataProviderMixin));
@@ -186,7 +189,6 @@ function OmegaMapMixin:AddStandardDataProviders()
 	worldQuestDataProvider:SetMatchWorldMapFilters(true);
 	worldQuestDataProvider:SetUsesSpellEffect(true);
 	worldQuestDataProvider:SetCheckBounties(true);
-	worldQuestDataProvider:SetMarkActiveQuests(true);
 	self:AddDataProvider(worldQuestDataProvider);
 
 	local pinFrameLevelsManager = self:GetPinFrameLevelsManager();
@@ -211,11 +213,13 @@ function OmegaMapMixin:AddStandardDataProviders()
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_ENCOUNTER");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_CONTRIBUTION_COLLECTOR");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VIGNETTE", 200);
-	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_STORY_LINE");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_STORY_LINE", 6);
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SCENARIO");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WORLD_QUEST", 500);
-	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WORLD_QUEST_PING");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_QUEST_PING");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_TRACKED_CONTENT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_ACTIVE_QUEST", C_QuestLog.GetMaxNumQuests());
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_CONTENT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_QUEST");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VEHICLE_BELOW_GROUP_MEMBER");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_BONUS_OBJECTIVE");
@@ -235,6 +239,7 @@ function OmegaMapMixin:AddOverlayFrames()
 	self:AddOverlayFrame("WorldMapActionButtonTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapZoneTimerTemplate", "FRAME", "BOTTOM", self:GetCanvasContainer(), "BOTTOM", 0, 20);
 	self:AddOverlayFrame("WorldMapThreatFrameTemplate", "FRAME", "BOTTOMLEFT", self:GetCanvasContainer(), "BOTTOMLEFT", 0, 0);
+	self:AddOverlayFrame("WorldMapActivityTrackerTemplate", "BUTTON", "BOTTOMLEFT", self:GetCanvasContainer(), "BOTTOMLEFT", 0, 0);
 
 	self.NavBar = self:AddOverlayFrame("OmegaMapNavBarTemplate", "FRAME");
 	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 64, -25);
@@ -273,6 +278,19 @@ function OmegaMapMixin:OnShow()
 	--self:UpdateSpacerFrameAnchoring()
 
 	--OmegaMap_SetPosition()
+
+	--local miniWorldMap = GetCVarBool("miniWorldMap");
+	--local maximized = self:IsMaximized();
+	--if miniWorldMap ~= maximized then
+		--if miniWorldMap then
+			--self.BorderFrame.MaximizeMinimizeFrame:Minimize();
+		--else
+			--self.BorderFrame.MaximizeMinimizeFrame:Maximize();
+		--end
+
+	--end
+
+	EventRegistry:TriggerEvent("WorldMapOnShow");
 end
 --[[
 function OmegaMapMixin:OnHide()

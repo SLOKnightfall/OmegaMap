@@ -1,7 +1,7 @@
-## Interface: 100007
+## Interface: 100200
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
-## Game Version: 10.0.7
+## Game Version: 10.2.0
 ## Author: SLOKnightfall
 ## Notes: A semi-transparent worldmap overlay that does not interrupt character control. 
 ## SavedVariables: OmegaMapConfig, OmegaMapConfigProfile
@@ -35,6 +35,7 @@ FrameXML\QuestMapFrame.xml
 FrameXML\NavigationBar.xml
 mixins.lua
 WorldMap\MapCanvasTemplates.xml
+Patrons.lua
 
 OmegaMapFunctionality.lua
 

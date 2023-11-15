@@ -1,8 +1,11 @@
 local OmegaMap = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("OmegaMap")
 local Config = OmegaMap.Config
+local addonName, addon = ...
 
-OmegaMap = LibStub("AceAddon-3.0"):NewAddon("OmegaMap", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
+--OmegaMap = LibStub("AceAddon-3.0"):NewAddon("OmegaMap", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
+OmegaMap = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
 OmegaMap.Plugins = {}
 
 NUM_OMEGAMAP_POI_COLUMNS = 14;
@@ -71,6 +74,47 @@ function OmegaMapLDB:Toggle(value)
 			Config.showMiniMapIcon = false;
 		end
 end
+
+
+	--local PATRONS = {{},{title = 'Patrons', people = addon.Patrons},}
+
+local Patrons = {
+	name = "Patrons |TInterface/Addons/OmegaMap/Icons/Patreon:12:12|t",
+	handler = optionHandler,
+	get = "Getter",
+	set = "Setter",
+	type = 'group',
+	childGroups = "tab",
+	inline = false,
+	args = {
+			Patronss_Label = {
+				order = 1,
+				name = function() return addonName .. ' is distributed for free and supported trough donations. A massive thank you to all the supporters on Patreon and Paypal who keep development alive. You can become a patron too at |cFFF96854patreon.com/SLOKnightfall|r.\n\n\n', 'https://www.patreon.com/SLOKnightfall' end,
+				type = "description",
+				width = "full",
+
+			},
+			Patronss_Header = {
+				order = 2,
+				name = "Patrons",
+				type = "header",
+				width = "full",
+			},
+			
+		},
+}
+	
+local function addPatrons()
+	for i, namex in ipairs(OmegaMap.Patrons) do
+		Patrons.args["name"..i] = {
+				order = i + 2,
+				name = namex,
+				type = "description",
+				width = ".3",
+			}
+	end
+end
+
 
 
 local OMEGAMAP_DEFAULT_SCALE = 1.0;
@@ -194,6 +238,7 @@ local options = {
 					get = function(info) return Config.showExteriors end,
 					width = 1.5,
 					disabled = true,
+					hidden = true,
 				},
 				showBattlegrounds = {
 					order = 4,
@@ -204,6 +249,7 @@ local options = {
 					get = function(info) return Config.showBattlegrounds end,
 					width = 1.5,
 					disabled = true,
+					hidden = true,
 				},
 				escapeClose = {
 					order = 5,
@@ -579,6 +625,9 @@ function OmegaMap:OnInitialize()
 	self.db.RegisterCallback(OmegaMap, "OnProfileReset", "RefreshConfig")
 
 
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("Patrons", Patrons)
+	self.patrons = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Patrons", "Patrons |TInterface/Addons/OmegaMap/Icons/Patreon:12:12|t","OmegaMap")
+
 	OmegaMapFrame.ScrollContainer:EnableMouse(false)
 	OmegaMapFrame:RegisterForDrag("LeftButton")
 	OmegaMapFrame:SetMovable(true)
@@ -598,6 +647,7 @@ function OmegaMap:OnInitialize()
 
 
 	setOptionSettings()
+	addPatrons()
 end
 
 

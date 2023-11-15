@@ -1,5 +1,5 @@
 <Bindings>
-	<Binding name="TOGGLEOMEGAMAP" description="Toggles OmegaMap" header="OMEGAMAP">
+	<Binding name="TOGGLEOMEGAMAP" description="Toggles OmegaMap" category="OmegaMap">
         	ToggleOmegaMap();
 	</Binding>
 </Bindings>
