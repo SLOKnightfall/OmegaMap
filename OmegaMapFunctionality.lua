@@ -625,8 +625,8 @@ function OmegaMap:OnInitialize()
 	self.db.RegisterCallback(OmegaMap, "OnProfileReset", "RefreshConfig")
 
 
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("Patrons", Patrons)
-	self.patrons = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Patrons", "Patrons |TInterface/Addons/OmegaMap/Icons/Patreon:12:12|t","OmegaMap")
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("OM_Patrons", Patrons)
+	self.patrons = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("OM_Patrons", "Patrons |TInterface/Addons/OmegaMap/Icons/Patreon:12:12|t","OmegaMap")
 
 	OmegaMapFrame.ScrollContainer:EnableMouse(false)
 	OmegaMapFrame:RegisterForDrag("LeftButton")
