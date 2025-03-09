@@ -5,7 +5,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 
-if (IsAddOnLoaded("Vuhdo")) then
+if (C_AddOns.IsAddOnLoaded("Vuhdo")) then
 local tNextTime = 0;
 	function VUHDO_setMapToCurrentZone()
 		if not OmegaMapFrame:IsShown() then

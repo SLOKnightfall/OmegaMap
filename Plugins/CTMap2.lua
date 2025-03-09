@@ -6,7 +6,7 @@
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
-if IsAddOnLoaded("CT_MapMod") then
+if C_AddOns.IsAddOnLoaded("CT_MapMod") then
 
 --Creating a Frame to display Routes in Omega Map
 if not CTMapOmegaMapOverlay then

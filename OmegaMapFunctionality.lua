@@ -129,7 +129,7 @@ OMEGAMAP_ALTMAP = false
 OMEGAMAP_QUEST_BONUS_OBJECTIVE = 49;
 
 local function CheckPlugin(Name)
-	return not IsAddOnLoaded(Name)
+	return not C_AddOns.IsAddOnLoaded(Name)
 end
 
 local function ToggleFrame(frame, value)

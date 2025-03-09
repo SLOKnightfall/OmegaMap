@@ -1,3 +1,5 @@
+--D:\World of Warcraft\_retail_\BlizzardInterfaceCode\Interface\AddOns\Blizzard_UIPanels_Game\Mainline\CampaignOverview.lua:
+
 OM_CampaignOverviewMixin = CreateFromMixins(CampaignOverviewMixin);
 
 
@@ -9,7 +11,7 @@ function OM_CampaignOverviewMixin:OnLoad()
 	self.linePool = CreateFontStringPool(self.ScrollFrame.ScrollChild, "BACKGROUND", 0);
 	self.texturePool = CreateTexturePool(self.ScrollFrame.ScrollChild, "BACKGROUND", -1);
 end
---[[
+
 do
 	local dynamicEvents = {
 		"QUEST_LOG_UPDATE",
@@ -28,8 +30,6 @@ do
 	end
 
 	function OM_CampaignOverviewMixin:OnHide()
-		self.linePool:ReleaseAll();
-		self.texturePool:ReleaseAll();
 		FrameUtil.UnregisterFrameForEvents(self, dynamicEvents);
 	end
 end
@@ -48,6 +48,7 @@ function OM_CampaignOverviewMixin:SetCampaign(campaignID)
 end
 
 function OM_CampaignOverviewMixin:RequestLoreText()
+	print(self.Header:GetCampaign():GetID())
 	C_LoreText.RequestLoreTextForCampaignID(self.Header:GetCampaign():GetID());
 end
 
@@ -108,21 +109,17 @@ end
 
 
 
-CampaignOverviewScrollFrameMixin = {};
+OM_CampaignOverviewScrollFrameMixin = CreateFromMixins(CampaignOverviewScrollFrameMixin);
 
-function CampaignOverviewScrollFrameMixin:OnLoad()
+function OM_CampaignOverviewScrollFrameMixin:OnLoad()
 	ScrollFrame_OnLoad(self);
 
 	self:RegisterCallback("OnVerticalScroll", function(offset)
-
-
-
-
 		self:UpdateFade();
 	end);
 end
 
-function CampaignOverviewScrollFrameMixin:GetVerticalScrollNormalized()
+function OM_CampaignOverviewScrollFrameMixin:GetVerticalScrollNormalized()
 	local range = self:GetVerticalScrollRange();
 	local offset = self:GetVerticalScroll();
 	if range ~= 0 then
@@ -132,7 +129,7 @@ function CampaignOverviewScrollFrameMixin:GetVerticalScrollNormalized()
 	return nil;
 end
 
-function CampaignOverviewScrollFrameMixin:UpdateFade()
+function OM_CampaignOverviewScrollFrameMixin:UpdateFade()
 	local offset = self:GetVerticalScrollNormalized();
 	if offset ~= nil then
 		if offset < 0.15 then
@@ -148,5 +145,3 @@ function CampaignOverviewScrollFrameMixin:UpdateFade()
 	end
 end
 
-
-]]--

@@ -6,7 +6,7 @@
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
-if IsAddOnLoaded("TomTom") then
+if C_AddOns.IsAddOnLoaded("TomTom") then
 local OmegaMap = select(2, ...)
 
 local L = TomTomLocals

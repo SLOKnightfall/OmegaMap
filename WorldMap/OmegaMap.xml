@@ -10,7 +10,6 @@
 			<Frame parentKey="TitleCanvasSpacerFrame">
 				<Anchors>
 					<Anchor point="TOPLEFT" x="2" y="0"/>
-					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-3" y="-67"/>
 				</Anchors>
 			</Frame>
 			<ScrollFrame parentKey="ScrollContainer" inherits="MapCanvasFrameScrollContainerTemplate" enableMouse="false">
@@ -29,7 +28,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="OmegaMapFrame" inherits="OmegaMapFrameTemplate" parent="UIParent" enableMouse="false" enableKeyboard="true" clampedToScreen="true" movable="true">
+	<Frame name="OmegaMapFrame" inherits="OmegaMapFrameTemplate" parent="UIParent" frameBuffer="true" enableMouse="false" enableKeyboard="true" clampedToScreen="true" movable="true">
 		<Frames>
 			<Frame parentKey="BlackoutFrame" frameStrata="LOW" enableMouse="true" hidden="true">
 				<Anchors>
@@ -62,7 +61,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button parentKey="Tutorial" inherits="MainHelpPlateButton" mixin="OmegaMapTutorialMixin">
+					<Button parentKey="Tutorial" inherits="MainHelpPlateButton" mixin="OmegaMapTutorialMixin" hidden = "true">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="43" y="19"/>
 						</Anchors>
@@ -85,7 +84,7 @@
 					<OnMouseWheel function="nop" />
 				</Scripts>
 			</Frame>
-				<Button name="OmegaMapPOIToggle" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Button name="OmegaMapPOIToggle" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" hidden = "true">
 					<Size x="25" y="55"/>
 					<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="OmegaMapFrame" x="-10" y="-60"/>
@@ -126,7 +125,7 @@
 					<PushedTexture file="Interface\Buttons\UI-MicroButton-LFG-Down"/>
 					<DisabledTexture file ="Interface\Addons\OmegaMap\Icons\off"/>
 				</Button>
-				<Button name="OmegaMapLockButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Button name="OmegaMapLockButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" hidden = "true">
 					<Size x="25" y="55"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapPOIToggle"  x="3" y="0" />
@@ -164,7 +163,7 @@
 					<PushedTexture file="Interface\Buttons\UI-MICROBUTTON-World-Down"/>
 					<DisabledTexture file="Interface\Buttons\UI-MICROBUTTON-World-Disabled"/>
 				</Button>
-				<Button name="OmegaMapOptionsButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" >
+				<Button name="OmegaMapOptionsButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame"  hidden = "true">
 					<Size x="25" y="55"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapLockButton" x="3" y="0"/>

@@ -39,12 +39,6 @@ end
 
 OmegaMap_WorldQuestPinMixin = CreateFromMixins(WorldQuestPinMixin);
 
-function OmegaMap_WorldQuestPinMixin:OnLoad()
-	WorldQuestPinMixin.OnLoad(self);
-
-	self:SetScalingLimits(1, 0.425, 0.425);
-end
-
 function OmegaMap_WorldQuestPinMixin:RefreshVisuals()
 	WorldQuestPinMixin.RefreshVisuals(self);
 	self.TrackedCheck:SetShown(WorldMap_IsWorldQuestEffectivelyTracked(self.questID));

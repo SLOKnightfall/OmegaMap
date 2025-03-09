@@ -6,7 +6,7 @@
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
-if IsAddOnLoaded("AngryWorldQuests") then
+if C_AddOns.IsAddOnLoaded("AngryWorldQuests") then
 
 --local ADDON, Addon = ...
 

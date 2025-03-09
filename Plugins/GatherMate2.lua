@@ -6,7 +6,7 @@
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
-if IsAddOnLoaded("GatherMate2") then
+if C_AddOns.IsAddOnLoaded("GatherMate2") then
 
 local OmegaMap = select(2, ...)
 OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")

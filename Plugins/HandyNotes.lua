@@ -1,4 +1,4 @@
-if IsAddOnLoaded("HandyNotes") then
+if C_AddOns.IsAddOnLoaded("HandyNotes") then
 
 
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")

@@ -7,7 +7,7 @@
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
 
-if IsAddOnLoaded("Gatherer") then
+if C_AddOns.IsAddOnLoaded("Gatherer") then
 
 --Creating a Frame to display Gatherer nodes in Omega Map
 if not GathererOmegaMapOverlayParent then

@@ -6,7 +6,7 @@
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
-if not IsAddOnLoaded("CT_MapMod") then return end
+if not C_AddOns.IsAddOnLoaded("CT_MapMod") then return end
 
 local OmegaMap = select(2, ...)
 OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")

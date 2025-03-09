@@ -6,7 +6,7 @@
 
 --	///////////////////////////////////////////////////////////////////////////////////////////
 
-if not IsAddOnLoaded("PetTracker") then return end
+if not C_AddOns.IsAddOnLoaded("PetTracker") then return end
 --print(OMEGAMAP_PETTRACKER_LOADED_MESSAGE)
 
 local OmegaMap = select(2, ...)

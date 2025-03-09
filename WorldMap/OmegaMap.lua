@@ -2,6 +2,10 @@ local OmegaMap = select(2, ...)
 OmegaMap = LibStub("AceAddon-3.0"):GetAddon("OmegaMap")
 local Config = OmegaMap.Config
 
+local function ShouldWoWLabsAreaBeActive()
+	return WoWLabsAreaDataProviderMixin and C_GameRules.IsGameRuleActive(Enum.GameRule.PlunderstormAreaSelection);
+end
+
 OmegaMapMixin = CreateFromMixins(WorldMapMixin)
 
 local TITLE_CANVAS_SPACER_FRAME_HEIGHT = 67;
@@ -16,12 +20,12 @@ end
 --[[
 function OmegaMapMixin:SynchronizeDisplayState()
 	if self:IsMaximized() then
-		self.BorderFrame.TitleText:SetText(WORLD_MAP);
+		self.BorderFrame:SetTitle(WORLD_MAP);
 		GameTooltip:Hide();
 		self.BlackoutFrame:Show();
-		RestoreUIPanelArea(self);
+		MaximizeUIPanel(self);
 	else
-		self.BorderFrame.TitleText:SetText(MAP_AND_QUEST_LOG);
+		self.BorderFrame:SetTitle(MAP_AND_QUEST_LOG);
 		self.BlackoutFrame:Hide();
 		RestoreUIPanelArea(self);
 	end
@@ -66,7 +70,7 @@ end
 function OmegaMapMixin:SetupMinimizeMaximizeButton()
 	self.minimizedWidth = 702;
 	self.minimizedHeight = 534;
-	self.questLogWidth = 290;
+	self.questLogWidth = 333;
 
 	local function OnMaximize()
 		self:HandleUserActionMaximizeSelf();
@@ -84,9 +88,42 @@ end
 function OmegaMapMixin:IsMaximized()
 	return self.isMaximized;
 end
+
+function WorldMapMixin:IsMinimized()
+	return self.isMaximized == false;
+end
+
+function WorldMapMixin:SetTutorialButtonShown(shown)
+	local worldMapHelpPlateDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapHelpPlateDisabled);
+	if worldMapHelpPlateDisabled then
+		return;
+	end
+
+	self.BorderFrame.Tutorial:SetShown(shown);
+end
+
+function WorldMapMixin:CheckAndShowTutorialTooltip()
+	local worldMapHelpPlateDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapHelpPlateDisabled);
+	if worldMapHelpPlateDisabled then
+		return;
+	end
+
+	self.BorderFrame.Tutorial:CheckAndShowTooltip();
+end
+
+function WorldMapMixin:CheckAndHideTutorialHelpInfo()
+	local worldMapHelpPlateDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapHelpPlateDisabled);
+	if worldMapHelpPlateDisabled then
+		return;
+	end
+
+	self.BorderFrame.Tutorial:CheckAndHideHelpInfo();
+end
+
+
 ]]--
 function OmegaMapMixin:OnLoad()
-	UIPanelWindows[self:GetName()] = { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP" };
+	RegisterUIPanel(self, { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP", allowOtherPanels = 1 });
 
 	MapCanvasMixin.OnLoad(self);
 
@@ -101,25 +138,37 @@ function OmegaMapMixin:OnLoad()
 	self:AddStandardDataProviders();
 	self:AddOverlayFrames();
 
+	if ShouldWoWLabsAreaBeActive() then
+		self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	end
+
 	self:RegisterEvent("VARIABLES_LOADED");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
+	self:RegisterEvent("UI_SCALE_CHANGED");
+	self:RegisterEvent("WORLD_MAP_OPEN");
 	--self:RegisterEvent("WORLD_MAP_OPEN");
 	--self:RegisterEvent("WORLD_MAP_CLOSE");
 
 	self:AttachQuestLog();
 
 	self:UpdateSpacerFrameAnchoring();
+
+	local worldMapHelpPlateDisabled = true -- C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapHelpPlateDisabled);
+	if worldMapHelpPlateDisabled then
+		self.BorderFrame.Tutorial:Hide();
+	end
 end
 
 function OmegaMapMixin:OnEvent(event, ...)
 	MapCanvasMixin.OnEvent(self, event, ...);
 
-	if event == "VARIABLES_LOADED" then
-		--if self:ShouldBeMinimized() then
-			--self:Minimize();
-		--else
-			--self:Maximize();
-		--end
+	if event == "PLAYER_ENTERING_WORLD" then
+		-- Query data for WoWLabsAreaDataProviderMixin.
+		--C_WowLabsDataManager.QuerySelectedWoWLabsArea();
+		--C_WowLabsDataManager.QueryWoWLabsAreaInfo();
+	elseif event == "VARIABLES_LOADED" then
+		--local displayState = self:GetOpenDisplayState();
+		--self:SetDisplayState(displayState);
 	elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
 		--if self:IsMaximized() then
 			--self:UpdateMaximizedSize();
@@ -144,7 +193,7 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(MapExplorationDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(MapHighlightDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(WorldMap_EventOverlayDataProviderMixin));
-	self:AddDataProvider(CreateFromMixins(StorylineQuestDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(QuestOfferDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BattlefieldFlagDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BonusObjectiveDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(VehicleDataProviderMixin));
@@ -163,15 +212,27 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(DigSiteDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(GarrisonPlotDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(DungeonEntranceDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(DelveEntranceDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(BannerDataProvider));
 	self:AddDataProvider(CreateFromMixins(ContributionCollectorDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(MapLinkDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(SelectableGraveyardDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(AreaPOIDataProviderMixin));
-	self:AddDataProvider(CreateFromMixins(MapIndicatorQuestDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(AreaPOIEventDataProviderMixin));
+	--self:AddDataProvider(CreateFromMixins(MapIndicatorQuestDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(QuestSessionDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(WaypointLocationDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(DragonridingRaceDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(SuperTrackWaypointDataProviderMixin));
 
+	if C_GameRules.IsGameRuleActive(Enum.GameRule.MapPlunderstormCircle) then
+		self:AddDataProvider(CreateFromMixins(PlunderstormCircleDataProviderMixin));
+	end
+
+	-- WoWLabs areas only appear when in WoWLabs since these feature(s) aren't fully data-driven yet.
+	--if ShouldWoWLabsAreaBeActive() then
+		--self:AddDataProvider(CreateFromMixins(WoWLabsAreaDataProviderMixin));
+	--end
 
 	--if IsGMClient() then
 		--self:AddDataProvider(CreateFromMixins(WorldMap_DebugDataProviderMixin));
@@ -183,7 +244,6 @@ function OmegaMapMixin:AddStandardDataProviders()
 
 	local groupMembersDataProvider = CreateFromMixins(GroupMembersDataProviderMixin);
 	self:AddDataProvider(groupMembersDataProvider);
-	OM_groupMembersDataProvider = groupMembersDataProvider
 
 	local worldQuestDataProvider = CreateFromMixins(OmegaMap_WorldQuestDataProviderMixin);
 	worldQuestDataProvider:SetMatchWorldMapFilters(true);
@@ -192,7 +252,9 @@ function OmegaMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(worldQuestDataProvider);
 
 	local pinFrameLevelsManager = self:GetPinFrameLevelsManager();
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WOW_LABS_AREA");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_MAP_EXPLORATION");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_PLUNDERSTORM_CIRCLE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_EVENT_OVERLAY");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_GARRISON_PLOT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_FOG_OF_WAR");
@@ -202,27 +264,30 @@ function OmegaMapMixin:AddStandardDataProviders()
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_DEBUG", 4);
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_DIG_SITE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_DUNGEON_ENTRANCE");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_DELVE_ENTRANCE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_FLIGHT_POINT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_INVASION");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_PET_TAMER");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SELECTABLE_GRAVEYARD");
-	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_GOSSIP");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_DRAGONRIDING_RACE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_AREA_POI");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_GOSSIP");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_DEBUG");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_MAP_LINK");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_ENCOUNTER");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_CONTRIBUTION_COLLECTOR");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VIGNETTE", 200);
-	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_STORY_LINE", 6);
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_QUEST_OFFER", QuestOfferDataProviderMixin.PIN_LEVEL_RANGE);
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SCENARIO");
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_BONUS_OBJECTIVE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WORLD_QUEST", 500);
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_AREA_POI_EVENT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_QUEST_PING");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_TRACKED_CONTENT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_ACTIVE_QUEST", C_QuestLog.GetMaxNumQuests());
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_CONTENT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_QUEST");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VEHICLE_BELOW_GROUP_MEMBER");
-	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_BONUS_OBJECTIVE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_BATTLEFIELD_FLAG");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WAYPOINT_LOCATION");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_GROUP_MEMBER");
@@ -232,9 +297,25 @@ function OmegaMapMixin:AddStandardDataProviders()
 end
 
 function OmegaMapMixin:AddOverlayFrames()
-	self:AddOverlayFrame("WorldMapFloorNavigationFrameTemplate", "FRAME", "TOPLEFT", self:GetCanvasContainer(), "TOPLEFT", -15, 2);
-	self:AddOverlayFrame("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNTOGGLEBUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, -2);
-	self:AddOverlayFrame("WorldMapTrackingPinButtonTemplate", "BUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -36, -2);
+
+	local floorDropdown = self:AddOverlayFrame("WorldMapFloorNavigationFrameTemplate", "DROPDOWNBUTTON", "TOPLEFT", self:GetCanvasContainer(), "TOPLEFT", 2, 0);
+	floorDropdown:SetWidth(160);
+
+	local topRightButtonPoolYOffset = -2;
+	local topRightButtonPoolYOffsetAmount = -32;
+
+	local worldTrackingOptionsDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapTrackingOptionsDisabled);
+	if not worldTrackingOptionsDisabled then
+		self:AddOverlayFrame("WorldMapTrackingOptionsButtonTemplate", "DROPDOWNBUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, topRightButtonPoolYOffset);
+		topRightButtonPoolYOffset = topRightButtonPoolYOffset + topRightButtonPoolYOffsetAmount;
+	end
+
+	local worldMapTrackingPinDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapTrackingPinDisabled);
+	if not worldMapTrackingPinDisabled then
+		self:AddOverlayFrame("WorldMapTrackingPinButtonTemplate", "BUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", -4, topRightButtonPoolYOffset);
+		topRightButtonPoolYOffset = topRightButtonPoolYOffset + topRightButtonPoolYOffsetAmount;
+	end
+
 	self:AddOverlayFrame("WorldMapBountyBoardTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapActionButtonTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapZoneTimerTemplate", "FRAME", "BOTTOM", self:GetCanvasContainer(), "BOTTOM", 0, 20);
@@ -245,7 +326,10 @@ function OmegaMapMixin:AddOverlayFrames()
 	self.NavBar:SetPoint("TOPLEFT", self.TitleCanvasSpacerFrame, "TOPLEFT", 64, -25);
 	self.NavBar:SetPoint("BOTTOMRIGHT", self.TitleCanvasSpacerFrame, "BOTTOMRIGHT", -4, 9);
 
-	self.SidePanelToggle = self:AddOverlayFrame("WorldMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
+	local questLogPanelDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.QuestLogPanelDisabled);
+	if not questLogPanelDisabled then
+		self.SidePanelToggle = self:AddOverlayFrame("WorldMapSidePanelToggleTemplate", "BUTTON", "BOTTOMRIGHT", self:GetCanvasContainer(), "BOTTOMRIGHT", -2, 1);
+	end
 end
 --[[
 function OmegaMapMixin:OnMapChanged()
@@ -259,6 +343,12 @@ function OmegaMapMixin:OnMapChanged()
 end
 ]]--
 function OmegaMapMixin:OnShow()
+	local frameStrata = C_GameRules.GetGameRuleAsFrameStrata(Enum.GameRule.WorldMapFrameStrata);
+	if frameStrata and frameStrata ~= "UNKNOWN" then
+		self:SetFrameStrata(frameStrata);
+	end
+
+
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
 	--OmegaMap_SetScale(OmegaMapFrame)
@@ -300,22 +390,21 @@ function OmegaMapMixin:OnHide()
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_CLOSE);
 
 	PlayerMovementFrameFader.RemoveFrame(self);
-	self.BorderFrame.Tutorial:CheckAndHideHelpInfo();
+	self:CheckAndHideTutorialHelpInfo();
 
 	self:OnUIClose();
 
-	self:TriggerEvent("WorldMapOnHide");
+	EventRegistry:TriggerEvent("WorldMapOnHide");
 	C_Map.CloseWorldMapInteraction();
+
+	UpdateMicroButtons();
 end
 
-function OmegaMapMixin:RefreshOverlayFrames()
-	if self.overlayFrames then
-		for i, frame in ipairs(self.overlayFrames) do
-			frame:Refresh();
-		end
-	end
-end
 ]]--
+local function SecureRefreshOverlayFrame(_, frame)
+	frame:Refresh();
+end
+
 function OmegaMapMixin:AddOverlayFrame(templateName, templateType, anchorPoint, relativeFrame, relativePoint, offsetX, offsetY)
 	local frame = CreateFrame(templateType, nil, self, templateName);
 	if anchorPoint then
@@ -385,10 +474,10 @@ OmegaMapTutorialMixin = CreateFromMixins(WorldMapTutorialMixin)
 
 function OmegaMapTutorialMixin:OnLoad()
 	self.helpInfo = {
-		FramePos = { x = 4,	y = -40 },
-		FrameSize = { width = 985, height = 500	},
-		[1] = { ButtonPos = { x = 350,	y = -180 }, HighLightBox = { x = 0, y = -30, width = 695, height = 464 }, ToolTipDir = "DOWN", ToolTipText = WORLD_MAP_TUTORIAL1 },
-		[2] = { ButtonPos = { x = 350,	y = 16 }, HighLightBox = { x = 50, y = 16, width = 645, height = 44 }, ToolTipDir = "DOWN", ToolTipText = WORLD_MAP_TUTORIAL4 },
+		FramePos = { x = 4,	y = -26 },
+		FrameSize = { width = 1028, height = 500	},
+		[1] = { ButtonPos = { x = 350,	y = -180 }, HighLightBox = { x = 0, y = -44, width = 695, height = 464 }, ToolTipDir = "DOWN", ToolTipText = WORLD_MAP_TUTORIAL1 },
+		[2] = { ButtonPos = { x = 350,	y = 16 }, HighLightBox = { x = 50, y = 2, width = 645, height = 44 }, ToolTipDir = "DOWN", ToolTipText = WORLD_MAP_TUTORIAL4 },
 	};
 end
 
