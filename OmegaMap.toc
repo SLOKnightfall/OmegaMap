@@ -1,5 +1,5 @@
 ## Interface: 110100
-## Category: Transmog
+## Category: Map
 ## Title: OmegaMap (@project-version@)
 ## Version: @project-version@
 ## Game Version: 11.1.0

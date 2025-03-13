@@ -4,7 +4,8 @@ local DISPLAY_STATE_OPEN_MINIMIZED_NO_LOG = 2;
 local DISPLAY_STATE_OPEN_MINIMIZED_WITH_LOG = 3;
 local DISPLAY_STATE_OPEN_MAXIMIZED = 4;
 
-QuestLogOwnerMixin = { }
+local QuestLogOwnerMixin = { }
+OM_QuestLogOwnerMixin = QuestLogOwnerMixin
 
 function QuestLogOwnerMixin:GetOpenDisplayState()
 	local displayState;
@@ -100,7 +101,9 @@ end
 
 function QuestLogOwnerMixin:HandleUserActionOpenSelf(mapID)
 	-- any displayState is fine for this
-	ShowUIPanel(self);
+	--ShowUIPanel(self);
+	OmegaMapFrame:Show();
+
 	if mapID then
 		self:SetMapID(mapID);
 	end
@@ -110,26 +113,26 @@ function QuestLogOwnerMixin:SetDisplayState(displayState)
 	local hasSynchronizedDisplayState = false;
 
 	if displayState == DISPLAY_STATE_CLOSED then
-		HideUIPanel(self);
+		OmegaMapFrame:Hide();
 	else
-		ShowUIPanel(self);
+		OmegaMapFrame:Show();
 
 		if displayState == DISPLAY_STATE_OPEN_MAXIMIZED then
 			if not self:IsMaximized() then
 				self:SetQuestLogPanelShown(false);
-				self:Maximize();
-				self.BorderFrame.MaximizeMinimizeFrame:SetMinimizedLook();
+				--self:Maximize();
+				--self.BorderFrame.MaximizeMinimizeFrame:SetMinimizedLook();
 				hasSynchronizedDisplayState = true;
 			end
 		elseif displayState == DISPLAY_STATE_OPEN_MINIMIZED_NO_LOG then
 			if not self:IsMinimized() then
-				self:Minimize();
+				--self:Minimize();
 				hasSynchronizedDisplayState = true;
 			end
 			self:SetQuestLogPanelShown(false);
 		elseif displayState == DISPLAY_STATE_OPEN_MINIMIZED_WITH_LOG then
 			if not self:IsMinimized() then
-				self:Minimize();
+				--self:Minimize();
 				self.BorderFrame.MaximizeMinimizeFrame:SetMaximizedLook();
 				hasSynchronizedDisplayState = true;
 			end

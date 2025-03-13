@@ -2,6 +2,38 @@
 ..\..\FrameXML\UI.xsd">
 	<Script file="OmegaMap.lua"/>
 
+	<Button name="OM_MainMenuBarMicroButton" motionScriptsWhileDisabled="true" virtual="true">
+		<Size>
+			<AbsDimension x="28" y="58"/>
+		</Size>
+		<HitRectInsets>
+			<AbsInset left="0" right="0" top="18" bottom="0"/>
+		</HitRectInsets>
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture name="$parentFlash" file="Interface\Buttons\Micro-Highlight" alphaMode="ADD" parentKey="Flash" hidden="true">
+					<Size x="64" y="64"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" x="-2" y="-18"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnEnter>
+			</OnEnter>
+			<OnEnable>
+				self:SetAlpha(1);
+			</OnEnable>
+			<OnDisable>
+				self:SetAlpha(0.5);
+			</OnDisable>
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
+		</Scripts>
+	</Button>
+
 	<Frame name="OmegaMapFrameTemplate" inherits="MapCanvasFrameTemplate" mixin="OM_QuestLogOwnerMixin, OmegaMapMixin" enableMouse="false" virtual="true">
 		<Anchors>
 			<Anchor point="CENTER"/>
@@ -84,12 +116,29 @@
 					<OnMouseWheel function="nop" />
 				</Scripts>
 			</Frame>
-				<Button name="OmegaMapPOIToggle" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" hidden = "true">
+				<Button name="OmegaMapPOIToggle" inherits="OM_MainMenuBarMicroButton" parent="OmegaMapFrame" hidden = "false">
 					<Size x="25" y="55"/>
 					<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="OmegaMapFrame" x="-10" y="-60"/>
 						<!--<Anchor point="TOPLEFT" relativeTo="OmegaMapTrackQuestButton" x="-20" y="0"/> -->
 					</Anchors>
+							<Layers>
+			<Layer level="OVERLAY">
+				<Texture name="MicroButtonPortrait">
+					<Size>
+						<AbsDimension x="18" y="25"/>
+					</Size>
+					<Anchors>
+						<Anchor point="TOP">
+							<Offset>
+								<AbsDimension x="0" y="-28"/>
+							</Offset>
+						</Anchor>
+					</Anchors>
+					<TexCoords left="0.2" right="0.8" top="0.0666" bottom="0.9"/>
+				</Texture>
+			</Layer>
+		</Layers>
 					<Scripts>
 						<OnClick>
 							if (OmegaMap_Config.clearMap) then
@@ -125,7 +174,7 @@
 					<PushedTexture file="Interface\Buttons\UI-MicroButton-LFG-Down"/>
 					<DisabledTexture file ="Interface\Addons\OmegaMap\Icons\off"/>
 				</Button>
-				<Button name="OmegaMapLockButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame" hidden = "true">
+				<Button name="OmegaMapLockButton" inherits="OM_MainMenuBarMicroButton" parent="OmegaMapFrame" hidden = "false">
 					<Size x="25" y="55"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapPOIToggle"  x="3" y="0" />
@@ -163,7 +212,7 @@
 					<PushedTexture file="Interface\Buttons\UI-MICROBUTTON-World-Down"/>
 					<DisabledTexture file="Interface\Buttons\UI-MICROBUTTON-World-Disabled"/>
 				</Button>
-				<Button name="OmegaMapOptionsButton" inherits="MainMenuBarMicroButton" parent="OmegaMapFrame"  hidden = "true">
+				<Button name="OmegaMapOptionsButton" inherits="OM_MainMenuBarMicroButton" parent="OmegaMapFrame"  hidden = "false">
 					<Size x="25" y="55"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT"  relativePoint="TOPLEFT" relativeTo="OmegaMapLockButton" x="3" y="0"/>

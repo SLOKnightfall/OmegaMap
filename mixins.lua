@@ -46,7 +46,7 @@ function OM_QuestLogOwnerMixin:SetDisplayState(displayState)
 		end
 	end
 
-	self:RefreshQuestLog();
+	--self:2();
 	self:UpdateSpacerFrameAnchoring();
 
 	if not hasSynchronizedDisplayState then

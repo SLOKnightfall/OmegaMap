@@ -348,10 +348,9 @@ function OmegaMapMixin:OnShow()
 		self:SetFrameStrata(frameStrata);
 	end
 
-
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
-	--OmegaMap_SetScale(OmegaMapFrame)
+	OmegaMap_SetScale(OmegaMapFrame)
 	MapCanvasMixin.OnShow(self);
 
 	if not OmegaMap.Config.disableZoomReset then
@@ -560,7 +559,7 @@ end
 
 function ToggleOmegaMap()
 	--OmegaMapFrame:HandleUserActionToggleSelf();
-		if OmegaMapFrame:IsShown() then	
+	if OmegaMapFrame:IsShown() then	
 		OmegaMapFrame:Hide();
 	else
 		OmegaMapFrame:Show();
